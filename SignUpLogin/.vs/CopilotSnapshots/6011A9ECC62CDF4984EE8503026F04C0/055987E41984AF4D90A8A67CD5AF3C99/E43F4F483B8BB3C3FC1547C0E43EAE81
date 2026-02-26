@@ -1,0 +1,6 @@
+﻿namespace SignUpLogin.Models
+{
+    public class Login
+    {
+    }
+}

@@ -1,0 +1,236 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "D:\\SysArch\\SignUpLogin\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{937B41B2-5A0B-4FCE-17E4-CE0F05575236}|SignUpLogin\\SignUpLogin.csproj|d:\\sysarch\\signuplogin\\signuplogin\\views\\login\\login.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{937B41B2-5A0B-4FCE-17E4-CE0F05575236}|SignUpLogin\\SignUpLogin.csproj|solutionrelative:signuplogin\\views\\login\\login.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{937B41B2-5A0B-4FCE-17E4-CE0F05575236}|SignUpLogin\\SignUpLogin.csproj|d:\\sysarch\\signuplogin\\signuplogin\\views\\shared\\_loginnavbar.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{937B41B2-5A0B-4FCE-17E4-CE0F05575236}|SignUpLogin\\SignUpLogin.csproj|solutionrelative:signuplogin\\views\\shared\\_loginnavbar.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{937B41B2-5A0B-4FCE-17E4-CE0F05575236}|SignUpLogin\\SignUpLogin.csproj|d:\\sysarch\\signuplogin\\signuplogin\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{937B41B2-5A0B-4FCE-17E4-CE0F05575236}|SignUpLogin\\SignUpLogin.csproj|solutionrelative:signuplogin\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{937B41B2-5A0B-4FCE-17E4-CE0F05575236}|SignUpLogin\\SignUpLogin.csproj|d:\\sysarch\\signuplogin\\signuplogin\\views\\shared\\_footer.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{937B41B2-5A0B-4FCE-17E4-CE0F05575236}|SignUpLogin\\SignUpLogin.csproj|solutionrelative:signuplogin\\views\\shared\\_footer.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{937B41B2-5A0B-4FCE-17E4-CE0F05575236}|SignUpLogin\\SignUpLogin.csproj|d:\\sysarch\\signuplogin\\signuplogin\\views\\shared\\_landingnavbar.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{937B41B2-5A0B-4FCE-17E4-CE0F05575236}|SignUpLogin\\SignUpLogin.csproj|solutionrelative:signuplogin\\views\\shared\\_landingnavbar.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{937B41B2-5A0B-4FCE-17E4-CE0F05575236}|SignUpLogin\\SignUpLogin.csproj|d:\\sysarch\\signuplogin\\signuplogin\\views\\signup\\signup.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{937B41B2-5A0B-4FCE-17E4-CE0F05575236}|SignUpLogin\\SignUpLogin.csproj|solutionrelative:signuplogin\\views\\signup\\signup.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{937B41B2-5A0B-4FCE-17E4-CE0F05575236}|SignUpLogin\\SignUpLogin.csproj|d:\\sysarch\\signuplogin\\signuplogin\\controllers\\signupcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{937B41B2-5A0B-4FCE-17E4-CE0F05575236}|SignUpLogin\\SignUpLogin.csproj|solutionrelative:signuplogin\\controllers\\signupcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{937B41B2-5A0B-4FCE-17E4-CE0F05575236}|SignUpLogin\\SignUpLogin.csproj|d:\\sysarch\\signuplogin\\signuplogin\\models\\signup.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{937B41B2-5A0B-4FCE-17E4-CE0F05575236}|SignUpLogin\\SignUpLogin.csproj|solutionrelative:signuplogin\\models\\signup.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{937B41B2-5A0B-4FCE-17E4-CE0F05575236}|SignUpLogin\\SignUpLogin.csproj|d:\\sysarch\\signuplogin\\signuplogin\\models\\login.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{937B41B2-5A0B-4FCE-17E4-CE0F05575236}|SignUpLogin\\SignUpLogin.csproj|solutionrelative:signuplogin\\models\\login.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{937B41B2-5A0B-4FCE-17E4-CE0F05575236}|SignUpLogin\\SignUpLogin.csproj|d:\\sysarch\\signuplogin\\signuplogin\\controllers\\logincontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{937B41B2-5A0B-4FCE-17E4-CE0F05575236}|SignUpLogin\\SignUpLogin.csproj|solutionrelative:signuplogin\\controllers\\logincontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{937B41B2-5A0B-4FCE-17E4-CE0F05575236}|SignUpLogin\\SignUpLogin.csproj|d:\\sysarch\\signuplogin\\signuplogin\\views\\home\\login.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{937B41B2-5A0B-4FCE-17E4-CE0F05575236}|SignUpLogin\\SignUpLogin.csproj|solutionrelative:signuplogin\\views\\home\\login.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{937B41B2-5A0B-4FCE-17E4-CE0F05575236}|SignUpLogin\\SignUpLogin.csproj|d:\\sysarch\\signuplogin\\signuplogin\\views\\shared\\_layout.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{937B41B2-5A0B-4FCE-17E4-CE0F05575236}|SignUpLogin\\SignUpLogin.csproj|solutionrelative:signuplogin\\views\\shared\\_layout.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{937B41B2-5A0B-4FCE-17E4-CE0F05575236}|SignUpLogin\\SignUpLogin.csproj|d:\\sysarch\\signuplogin\\signuplogin\\controllers\\homecontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{937B41B2-5A0B-4FCE-17E4-CE0F05575236}|SignUpLogin\\SignUpLogin.csproj|solutionrelative:signuplogin\\controllers\\homecontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 6,
+          "Children": [
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{aa2115a1-9712-457b-9047-dbb71ca2cdd2}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "Program.cs",
+              "DocumentMoniker": "D:\\SysArch\\SignUpLogin\\SignUpLogin\\Program.cs",
+              "RelativeDocumentMoniker": "SignUpLogin\\Program.cs",
+              "ToolTip": "D:\\SysArch\\SignUpLogin\\SignUpLogin\\Program.cs",
+              "RelativeToolTip": "SignUpLogin\\Program.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-02-26T17:08:14.386Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "_Footer.cshtml",
+              "DocumentMoniker": "D:\\SysArch\\SignUpLogin\\SignUpLogin\\Views\\Shared\\_Footer.cshtml",
+              "RelativeDocumentMoniker": "SignUpLogin\\Views\\Shared\\_Footer.cshtml",
+              "ToolTip": "D:\\SysArch\\SignUpLogin\\SignUpLogin\\Views\\Shared\\_Footer.cshtml",
+              "RelativeToolTip": "SignUpLogin\\Views\\Shared\\_Footer.cshtml",
+              "ViewState": "AgIAAAIAAAAAAAAAAABRwAUAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-02-26T13:27:10.616Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "_LandingNavBar.cshtml",
+              "DocumentMoniker": "D:\\SysArch\\SignUpLogin\\SignUpLogin\\Views\\Shared\\_LandingNavBar.cshtml",
+              "RelativeDocumentMoniker": "SignUpLogin\\Views\\Shared\\_LandingNavBar.cshtml",
+              "ToolTip": "D:\\SysArch\\SignUpLogin\\SignUpLogin\\Views\\Shared\\_LandingNavBar.cshtml",
+              "RelativeToolTip": "SignUpLogin\\Views\\Shared\\_LandingNavBar.cshtml",
+              "ViewState": "AgIAAAoAAAAAAAAAAAAUwCYAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-02-26T13:26:41.168Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "_LoginNavBar.cshtml",
+              "DocumentMoniker": "D:\\SysArch\\SignUpLogin\\SignUpLogin\\Views\\Shared\\_LoginNavBar.cshtml",
+              "RelativeDocumentMoniker": "SignUpLogin\\Views\\Shared\\_LoginNavBar.cshtml",
+              "ToolTip": "D:\\SysArch\\SignUpLogin\\SignUpLogin\\Views\\Shared\\_LoginNavBar.cshtml",
+              "RelativeToolTip": "SignUpLogin\\Views\\Shared\\_LoginNavBar.cshtml",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAsAAAAVAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-02-26T13:26:02.793Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "Signup.cshtml",
+              "DocumentMoniker": "D:\\SysArch\\SignUpLogin\\SignUpLogin\\Views\\Signup\\Signup.cshtml",
+              "RelativeDocumentMoniker": "SignUpLogin\\Views\\Signup\\Signup.cshtml",
+              "ToolTip": "D:\\SysArch\\SignUpLogin\\SignUpLogin\\Views\\Signup\\Signup.cshtml",
+              "RelativeToolTip": "SignUpLogin\\Views\\Signup\\Signup.cshtml",
+              "ViewState": "AgIAAAMAAAAAAAAAAAAAAAcAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-02-26T13:24:41.355Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "Login.cshtml",
+              "DocumentMoniker": "D:\\SysArch\\SignUpLogin\\SignUpLogin\\Views\\Login\\Login.cshtml",
+              "RelativeDocumentMoniker": "SignUpLogin\\Views\\Login\\Login.cshtml",
+              "ToolTip": "D:\\SysArch\\SignUpLogin\\SignUpLogin\\Views\\Login\\Login.cshtml",
+              "RelativeToolTip": "SignUpLogin\\Views\\Login\\Login.cshtml",
+              "ViewState": "AgIAAHQAAAAAAAAAAADwv4MAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-02-26T13:23:51.699Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "SignupController.cs",
+              "DocumentMoniker": "D:\\SysArch\\SignUpLogin\\SignUpLogin\\Controllers\\SignupController.cs",
+              "RelativeDocumentMoniker": "SignUpLogin\\Controllers\\SignupController.cs",
+              "ToolTip": "D:\\SysArch\\SignUpLogin\\SignUpLogin\\Controllers\\SignupController.cs",
+              "RelativeToolTip": "SignUpLogin\\Controllers\\SignupController.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAYAAAAjAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-02-26T13:22:20.334Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
+              "Title": "Signup.cs",
+              "DocumentMoniker": "D:\\SysArch\\SignUpLogin\\SignUpLogin\\Models\\Signup.cs",
+              "RelativeDocumentMoniker": "SignUpLogin\\Models\\Signup.cs",
+              "ToolTip": "D:\\SysArch\\SignUpLogin\\SignUpLogin\\Models\\Signup.cs",
+              "RelativeToolTip": "SignUpLogin\\Models\\Signup.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-02-26T13:21:25.601Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 8,
+              "Title": "Login.cs",
+              "DocumentMoniker": "D:\\SysArch\\SignUpLogin\\SignUpLogin\\Models\\Login.cs",
+              "RelativeDocumentMoniker": "SignUpLogin\\Models\\Login.cs",
+              "ToolTip": "D:\\SysArch\\SignUpLogin\\SignUpLogin\\Models\\Login.cs",
+              "RelativeToolTip": "SignUpLogin\\Models\\Login.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAMAAAAFAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-02-26T13:21:09.244Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 9,
+              "Title": "LoginController.cs",
+              "DocumentMoniker": "D:\\SysArch\\SignUpLogin\\SignUpLogin\\Controllers\\LoginController.cs",
+              "RelativeDocumentMoniker": "SignUpLogin\\Controllers\\LoginController.cs",
+              "ToolTip": "D:\\SysArch\\SignUpLogin\\SignUpLogin\\Controllers\\LoginController.cs",
+              "RelativeToolTip": "SignUpLogin\\Controllers\\LoginController.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABkAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-02-26T13:20:46.944Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 10,
+              "Title": "Login.cshtml",
+              "DocumentMoniker": "D:\\SysArch\\SignUpLogin\\SignUpLogin\\Views\\Home\\Login.cshtml",
+              "RelativeDocumentMoniker": "SignUpLogin\\Views\\Home\\Login.cshtml",
+              "ToolTip": "D:\\SysArch\\SignUpLogin\\SignUpLogin\\Views\\Home\\Login.cshtml",
+              "RelativeToolTip": "SignUpLogin\\Views\\Home\\Login.cshtml",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAACwAAAAWAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-02-26T13:11:13.507Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 11,
+              "Title": "_Layout.cshtml",
+              "DocumentMoniker": "D:\\SysArch\\SignUpLogin\\SignUpLogin\\Views\\Shared\\_Layout.cshtml",
+              "RelativeDocumentMoniker": "SignUpLogin\\Views\\Shared\\_Layout.cshtml",
+              "ToolTip": "D:\\SysArch\\SignUpLogin\\SignUpLogin\\Views\\Shared\\_Layout.cshtml",
+              "RelativeToolTip": "SignUpLogin\\Views\\Shared\\_Layout.cshtml",
+              "ViewState": "AgIAACcAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-02-26T13:10:56.853Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 12,
+              "Title": "HomeController.cs",
+              "DocumentMoniker": "D:\\SysArch\\SignUpLogin\\SignUpLogin\\Controllers\\HomeController.cs",
+              "RelativeDocumentMoniker": "SignUpLogin\\Controllers\\HomeController.cs",
+              "ToolTip": "D:\\SysArch\\SignUpLogin\\SignUpLogin\\Controllers\\HomeController.cs",
+              "RelativeToolTip": "SignUpLogin\\Controllers\\HomeController.cs",
+              "ViewState": "AgIAAAEAAAAAAAAAAAAmwBEAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-02-26T13:07:07.019Z"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
