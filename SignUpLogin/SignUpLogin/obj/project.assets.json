@@ -5265,23 +5265,23 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\russe\\.nuget\\packages\\": {},
+    "C:\\Users\\TT518\\.nuget\\packages\\": {},
     "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "D:\\SysArch\\SignUpLogin\\SignUpLogin\\SignUpLogin.csproj",
+      "projectUniqueName": "Z:\\TT518\\GILLERARU\\SignUpLogin\\SignUpLogin\\SignUpLogin.csproj",
       "projectName": "SignUpLogin",
-      "projectPath": "D:\\SysArch\\SignUpLogin\\SignUpLogin\\SignUpLogin.csproj",
-      "packagesPath": "C:\\Users\\russe\\.nuget\\packages\\",
-      "outputPath": "D:\\SysArch\\SignUpLogin\\SignUpLogin\\obj\\",
+      "projectPath": "Z:\\TT518\\GILLERARU\\SignUpLogin\\SignUpLogin\\SignUpLogin.csproj",
+      "packagesPath": "C:\\Users\\TT518\\.nuget\\packages\\",
+      "outputPath": "Z:\\TT518\\GILLERARU\\SignUpLogin\\SignUpLogin\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
       ],
       "configFilePaths": [
-        "C:\\Users\\russe\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Users\\TT518\\AppData\\Roaming\\NuGet\\NuGet.Config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
@@ -5290,6 +5290,7 @@
       ],
       "sources": {
         "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+        "C:\\Program Files\\dotnet\\library-packs": {},
         "https://api.nuget.org/v3/index.json": {}
       },
       "frameworks": {
@@ -5338,7 +5339,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.103/PortableRuntimeIdentifierGraph.json",
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.102/PortableRuntimeIdentifierGraph.json",
         "packagesToPrune": {
           "Microsoft.AspNetCore": "(,10.0.32767]",
           "Microsoft.AspNetCore.Antiforgery": "(,10.0.32767]",

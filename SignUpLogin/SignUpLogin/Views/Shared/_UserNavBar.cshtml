@@ -1,0 +1,74 @@
+<nav class="navbar navbar-expand-sm navbar-light" style="background-color: #003d82; position: sticky; top: 0; z-index: 1000;">
+    <div class="container-fluid">
+        <a class="navbar-brand text-white" asp-controller="Home" asp-action="Index">College of Computer Studies Sit-in Monitoring System</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
+                aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="navbar-collapse collapse d-sm-inline-flex justify-content-end">
+            <ul class="navbar-nav align-items-center">
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle d-flex align-items-center gap-2 text-white" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <div class="user-avatar">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4z"/>
+                            </svg>
+                        </div>
+                        <span class="user-name">User</span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                        <li><a class="dropdown-item" href="#">My Profile</a></li>
+                        <li><a class="dropdown-item" href="#">My Records</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item text-danger" asp-controller="Login" asp-action="Index">Logout</a></li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<style>
+    .user-avatar {
+        background-color: rgba(255, 255, 255, 0.2);
+        border-radius: 50%;
+        width: 34px;
+        height: 34px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+    }
+
+    .user-name {
+        font-weight: 600;
+        font-size: 14px;
+        color: white;
+    }
+
+    .dropdown-toggle::after {
+        color: white;
+    }
+
+    .dropdown-menu {
+        border-radius: 6px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        border: none;
+        min-width: 160px;
+    }
+
+    .dropdown-item {
+        font-size: 14px;
+        padding: 8px 16px;
+    }
+
+    .dropdown-item:hover {
+        background-color: #f0f4ff;
+        color: #003d82;
+    }
+
+    .dropdown-item.text-danger:hover {
+        background-color: #fff0f0;
+        color: #dc3545 !important;
+    }
+</style>

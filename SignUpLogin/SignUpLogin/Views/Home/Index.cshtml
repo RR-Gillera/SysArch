@@ -1,8 +1,215 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+@{
+    ViewData["Title"] = "College of Computer Studies Sit-in Monitoring System";
+    Layout = null;
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+    @await Html.PartialAsync("_UserNavBar")
+
+    <!-- Hero -->
+    <div class="hero-section">
+        <div class="container hero-content">
+            <div class="row justify-content-center align-items-center">
+                <div class="col-md-5 text-center">
+                    <img src="~/images/CCS Logo.png" alt="CCS Logo" class="hero-logo" />
+                </div>
+                <div class="col-md-6">
+                    <div class="hero-card">
+                        <h1 class="hero-title">College of Computer Studies</h1>
+                        <p class="hero-subtitle">Sit-in Monitoring System</p>
+                        <p class="hero-desc">
+                            A streamlined platform for managing and monitoring student sit-in sessions
+                            in the CCS laboratories. Fast, organized, and easy to use.
+                        </p>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Features -->
+    <div class="features-section">
+        <div class="container">
+            <h2 class="features-title text-center mb-2">What We Offer</h2>
+            <p class="features-subtitle text-center mb-5">Everything you need for a smooth sit-in experience</p>
+            <div class="row g-4 justify-content-center">
+                <div class="col-md-4">
+                    <div class="feature-card">
+                        <div class="feature-icon">📋</div>
+                        <h5 class="feature-heading">Easy Registration</h5>
+                        <p class="feature-text">Register quickly and get access to sit-in sessions in the CCS laboratories with minimal steps.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="feature-card">
+                        <div class="feature-icon">🖥️</div>
+                        <h5 class="feature-heading">Lab Monitoring</h5>
+                        <p class="feature-text">Real-time tracking of student sit-in sessions ensures organized and efficient lab usage.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="feature-card">
+                        <div class="feature-icon">📊</div>
+                        <h5 class="feature-heading">Session Records</h5>
+                        <p class="feature-text">Keep track of your sit-in history and remaining session credits all in one place.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @await Html.PartialAsync("_Footer")
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
+
+<style>
+    html, body {
+        margin: 0;
+        padding: 0;
+        background-color: #f5f5f5;
+        overflow-x: hidden;
+    }
+
+    nav.navbar {
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+    }
+
+    /* Hero */
+    .hero-section {
+        background-color: #f5f5f5;
+        padding: 60px 0 50px;
+    }
+
+    .hero-logo {
+        max-width: 320px;
+        width: 100%;
+        height: auto;
+        object-fit: contain;
+    }
+
+    .hero-card {
+        background-color: #ffffff;
+        padding: 40px;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .hero-title {
+        font-size: 1.6rem;
+        font-weight: 800;
+        color: #003d82;
+        margin-bottom: 6px;
+    }
+
+    .hero-subtitle {
+        font-size: 1rem;
+        font-weight: 600;
+        color: #555;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 16px;
+    }
+
+    .hero-desc {
+        font-size: 0.95rem;
+        color: #555;
+        line-height: 1.7;
+        margin-bottom: 0;
+    }
+
+    .hero-btn {
+        padding: 10px 32px;
+        font-weight: 600;
+        border-radius: 4px;
+        font-size: 15px;
+    }
+
+    .btn-primary {
+        background-color: #003d82;
+        border-color: #003d82;
+    }
+
+    .btn-primary:hover {
+        background-color: #002a5c;
+        border-color: #002a5c;
+    }
+
+    .btn-outline-primary {
+        color: #003d82;
+        border-color: #003d82;
+        border-width: 2px;
+    }
+
+    .btn-outline-primary:hover {
+        background-color: #003d82;
+        color: white;
+    }
+
+    /* Features */
+    .features-section {
+        background-color: #f5f5f5;
+        padding: 50px 0 60px;
+    }
+
+    .features-title {
+        font-size: 1.6rem;
+        font-weight: 700;
+        color: #003d82;
+    }
+
+    .features-subtitle {
+        color: #666;
+        font-size: 0.95rem;
+    }
+
+    .feature-card {
+        background-color: #ffffff;
+        border-radius: 8px;
+        padding: 32px 28px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        height: 100%;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .feature-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 6px 20px rgba(0, 61, 130, 0.15);
+    }
+
+    .feature-icon {
+        font-size: 2.2rem;
+        margin-bottom: 14px;
+    }
+
+    .feature-heading {
+        font-weight: 700;
+        color: #003d82;
+        margin-bottom: 10px;
+    }
+
+    .feature-text {
+        color: #555;
+        font-size: 0.93rem;
+        line-height: 1.6;
+        margin-bottom: 0;
+    }
+
+    footer {
+        margin-top: 0 !important;
+    }
+</style>
