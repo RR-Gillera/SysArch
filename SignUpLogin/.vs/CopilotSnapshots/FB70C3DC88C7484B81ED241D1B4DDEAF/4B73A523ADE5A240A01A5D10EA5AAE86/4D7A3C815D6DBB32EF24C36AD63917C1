@@ -1,0 +1,201 @@
+﻿@model SignUpLogin.Models.Signup
+
+@{
+    ViewData["Title"] = "Register - College of Computer Studies";
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+    @await Html.PartialAsync("_LoginNavBar")
+
+    <div class="container signup-container">
+        <div class="row justify-content-center">
+            <div class="col-lg-11 col-md-12">
+                <div class="signup-form-container">
+                    <div class="text-center mb-4">
+                        <img src="~/images/CCS Logo.png" alt="CCS Logo" class="ccs-logo" />
+                        <h4 class="form-title mt-3">Create an Account</h4>
+                    </div>
+
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                    <form method="post" asp-controller="Signup" asp-action="Index">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="IdNumber" class="form-label"></label>
+                                <input asp-for="IdNumber" class="form-control" placeholder="Enter your ID number" />
+                                <span asp-validation-for="IdNumber" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Email" class="form-label"></label>
+                                <input asp-for="Email" class="form-control" placeholder="Enter your email" />
+                                <span asp-validation-for="Email" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="FirstName" class="form-label"></label>
+                                <input asp-for="FirstName" class="form-control" placeholder="First name" />
+                                <span asp-validation-for="FirstName" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="LastName" class="form-label"></label>
+                                <input asp-for="LastName" class="form-control" placeholder="Last name" />
+                                <span asp-validation-for="LastName" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="MiddleName" class="form-label"></label>
+                                <input asp-for="MiddleName" class="form-control" placeholder="Middle name" />
+                                <span asp-validation-for="MiddleName" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="CourseLevel" class="form-label"></label>
+                                <select asp-for="CourseLevel" class="form-select">
+                                    <option value="" disabled selected>Select year</option>
+                                    <option value="1">1st Year</option>
+                                    <option value="2">2nd Year</option>
+                                    <option value="3">3rd Year</option>
+                                    <option value="4">4th Year</option>
+                                </select>
+                                <span asp-validation-for="CourseLevel" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Course" class="form-label"></label>
+                                <select asp-for="Course" class="form-select">
+                                    <option value="" disabled selected>Select course</option>
+                                    <option value="BSCS">BSCS</option>
+                                    <option value="BSIT">BSIT</option>
+                                    <option value="BSIS">BSIS</option>
+                                    <option value="ACT">ACT</option>
+                                </select>
+                                <span asp-validation-for="Course" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Address" class="form-label"></label>
+                                <input asp-for="Address" class="form-control" placeholder="Enter your address" />
+                                <span asp-validation-for="Address" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Password" class="form-label"></label>
+                                <input asp-for="Password" class="form-control" placeholder="Create a password" />
+                                <span asp-validation-for="Password" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="ConfirmPassword" class="form-label"></label>
+                                <input asp-for="ConfirmPassword" class="form-control" placeholder="Confirm your password" />
+                                <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100 signup-btn mt-2">Register</button>
+                    </form>
+
+                    <div class="mt-3 text-center">
+                        <span>Already have an account? <a asp-controller="Login" asp-action="Index" class="text-danger text-decoration-none fw-bold">Login</a></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @await Html.PartialAsync("_Footer")
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    @await Html.PartialAsync("_ValidationScriptsPartial")
+</body>
+</html>
+
+<style>
+    html, body {
+        height: 100%;
+        margin: 0;
+        overflow: auto;
+    }
+
+    body {
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+        background-color: #ffffff;
+    }
+
+    .signup-container {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 40px 0;
+    }
+
+    .ccs-logo {
+        max-width: 140px;
+        width: 100%;
+        height: auto;
+        object-fit: contain;
+    }
+
+    .signup-form-container {
+        background-color: #ffffff;
+        padding: 35px 40px;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .form-title {
+        font-weight: 700;
+        color: #003d82;
+        font-size: 22px;
+    }
+
+    .signup-btn {
+        background-color: #003d82;
+        border-color: #003d82;
+        padding: 12px;
+        font-weight: 500;
+        font-size: 16px;
+    }
+
+    .signup-btn:hover {
+        background-color: #002a5c;
+        border-color: #002a5c;
+    }
+
+    .form-label {
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 6px;
+    }
+
+    .form-control,
+    .form-select {
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+        padding: 10px 12px;
+    }
+
+    .form-control:focus,
+    .form-select:focus {
+        border-color: #003d82;
+        box-shadow: 0 0 0 0.2rem rgba(0, 61, 130, 0.2);
+    }
+</style>

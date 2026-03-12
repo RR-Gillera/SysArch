@@ -1,0 +1,535 @@
+@{
+    ViewData["Title"] = "Dashboard";
+    Layout = null;
+    var today = DateTime.Now.ToString("MMMM dd, yyyy");
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] — CCS Sit-in Monitoring</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+    @await Html.PartialAsync("_UserNavBar")
+
+    <div class="dash-wrapper">
+        <div class="container dash-body">
+
+            <!-- Welcome heading -->
+            <div class="welcome-header">
+                <h1 class="welcome-name">Welcome, @ViewBag.UserName</h1>
+                <p class="welcome-date">@today</p>
+            </div>
+
+            <!-- Blue banner card -->
+            <div class="banner-card">
+                <div class="banner-left">
+                    <img src="~/images/CCS Logo.png" alt="CCS Logo" class="banner-logo" />
+                </div>
+                <div class="banner-info">
+                    <h2 class="banner-name">Welcome, @ViewBag.UserName</h2>
+                    <p class="banner-detail">Student ID: @ViewBag.IdNumber</p>
+                    <p class="banner-detail">Course: @ViewBag.Course</p>
+                </div>
+                <div class="banner-status">
+                    <div class="status-badge not-active">
+                        <span class="status-label">Sit-in Status:</span>
+                        <span class="status-value">NOT ACTIVE</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main two-column layout -->
+            <div class="dash-columns">
+
+                <!-- Left column -->
+                <div class="dash-left">
+
+                    <!-- Laboratory Availability -->
+                    <div class="dash-panel">
+                        <div class="panel-head">
+                            <h3 class="panel-title">Laboratory Availability</h3>
+                        </div>
+                        <div class="lab-grid">
+                            <div class="lab-card">
+                                <h4 class="lab-name">Lab 524</h4>
+                                <div class="lab-status available">
+                                    <span class="lab-dot bg-success"></span> Available
+                                </div>
+                                <p class="lab-sub">No class</p>
+                                <button class="btn btn-outline-secondary btn-sm lab-btn" disabled>Lab 524</button>
+                            </div>
+                            <div class="lab-card">
+                                <h4 class="lab-name">Lab 526</h4>
+                                <div class="lab-status occupied">
+                                    <span class="lab-dot bg-danger"></span> Occupied
+                                </div>
+                                <p class="lab-sub">Programming Class</p>
+                                <button class="btn btn-outline-secondary btn-sm lab-btn" disabled>Lab 526</button>
+                            </div>
+                            <div class="lab-card lab-card-highlight">
+                                <h4 class="lab-name">Lab 528</h4>
+                                <div class="lab-status full">
+                                    <span class="lab-dot bg-warning"></span> Sit-in Full
+                                </div>
+                                <p class="lab-sub">30 / 30 students</p>
+                                <button class="btn btn-outline-secondary btn-sm lab-btn" disabled>Lab 528</button>
+                            </div>
+                            <div class="lab-card">
+                                <h4 class="lab-name">Lab 530</h4>
+                                <div class="lab-status available">
+                                    <span class="lab-dot bg-success"></span> Available
+                                </div>
+                                <p class="lab-sub">Open for sit-in</p>
+                                <button class="btn btn-outline-secondary btn-sm lab-btn" disabled>Lab 530</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sit-in History -->
+                    <div class="dash-panel">
+                        <div class="panel-head">
+                            <h3 class="panel-title">Sit-in History</h3>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table history-table">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Laboratory</th>
+                                        <th>Time In</th>
+                                        <th>Time Out</th>
+                                        <th>Duration</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>March 12</td>
+                                        <td>Lab 528</td>
+                                        <td>1:00 PM</td>
+                                        <td>3:00 PM</td>
+                                        <td>2 hrs</td>
+                                    </tr>
+                                    <tr>
+                                        <td>March 10</td>
+                                        <td>Lab 524</td>
+                                        <td>10:00 AM</td>
+                                        <td>12:00 PM</td>
+                                        <td>2 hrs</td>
+                                    </tr>
+                                    <tr>
+                                        <td>March 8</td>
+                                        <td>Lab 530</td>
+                                        <td>2:00 PM</td>
+                                        <td>4:00 PM</td>
+                                        <td>2 hrs</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right column -->
+                <div class="dash-right">
+
+                    <!-- Remaining Sit-in Hours -->
+                    <div class="dash-panel">
+                        <div class="panel-head">
+                            <h3 class="panel-title">Remaining Sit-in Hours</h3>
+                        </div>
+                        <div class="hours-display">
+                            <span class="hours-big">30</span>
+                            <span class="hours-sep">/</span>
+                            <span class="hours-total">30</span>
+                            <span class="hours-text">hours remaining</span>
+                        </div>
+                        <div class="hours-bar">
+                            <div class="hours-fill" style="width: 100%"></div>
+                        </div>
+                    </div>
+
+                    <!-- Announcements -->
+                    <div class="dash-panel">
+                        <div class="panel-head">
+                            <h3 class="panel-title">Announcements</h3>
+                        </div>
+                        <ul class="announce-list">
+                            <li><span class="announce-dot"></span> Lab 530 will be closed tomorrow</li>
+                            <li><span class="announce-dot"></span> Programming competition — register now</li>
+                            <li><span class="announce-dot"></span> New computers installed in Lab 528</li>
+                        </ul>
+                        <a href="#" class="view-all-link">View All</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @await Html.PartialAsync("_Footer")
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
+
+<style>
+    html, body {
+        margin: 0;
+        padding: 0;
+        background: #eef1f5;
+        overflow-x: hidden;
+    }
+
+    body {
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+    }
+
+    .dash-wrapper {
+        flex: 1;
+    }
+
+    .dash-body {
+        padding: 28px 15px 40px;
+    }
+
+
+    .welcome-header {
+        margin-bottom: 20px;
+    }
+
+    .welcome-name {
+        font-size: 1.6rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin: 0 0 2px;
+    }
+
+    .welcome-date {
+        font-size: 0.85rem;
+        color: #94a3b8;
+        margin: 0;
+    }
+
+    /* -------- Blue banner card -------- */
+    .banner-card {
+        background: linear-gradient(135deg, #0a4da2 0%, #063a7a 60%, #042c5c 100%);
+        border-radius: 12px;
+        padding: 28px 32px;
+        display: flex;
+        align-items: center;
+        gap: 28px;
+        margin-bottom: 24px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .banner-card::before {
+        content: '';
+        position: absolute;
+        top: -30px;
+        right: -30px;
+        width: 180px;
+        height: 180px;
+        background: rgba(255,255,255,0.04);
+        border-radius: 50%;
+        pointer-events: none;
+    }
+
+    .banner-logo {
+        width: 110px;
+        height: 110px;
+        object-fit: contain;
+        flex-shrink: 0;
+    }
+
+    .banner-info {
+        flex: 1;
+    }
+
+    .banner-name {
+        font-size: 1.35rem;
+        font-weight: 700;
+        color: #fff;
+        margin: 0 0 6px;
+    }
+
+    .banner-detail {
+        font-size: 0.9rem;
+        color: rgba(255,255,255,0.75);
+        margin: 0 0 2px;
+    }
+
+    .banner-status {
+        flex-shrink: 0;
+    }
+
+    .status-badge {
+        background: #fff;
+        border-radius: 8px;
+        padding: 12px 20px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .status-label {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #1e293b;
+    }
+
+    .status-value {
+        font-size: 0.85rem;
+        font-weight: 700;
+        padding: 3px 12px;
+        border-radius: 4px;
+    }
+
+    .not-active .status-value {
+        color: #dc3545;
+        border: 1.5px solid #dc3545;
+    }
+
+    /* -------- Two-column layout -------- */
+    .dash-columns {
+        display: grid;
+        grid-template-columns: 1.6fr 1fr;
+        gap: 22px;
+        align-items: start;
+    }
+
+    .dash-left,
+    .dash-right {
+        display: flex;
+        flex-direction: column;
+        gap: 22px;
+    }
+
+    .dash-panel {
+        background: #fff;
+        border-radius: 10px;
+        padding: 22px 24px;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    }
+
+    .panel-head {
+        margin-bottom: 16px;
+    }
+
+    .panel-title {
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin: 0;
+    }
+
+    /* -------- Lab availability -------- */
+    .lab-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 14px;
+    }
+
+    .lab-card {
+        border: 1.5px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 16px 14px;
+        text-align: left;
+    }
+
+    .lab-card-highlight {
+        border-color: #d97706;
+    }
+
+    .lab-name {
+        font-size: 0.92rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin: 0 0 8px;
+    }
+
+    .lab-status {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.82rem;
+        font-weight: 600;
+        margin-bottom: 4px;
+    }
+
+    .lab-status.available { color: #16a34a; }
+    .lab-status.occupied  { color: #dc3545; }
+    .lab-status.full      { color: #d97706; }
+
+    .lab-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        display: inline-block;
+    }
+
+    .lab-sub {
+        font-size: 0.78rem;
+        color: #94a3b8;
+        margin: 0 0 10px;
+    }
+
+    .lab-btn {
+        font-size: 0.75rem;
+        padding: 4px 14px;
+        border-radius: 4px;
+        color: #64748b;
+        border-color: #cbd5e1;
+    }
+
+    /* -------- History table -------- */
+    .history-table {
+        margin: 0;
+        font-size: 0.85rem;
+    }
+
+    .history-table thead th {
+        background: #f8fafc;
+        color: #64748b;
+        font-weight: 600;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+        border-bottom: 2px solid #e2e8f0;
+        padding: 10px 12px;
+    }
+
+    .history-table tbody td {
+        padding: 12px;
+        color: #334155;
+        border-bottom: 1px solid #f1f5f9;
+        vertical-align: middle;
+    }
+
+    .history-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    /* -------- Remaining hours -------- */
+    .hours-display {
+        display: flex;
+        align-items: baseline;
+        gap: 4px;
+        margin-bottom: 12px;
+        flex-wrap: wrap;
+    }
+
+    .hours-big {
+        font-size: 2rem;
+        font-weight: 800;
+        color: #003d82;
+        line-height: 1;
+    }
+
+    .hours-sep {
+        font-size: 1.5rem;
+        color: #94a3b8;
+        font-weight: 300;
+    }
+
+    .hours-total {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #64748b;
+    }
+
+    .hours-text {
+        font-size: 0.85rem;
+        color: #94a3b8;
+        margin-left: 6px;
+    }
+
+    .hours-bar {
+        height: 10px;
+        border-radius: 6px;
+        background: #e2e8f0;
+    }
+
+    .hours-fill {
+        height: 100%;
+        border-radius: 6px;
+        background: #003d82;
+        transition: width 0.6s ease;
+    }
+
+    /* -------- Announcements -------- */
+    .announce-list {
+        list-style: none;
+        padding: 0;
+        margin: 0 0 12px;
+    }
+
+    .announce-list li {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        font-size: 0.85rem;
+        color: #334155;
+        padding: 8px 0;
+        line-height: 1.5;
+    }
+
+    .announce-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #003d82;
+        flex-shrink: 0;
+        margin-top: 5px;
+    }
+
+    .view-all-link {
+        font-size: 0.82rem;
+        color: #003d82;
+        font-weight: 600;
+        text-decoration: none;
+        float: right;
+    }
+
+    .view-all-link:hover {
+        text-decoration: underline;
+    }
+
+    /* -------- Responsive -------- */
+    @@media (max-width: 992px) {
+        .lab-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    @@media (max-width: 768px) {
+        .dash-columns {
+            grid-template-columns: 1fr;
+        }
+
+        .banner-card {
+            flex-direction: column;
+            text-align: center;
+            gap: 16px;
+        }
+
+        .lab-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .welcome-name {
+            font-size: 1.3rem;
+        }
+    }
+
+    footer {
+        margin-top: 0 !important;
+    }
+</style>

@@ -1,0 +1,436 @@
+﻿@{
+    ViewData["Title"] = "Dashboard";
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] — CCS Sit-in Monitoring</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+    @await Html.PartialAsync("_UserNavBar")
+
+    <div class="dash-wrapper">
+        <!-- Greeting strip -->
+        <section class="greeting-strip">
+            <div class="container">
+                <div class="greeting-inner">
+                    <div>
+                        <h1 class="greeting-name">Welcome back, @ViewBag.UserName</h1>
+                        <p class="greeting-sub">@ViewBag.IdNumber &middot; @ViewBag.Course — Year @ViewBag.CourseLevel</p>
+                    </div>
+                    <div class="greeting-badge">
+                        <span class="status-dot"></span> Active
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Main content -->
+        <div class="container dash-body">
+
+            <!-- Stats row -->
+            <div class="stat-row">
+                <div class="stat-tile stat-blue">
+                    <div class="stat-number">30</div>
+                    <div class="stat-label">Total Sessions</div>
+                    <div class="stat-bar"><div class="stat-fill" style="width:100%"></div></div>
+                </div>
+                <div class="stat-tile stat-teal">
+                    <div class="stat-number">0</div>
+                    <div class="stat-label">Sessions Used</div>
+                    <div class="stat-bar"><div class="stat-fill" style="width:0%"></div></div>
+                </div>
+                <div class="stat-tile stat-amber">
+                    <div class="stat-number">30</div>
+                    <div class="stat-label">Remaining</div>
+                    <div class="stat-bar"><div class="stat-fill" style="width:100%"></div></div>
+                </div>
+            </div>
+
+            <!-- Two-column area -->
+            <div class="dash-columns">
+
+                <!-- Left: announcements -->
+                <div class="dash-panel announce-panel">
+                    <div class="panel-header">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M8 16a2 2 0 0 0 2-2H6a2 2 0 0 0 2 2zm.995-14.901a1 1 0 1 0-1.99 0A5.002 5.002 0 0 0 3 6c0 1.098-.5 6-2 7h14c-1.5-1-2-5.902-2-7 0-2.42-1.72-4.44-4.005-4.901z"/>
+                        </svg>
+                        <span>Announcements</span>
+                    </div>
+                    <ul class="announce-list">
+                        <li class="announce-item">
+                            <div class="announce-dot"></div>
+                            <div>
+                                <strong>Lab 524 maintenance</strong>
+                                <p>Lab 524 will be unavailable on June 20 for equipment upgrades.</p>
+                            </div>
+                        </li>
+                        <li class="announce-item">
+                            <div class="announce-dot"></div>
+                            <div>
+                                <strong>New sit-in rules</strong>
+                                <p>Students must present their ID before every session starting July 1.</p>
+                            </div>
+                        </li>
+                        <li class="announce-item">
+                            <div class="announce-dot"></div>
+                            <div>
+                                <strong>Welcome to the new semester!</strong>
+                                <p>Session credits have been reset. You now have 30 sessions available.</p>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Right: quick info & rules -->
+                <div class="dash-side">
+                    <div class="dash-panel profile-snapshot">
+                        <div class="panel-header">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0z"/>
+                                <path fill-rule="evenodd" d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8zm8-7a7 7 0 0 0-5.468 11.37C3.242 11.226 4.805 10 8 10s4.757 1.225 5.468 2.37A7 7 0 0 0 8 1z"/>
+                            </svg>
+                            <span>My Profile</span>
+                        </div>
+                        <div class="snapshot-grid">
+                            <div class="snapshot-item">
+                                <span class="snap-label">Name</span>
+                                <span class="snap-value">@ViewBag.UserName</span>
+                            </div>
+                            <div class="snapshot-item">
+                                <span class="snap-label">ID</span>
+                                <span class="snap-value">@ViewBag.IdNumber</span>
+                            </div>
+                            <div class="snapshot-item">
+                                <span class="snap-label">Course</span>
+                                <span class="snap-value">@ViewBag.Course — Year @ViewBag.CourseLevel</span>
+                            </div>
+                            <div class="snapshot-item">
+                                <span class="snap-label">Email</span>
+                                <span class="snap-value">@ViewBag.Email</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="dash-panel rules-card">
+                        <div class="panel-header">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M14 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h12zM2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2z"/>
+                                <path d="M10.97 4.97a.75.75 0 0 1 1.071 1.05l-3.992 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.236.236 0 0 1 .02-.022z"/>
+                            </svg>
+                            <span>Sit-in Rules</span>
+                        </div>
+                        <ol class="rules-list">
+                            <li>Present your student ID at the lab entrance.</li>
+                            <li>Maximum of 3 hours per sit-in session.</li>
+                            <li>No food or drinks inside the laboratory.</li>
+                            <li>Log out properly when leaving.</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @await Html.PartialAsync("_Footer")
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
+
+<style>
+    html, body {
+        margin: 0;
+        padding: 0;
+        background: #eef1f5;
+        overflow-x: hidden;
+    }
+
+    body {
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+    }
+
+    .dash-wrapper {
+        flex: 1;
+    }
+
+    /* ---------- Greeting strip ---------- */
+    .greeting-strip {
+        background: linear-gradient(135deg, #003d82 0%, #00264d 100%);
+        padding: 32px 0 28px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .greeting-strip::after {
+        content: '';
+        position: absolute;
+        right: -60px;
+        top: -40px;
+        width: 260px;
+        height: 260px;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.04);
+        pointer-events: none;
+    }
+
+    .greeting-inner {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    .greeting-name {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #fff;
+        margin: 0 0 4px;
+    }
+
+    .greeting-sub {
+        color: rgba(255,255,255,0.65);
+        font-size: 0.88rem;
+        margin: 0;
+        letter-spacing: 0.3px;
+    }
+
+    .greeting-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        background: rgba(255,255,255,0.1);
+        border: 1px solid rgba(255,255,255,0.18);
+        border-radius: 20px;
+        padding: 6px 16px;
+        color: #a3f5c7;
+        font-weight: 600;
+        font-size: 13px;
+    }
+
+    .status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #34d399;
+        display: inline-block;
+        animation: pulse-dot 2s infinite;
+    }
+
+    @@keyframes pulse-dot {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.4; }
+    }
+
+    /* ---------- Stats ---------- */
+    .dash-body {
+        margin-top: -18px;
+        position: relative;
+        z-index: 1;
+        padding-bottom: 40px;
+    }
+
+    .stat-row {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 18px;
+        margin-bottom: 24px;
+    }
+
+    .stat-tile {
+        background: #fff;
+        border-radius: 10px;
+        padding: 22px 24px 18px;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+        border-left: 4px solid transparent;
+    }
+
+    .stat-blue  { border-left-color: #003d82; }
+    .stat-teal  { border-left-color: #0d9488; }
+    .stat-amber { border-left-color: #d97706; }
+
+    .stat-number {
+        font-size: 1.8rem;
+        font-weight: 800;
+        color: #1e293b;
+        line-height: 1;
+    }
+
+    .stat-label {
+        font-size: 0.8rem;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        margin: 6px 0 12px;
+        font-weight: 600;
+    }
+
+    .stat-bar {
+        height: 4px;
+        border-radius: 4px;
+        background: #e2e8f0;
+    }
+
+    .stat-fill {
+        height: 100%;
+        border-radius: 4px;
+        transition: width 0.6s ease;
+    }
+
+    .stat-blue .stat-fill  { background: #003d82; }
+    .stat-teal .stat-fill  { background: #0d9488; }
+    .stat-amber .stat-fill { background: #d97706; }
+
+    /* ---------- Two columns ---------- */
+    .dash-columns {
+        display: grid;
+        grid-template-columns: 1.6fr 1fr;
+        gap: 20px;
+        align-items: start;
+    }
+
+    .dash-side {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .dash-panel {
+        background: #fff;
+        border-radius: 10px;
+        padding: 24px;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    }
+
+    .panel-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: 700;
+        font-size: 0.95rem;
+        color: #003d82;
+        margin-bottom: 18px;
+        padding-bottom: 12px;
+        border-bottom: 2px solid #eef1f5;
+    }
+
+    /* ---------- Announcements ---------- */
+    .announce-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .announce-item {
+        display: flex;
+        gap: 14px;
+        padding: 14px 0;
+        border-bottom: 1px solid #f1f5f9;
+        align-items: flex-start;
+    }
+
+    .announce-item:last-child {
+        border-bottom: none;
+        padding-bottom: 0;
+    }
+
+    .announce-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #003d82;
+        flex-shrink: 0;
+        margin-top: 5px;
+    }
+
+    .announce-item strong {
+        font-size: 0.9rem;
+        color: #1e293b;
+        display: block;
+        margin-bottom: 3px;
+    }
+
+    .announce-item p {
+        font-size: 0.82rem;
+        color: #64748b;
+        margin: 0;
+        line-height: 1.5;
+    }
+
+    /* ---------- Profile snapshot ---------- */
+    .snapshot-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+    }
+
+    .snapshot-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 10px 0;
+        border-bottom: 1px solid #f1f5f9;
+    }
+
+    .snapshot-item:last-child {
+        border-bottom: none;
+        padding-bottom: 0;
+    }
+
+    .snap-label {
+        font-size: 0.8rem;
+        color: #94a3b8;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 600;
+    }
+
+    .snap-value {
+        font-size: 0.88rem;
+        color: #1e293b;
+        font-weight: 500;
+        text-align: right;
+    }
+
+    /* ---------- Rules ---------- */
+    .rules-list {
+        padding-left: 20px;
+        margin: 0;
+    }
+
+    .rules-list li {
+        font-size: 0.85rem;
+        color: #475569;
+        line-height: 1.6;
+        padding: 4px 0;
+    }
+
+    /* ---------- Responsive ---------- */
+    @@media (max-width: 768px) {
+        .stat-row {
+            grid-template-columns: 1fr;
+        }
+
+        .dash-columns {
+            grid-template-columns: 1fr;
+        }
+
+        .greeting-name {
+            font-size: 1.2rem;
+        }
+    }
+
+    footer {
+        margin-top: 0 !important;
+    }
+</style>

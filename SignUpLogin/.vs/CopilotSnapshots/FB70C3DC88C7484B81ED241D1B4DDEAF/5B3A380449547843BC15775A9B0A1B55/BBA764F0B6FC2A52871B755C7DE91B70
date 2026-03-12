@@ -1,0 +1,14 @@
+﻿using Microsoft.EntityFrameworkCore;
+using SignUpLogin.Models;
+
+namespace SignUpLogin.Data
+{
+    public class ApplicationDbContext : DbContext
+    {
+        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
+        {
+        }
+
+        public DbSet<Signup> Signups { get; set; } = null!;
+    }
+}
