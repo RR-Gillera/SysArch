@@ -24,6 +24,13 @@
             </div>
             <div class="col-md-6">
                 <div class="login-form-container">
+                    @if (TempData["Success"] != null)
+                    {
+                        <div class="alert alert-success" role="alert">
+                            @TempData["Success"]
+                        </div>
+                    }
+
                     <form method="post" asp-controller="Login" asp-action="Index">
                         <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
                         <div class="mb-3">
@@ -34,21 +41,7 @@
 
                         <div class="mb-3">
                             <label for="password" class="form-label">Password</label>
-                            <div class="password-wrapper">
-                                <input type="password" class="form-control password-input" asp-for="Password" placeholder="Enter password" required>
-                                <button type="button" class="password-toggle" id="togglePassword" aria-label="Show password">
-                                    <svg id="eyeOpen" xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
-                                        <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.12 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.133 13.133 0 0 1 1.172 8z" />
-                                        <path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5z" />
-                                    </svg>
-                                    <svg id="eyeClosed" xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16" style="display: none;">
-                                        <path d="M13.359 11.238C14.684 10.151 15.773 8.54 16 8c-.728-1.64-3.44-5.5-8-5.5a7.028 7.028 0 0 0-2.79.588l.77.771A6.03 6.03 0 0 1 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.134 13.134 0 0 1 14.828 8a13.134 13.134 0 0 1-1.469 2.043l.708.708z" />
-                                        <path d="M11.297 9.176a3.5 3.5 0 0 0-4.473-4.473l.823.823a2.5 2.5 0 0 1 2.827 2.827l.823.823zm-2.943 1.767-1.558-1.558a1.5 1.5 0 0 1-1.181-1.181L4.057 6.646a3.5 3.5 0 0 0 4.297 4.297z" />
-                                        <path d="M3.35 5.47A13.134 13.134 0 0 0 1.172 8c.058.087.122.183.195.288.335.48.83 1.12 1.465 1.755C4.121 11.332 5.88 12.5 8 12.5c.716 0 1.39-.133 2.02-.359l.77.77A7.029 7.029 0 0 1 8 13.5c-4.56 0-7.272-3.86-8-5.5.325-.731 1.426-2.523 3.35-3.97z" />
-                                        <path d="M5.354 7.646 8.354 10.646l-.708.708-3-3 .708-.708zm6.292 6.708-10-10 .708-.708 10 10-.708.708z" />
-                                    </svg>
-                                </button>
-                            </div>
+                            <input type="password" class="form-control" asp-for="Password" placeholder="Enter password" required>
                             <span asp-validation-for="Password" class="text-danger"></span>
                         </div>
 
@@ -76,22 +69,6 @@
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     @await Html.PartialAsync("_ValidationScriptsPartial")
-    <script>
-        const togglePassword = document.getElementById('togglePassword');
-        const passwordInput = document.getElementById('Password');
-        const eyeOpen = document.getElementById('eyeOpen');
-        const eyeClosed = document.getElementById('eyeClosed');
-
-        if (togglePassword && passwordInput) {
-            togglePassword.addEventListener('click', function () {
-                const isPassword = passwordInput.type === 'password';
-                passwordInput.type = isPassword ? 'text' : 'password';
-                eyeOpen.style.display = isPassword ? 'none' : 'block';
-                eyeClosed.style.display = isPassword ? 'block' : 'none';
-                togglePassword.setAttribute('aria-label', isPassword ? 'Hide password' : 'Show password');
-            });
-        }
-    </script>
 </body>
 </html>
 
@@ -106,7 +83,10 @@
         display: flex;
         flex-direction: column;
         height: 100vh;
-        background-color: #ffffff;
+        background-image: url('/images/UC_background.jpg');
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
     }
 
     .login-container {

@@ -10,5 +10,21 @@ namespace SignUpLogin.Data
         }
 
         public DbSet<Signup> Signups { get; set; } = null!;
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<Signup>()
+                .HasKey(s => s.IdNumber);
+
+            modelBuilder.Entity<Signup>()
+                .HasIndex(s => s.IdNumber)
+                .IsUnique();
+
+            modelBuilder.Entity<Signup>()
+                .HasIndex(s => s.Email)
+                .IsUnique();
+        }
     }
 }

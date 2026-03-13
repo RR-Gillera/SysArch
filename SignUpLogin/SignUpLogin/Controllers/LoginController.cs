@@ -18,13 +18,11 @@ namespace SignUpLogin.Controllers
         public IActionResult Index()
         {
             var model = new Login();
-
             if (Request.Cookies.TryGetValue(RememberedIdCookie, out var rememberedIdNumber) && !string.IsNullOrWhiteSpace(rememberedIdNumber))
             {
                 model.IdNumber = rememberedIdNumber;
                 model.RememberMe = true;
             }
-
             return View("Login", model);
         }
 
@@ -34,12 +32,15 @@ namespace SignUpLogin.Controllers
             if (!ModelState.IsValid)
                 return View("Login", model);
 
+            // Try by IdNumber first (students), then by FirstName for admins
             var user = await _context.Signups
-                .FirstOrDefaultAsync(u => u.IdNumber == model.IdNumber && u.Password == model.Password);
+                           .FirstOrDefaultAsync(u => u.IdNumber == model.IdNumber)
+                       ?? await _context.Signups
+                           .FirstOrDefaultAsync(u => u.FirstName == model.IdNumber && u.Role == "Admin");
 
-            if (user == null)
+            if (user == null || !BCrypt.Net.BCrypt.Verify(model.Password, user.Password))
             {
-                ModelState.AddModelError(string.Empty, "Invalid ID Number or Password.");
+                ModelState.AddModelError(string.Empty, "Invalid ID Number/Username or Password.");
                 return View("Login", model);
             }
 
@@ -59,14 +60,19 @@ namespace SignUpLogin.Controllers
                 Response.Cookies.Delete(RememberedIdCookie);
             }
 
-            HttpContext.Session.SetString("UserId", user.Id.ToString());
             HttpContext.Session.SetString("UserName", $"{user.FirstName} {user.LastName}");
             HttpContext.Session.SetString("IdNumber", user.IdNumber);
             HttpContext.Session.SetString("Course", user.Course);
             HttpContext.Session.SetString("CourseLevel", user.CourseLevel);
             HttpContext.Session.SetString("Email", user.Email);
+            HttpContext.Session.SetString("Role", user.Role);
 
-            return RedirectToAction("Home", "Home");
+            TempData["Success"] = "Login successful!";
+
+            if (user.Role == "Admin")
+                return RedirectToAction("Home", "Admin");
+            else
+                return RedirectToAction("Home");
         }
 
         public IActionResult Logout()
