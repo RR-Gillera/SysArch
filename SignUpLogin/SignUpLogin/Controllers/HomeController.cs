@@ -13,7 +13,7 @@ namespace SignUpLogin.Controllers
 
         public IActionResult Home()
         {
-            if (string.IsNullOrEmpty(HttpContext.Session.GetString("UserId")))
+            if (string.IsNullOrEmpty(HttpContext.Session.GetString("IdNumber")))
                 return RedirectToAction("Index", "Login");
 
             ViewBag.UserName = HttpContext.Session.GetString("UserName");
@@ -22,7 +22,7 @@ namespace SignUpLogin.Controllers
 
         public IActionResult Dashboard()
         {
-            if (string.IsNullOrEmpty(HttpContext.Session.GetString("UserId")))
+            if (string.IsNullOrEmpty(HttpContext.Session.GetString("IdNumber")))
                 return RedirectToAction("Index", "Login");
 
             ViewBag.UserName = HttpContext.Session.GetString("UserName");

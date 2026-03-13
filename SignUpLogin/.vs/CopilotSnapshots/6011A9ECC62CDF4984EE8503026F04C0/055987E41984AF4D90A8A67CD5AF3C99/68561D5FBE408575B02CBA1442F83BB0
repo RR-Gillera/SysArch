@@ -1,7 +1,0 @@
-﻿
-@{
-    ViewData["Title"] = "_LoginNavBar";
-}
-
-<h1>_LoginNavBar</h1>
-
