@@ -72,7 +72,7 @@ namespace SignUpLogin.Controllers
             if (user.Role == "Admin")
                 return RedirectToAction("Home", "Admin");
             else
-                return RedirectToAction("Home");
+                return RedirectToAction("Home", "Home");
         }
 
         public IActionResult Logout()

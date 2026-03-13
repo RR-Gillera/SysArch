@@ -13,24 +13,25 @@ namespace SignUpLogin.Controllers
 
         public IActionResult Home()
         {
-            if (string.IsNullOrEmpty(HttpContext.Session.GetString("UserId")))
+            if (string.IsNullOrEmpty(HttpContext.Session.GetString("IdNumber")))
                 return RedirectToAction("Index", "Login");
-
-            ViewBag.UserName = HttpContext.Session.GetString("UserName");
-            return View();
-        }
-
-        public IActionResult Dashboard()
-        {
-            if (string.IsNullOrEmpty(HttpContext.Session.GetString("UserId")))
-                return RedirectToAction("Index", "Login");
-
             ViewBag.UserName = HttpContext.Session.GetString("UserName");
             ViewBag.IdNumber = HttpContext.Session.GetString("IdNumber");
             ViewBag.Course = HttpContext.Session.GetString("Course");
             ViewBag.CourseLevel = HttpContext.Session.GetString("CourseLevel");
             ViewBag.Email = HttpContext.Session.GetString("Email");
+            return View();
+        }
 
+        public IActionResult Dashboard()
+        {
+            if (string.IsNullOrEmpty(HttpContext.Session.GetString("IdNumber")))
+                return RedirectToAction("Index", "Login");
+            ViewBag.UserName = HttpContext.Session.GetString("UserName");
+            ViewBag.IdNumber = HttpContext.Session.GetString("IdNumber");
+            ViewBag.Course = HttpContext.Session.GetString("Course");
+            ViewBag.CourseLevel = HttpContext.Session.GetString("CourseLevel");
+            ViewBag.Email = HttpContext.Session.GetString("Email");
             return View();
         }
 

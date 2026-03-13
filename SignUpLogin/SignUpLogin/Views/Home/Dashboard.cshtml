@@ -1,5 +1,5 @@
 @{
-    ViewData["Title"] = "Dashboard";
+    ViewData["Title"] = "Home";
     Layout = null;
     var today = DateTime.Now.ToString("MMMM dd, yyyy");
 }
@@ -9,12 +9,29 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] — CCS Sit-in Monitoring</title>
+    <title>@ViewData["Title"]</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 </head>
 <body>
     @await Html.PartialAsync("_UserNavBar")
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,0.5); z-index:9999">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content text-center p-4">
+                    <div class="mb-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" fill="#28a745" viewBox="0 0 16 16">
+                            <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z" />
+                        </svg>
+                    </div>
+                    <h5 class="fw-bold">@TempData["Success"]</h5>
+                    <button class="btn btn-success mt-3 px-4" onclick="this.closest('.modal').remove()">OK</button>
+                </div>
+            </div>
+        </div>
+    }
 
     <div class="dash-wrapper">
         <div class="container dash-body">
@@ -33,7 +50,8 @@
                 <div class="banner-info">
                     <h2 class="banner-name">Welcome, @ViewBag.UserName</h2>
                     <p class="banner-detail">Student ID: @ViewBag.IdNumber</p>
-                    <p class="banner-detail">Course: @ViewBag.Course</p>
+                    <p class="banner-detail">Course: @ViewBag.Course &nbsp;|&nbsp; Year: @ViewBag.CourseLevel</p>
+                    <p class="banner-detail">Email: @ViewBag.Email</p>
                 </div>
                 <div class="banner-status">
                     <div class="status-badge not-active">
@@ -108,25 +126,7 @@
                                 </thead>
                                 <tbody>
                                     <tr>
-                                        <td>March 12</td>
-                                        <td>Lab 528</td>
-                                        <td>1:00 PM</td>
-                                        <td>3:00 PM</td>
-                                        <td>2 hrs</td>
-                                    </tr>
-                                    <tr>
-                                        <td>March 10</td>
-                                        <td>Lab 524</td>
-                                        <td>10:00 AM</td>
-                                        <td>12:00 PM</td>
-                                        <td>2 hrs</td>
-                                    </tr>
-                                    <tr>
-                                        <td>March 8</td>
-                                        <td>Lab 530</td>
-                                        <td>2:00 PM</td>
-                                        <td>4:00 PM</td>
-                                        <td>2 hrs</td>
+                                        <td colspan="5" class="text-center text-muted" style="font-size:0.85rem; padding:20px;">No sit-in history yet.</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -165,6 +165,22 @@
                         </ul>
                         <a href="#" class="view-all-link">View All</a>
                     </div>
+
+                    <!-- Rules and Regulations -->
+                    <div class="dash-panel">
+                        <div class="panel-head">
+                            <h3 class="panel-title">Rules and Regulations</h3>
+                        </div>
+                        <div class="rules-list">
+                            <p>1. Maintain silence and proper behavior inside the laboratory.</p>
+                            <p>2. No food or drinks allowed inside the laboratory.</p>
+                            <p>3. Surfing the Internet is allowed only with the permission of the instructor.</p>
+                            <p>4. Getting access to other websites not related to the course is strictly prohibited.</p>
+                            <p>5. Deleting computer files and changing the set-up of the computer is a major offense.</p>
+                            <p>6. Observe computer time usage carefully. A fifteen-minute allowance is given for each use.</p>
+                            <p>7. Observe proper decorum while inside the laboratory.</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -199,7 +215,6 @@
         padding: 28px 15px 40px;
     }
 
-
     .welcome-header {
         margin-bottom: 20px;
     }
@@ -217,7 +232,6 @@
         margin: 0;
     }
 
-    /* -------- Blue banner card -------- */
     .banner-card {
         background: linear-gradient(135deg, #0a4da2 0%, #063a7a 60%, #042c5c 100%);
         border-radius: 12px;
@@ -230,17 +244,17 @@
         overflow: hidden;
     }
 
-    .banner-card::before {
-        content: '';
-        position: absolute;
-        top: -30px;
-        right: -30px;
-        width: 180px;
-        height: 180px;
-        background: rgba(255,255,255,0.04);
-        border-radius: 50%;
-        pointer-events: none;
-    }
+        .banner-card::before {
+            content: '';
+            position: absolute;
+            top: -30px;
+            right: -30px;
+            width: 180px;
+            height: 180px;
+            background: rgba(255,255,255,0.04);
+            border-radius: 50%;
+            pointer-events: none;
+        }
 
     .banner-logo {
         width: 110px;
@@ -297,7 +311,6 @@
         border: 1.5px solid #dc3545;
     }
 
-    /* -------- Two-column layout -------- */
     .dash-columns {
         display: grid;
         grid-template-columns: 1.6fr 1fr;
@@ -305,8 +318,7 @@
         align-items: start;
     }
 
-    .dash-left,
-    .dash-right {
+    .dash-left, .dash-right {
         display: flex;
         flex-direction: column;
         gap: 22px;
@@ -330,7 +342,6 @@
         margin: 0;
     }
 
-    /* -------- Lab availability -------- */
     .lab-grid {
         display: grid;
         grid-template-columns: repeat(4, 1fr);
@@ -341,7 +352,6 @@
         border: 1.5px solid #e2e8f0;
         border-radius: 8px;
         padding: 16px 14px;
-        text-align: left;
     }
 
     .lab-card-highlight {
@@ -364,9 +374,17 @@
         margin-bottom: 4px;
     }
 
-    .lab-status.available { color: #16a34a; }
-    .lab-status.occupied  { color: #dc3545; }
-    .lab-status.full      { color: #d97706; }
+        .lab-status.available {
+            color: #16a34a;
+        }
+
+        .lab-status.occupied {
+            color: #dc3545;
+        }
+
+        .lab-status.full {
+            color: #d97706;
+        }
 
     .lab-dot {
         width: 10px;
@@ -389,35 +407,33 @@
         border-color: #cbd5e1;
     }
 
-    /* -------- History table -------- */
     .history-table {
         margin: 0;
         font-size: 0.85rem;
     }
 
-    .history-table thead th {
-        background: #f8fafc;
-        color: #64748b;
-        font-weight: 600;
-        font-size: 0.8rem;
-        text-transform: uppercase;
-        letter-spacing: 0.4px;
-        border-bottom: 2px solid #e2e8f0;
-        padding: 10px 12px;
-    }
+        .history-table thead th {
+            background: #f8fafc;
+            color: #64748b;
+            font-weight: 600;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            border-bottom: 2px solid #e2e8f0;
+            padding: 10px 12px;
+        }
 
-    .history-table tbody td {
-        padding: 12px;
-        color: #334155;
-        border-bottom: 1px solid #f1f5f9;
-        vertical-align: middle;
-    }
+        .history-table tbody td {
+            padding: 12px;
+            color: #334155;
+            border-bottom: 1px solid #f1f5f9;
+            vertical-align: middle;
+        }
 
-    .history-table tbody tr:last-child td {
-        border-bottom: none;
-    }
+        .history-table tbody tr:last-child td {
+            border-bottom: none;
+        }
 
-    /* -------- Remaining hours -------- */
     .hours-display {
         display: flex;
         align-items: baseline;
@@ -464,22 +480,21 @@
         transition: width 0.6s ease;
     }
 
-    /* -------- Announcements -------- */
     .announce-list {
         list-style: none;
         padding: 0;
         margin: 0 0 12px;
     }
 
-    .announce-list li {
-        display: flex;
-        align-items: flex-start;
-        gap: 10px;
-        font-size: 0.85rem;
-        color: #334155;
-        padding: 8px 0;
-        line-height: 1.5;
-    }
+        .announce-list li {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            font-size: 0.85rem;
+            color: #334155;
+            padding: 8px 0;
+            line-height: 1.5;
+        }
 
     .announce-dot {
         width: 8px;
@@ -498,11 +513,17 @@
         float: right;
     }
 
-    .view-all-link:hover {
-        text-decoration: underline;
+        .view-all-link:hover {
+            text-decoration: underline;
+        }
+
+    .rules-list p {
+        font-size: 0.85rem;
+        color: #334155;
+        margin-bottom: 8px;
+        line-height: 1.6;
     }
 
-    /* -------- Responsive -------- */
     @@media (max-width: 992px) {
         .lab-grid {
             grid-template-columns: repeat(2, 1fr);

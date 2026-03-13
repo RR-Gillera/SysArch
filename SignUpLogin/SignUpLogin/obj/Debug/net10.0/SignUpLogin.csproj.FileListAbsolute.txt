@@ -638,10 +638,10 @@ Z:\TT518\GILLERARU\SignUpLogin\SignUpLogin\obj\Debug\net10.0\staticwebassets.bui
 Z:\TT518\GILLERARU\SignUpLogin\SignUpLogin\obj\Debug\net10.0\staticwebassets.development.json
 Z:\TT518\GILLERARU\SignUpLogin\SignUpLogin\obj\Debug\net10.0\staticwebassets.build.endpoints.json
 Z:\TT518\GILLERARU\SignUpLogin\SignUpLogin\obj\Debug\net10.0\swae.build.ex.cache
+Z:\TT518\GILLERARU\SignUpLogin\SignUpLogin\obj\Debug\net10.0\staticwebassets.upToDateCheck.txt
 Z:\TT518\GILLERARU\SignUpLogin\SignUpLogin\obj\Debug\net10.0\SignUpLo.79DEB58F.Up2Date
 Z:\TT518\GILLERARU\SignUpLogin\SignUpLogin\obj\Debug\net10.0\SignUpLogin.dll
 Z:\TT518\GILLERARU\SignUpLogin\SignUpLogin\obj\Debug\net10.0\refint\SignUpLogin.dll
 Z:\TT518\GILLERARU\SignUpLogin\SignUpLogin\obj\Debug\net10.0\SignUpLogin.pdb
 Z:\TT518\GILLERARU\SignUpLogin\SignUpLogin\obj\Debug\net10.0\SignUpLogin.genruntimeconfig.cache
 Z:\TT518\GILLERARU\SignUpLogin\SignUpLogin\obj\Debug\net10.0\ref\SignUpLogin.dll
-Z:\TT518\GILLERARU\SignUpLogin\SignUpLogin\obj\Debug\net10.0\staticwebassets.upToDateCheck.txt

@@ -1,6 +1,7 @@
 @{
     ViewData["Title"] = "Home";
     Layout = null;
+    var today = DateTime.Now.ToString("MMMM dd, yyyy");
 }
 
 <!DOCTYPE html>
@@ -11,21 +12,134 @@
     <title>@ViewData["Title"]</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
 </head>
 <body>
     @await Html.PartialAsync("_UserNavBar")
 
-    <main class="simple-home">
-        <div class="container text-center">
-            @if (TempData["Success"] != null)
-            {
-                <div class="alert alert-success mb-4" role="alert">
-                    @TempData["Success"]
+    @if (TempData["Success"] != null)
+    {
+        <div class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,0.4); z-index:9999">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content text-center p-4 border-0" style="border-radius:16px">
+                    <div class="mb-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" fill="#22c55e" viewBox="0 0 16 16">
+                            <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z" />
+                        </svg>
+                    </div>
+                    <h5 class="fw-bold">@TempData["Success"]</h5>
+                    <button class="btn btn-success mt-3 px-5" style="border-radius:8px" onclick="this.closest('.modal').remove()">OK</button>
                 </div>
-            }
-            <h1 class="welcome-title">Welcome, @ViewBag.UserName</h1>
+            </div>
         </div>
-    </main>
+    }
+
+    <div class="page-wrapper">
+
+        <!-- Top greeting bar -->
+        <div class="greeting-bar">
+            <div>
+                <h1 class="greeting-name">Good day, @ViewBag.UserName ??</h1>
+                <p class="greeting-date">@today</p>
+            </div>
+            <div class="session-chip">
+                <span class="session-dot"></span>
+                <span>Session: <strong>30</strong> hrs remaining</span>
+            </div>
+        </div>
+
+        <!-- Three column layout -->
+        <div class="three-col">
+
+            <!-- Left: Student Information -->
+            <div class="card-panel">
+                <div class="card-panel-header">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4z" />
+                    </svg>
+                    Student Information
+                </div>
+                <div class="card-panel-body">
+                    <div class="avatar-wrap">
+                        <img src="~/images/default-avatar.png"
+                             onerror="this.src='https://ui-avatars.com/api/?name=@ViewBag.UserName&background=0ea5e9&color=fff&size=100&bold=true'"
+                             alt="Avatar" class="avatar-img" />
+                        <p class="avatar-name">@ViewBag.UserName</p>
+                        <span class="avatar-badge">Student</span>
+                    </div>
+                    <div class="info-list">
+                        <div class="info-row">
+                            <span class="info-label">ID Number</span>
+                            <span class="info-value">@ViewBag.IdNumber</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Course</span>
+                            <span class="info-value">@ViewBag.Course</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Year</span>
+                            <span class="info-value">@ViewBag.CourseLevel</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Email</span>
+                            <span class="info-value text-truncate">@ViewBag.Email</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Sit-in</span>
+                            <span class="info-value status-inactive">Not Active</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Middle: Announcements -->
+            <div class="card-panel">
+                <div class="card-panel-header">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M13 2.5a1.5 1.5 0 0 1 3 0v11a1.5 1.5 0 0 1-3 0v-.214c-2.162-1.241-4.49-1.843-6.912-2.083l.405 2.712A1 1 0 0 1 5.51 15.1h-.548a1 1 0 0 1-.916-.599l-1.85-3.49-.202-.003A2.014 2.014 0 0 1 0 9V7a2.02 2.02 0 0 1 1.992-2.013 74.663 74.663 0 0 0 2.483-.075c3.043-.154 6.148-.849 8.525-2.199V2.5z" />
+                    </svg>
+                    Announcements
+                </div>
+                <div class="card-panel-body announce-scroll">
+                    <div class="announce-card">
+                        <div class="announce-top">
+                            <span class="announce-author">CCS Admin</span>
+                            <span class="announce-date">@today</span>
+                        </div>
+                        <p class="announce-msg">No new announcements at this time. Check back later.</p>
+                    </div>
+                    <div class="announce-card">
+                        <div class="announce-top">
+                            <span class="announce-author">CCS Admin</span>
+                            <span class="announce-date">May 08, 2024</span>
+                        </div>
+                        <p class="announce-msg">Important Announcement — We are excited to announce the launch of our new website! ?? Explore our latest products and services now!</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Rules and Regulations -->
+            <div class="card-panel">
+                <div class="card-panel-header">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M2.5 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2h-11zm6.5 4.5a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1H9.5a.5.5 0 0 1-.5-.5zm-4 2a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 0 1h-6a.5.5 0 0 1-.5-.5zm0 2a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 0 1h-6a.5.5 0 0 1-.5-.5zm0 2a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 0 1h-6a.5.5 0 0 1-.5-.5z" />
+                    </svg>
+                    Rules and Regulations
+                </div>
+                <div class="card-panel-body rules-scroll">
+                    <div class="rule-item"><span class="rule-num">1</span><p>Maintain silence and proper behavior at all times inside the laboratory.</p></div>
+                    <div class="rule-item"><span class="rule-num">2</span><p>No food or drinks allowed inside the laboratory.</p></div>
+                    <div class="rule-item"><span class="rule-num">3</span><p>Surfing the Internet is allowed only with the permission of the instructor. Downloading and installing software are strictly prohibited.</p></div>
+                    <div class="rule-item"><span class="rule-num">4</span><p>Getting access to websites not related to the course (especially illicit sites) is strictly prohibited.</p></div>
+                    <div class="rule-item"><span class="rule-num">5</span><p>Deleting computer files and changing the set-up of the computer is a major offense.</p></div>
+                    <div class="rule-item"><span class="rule-num">6</span><p>Observe computer time usage carefully. A fifteen-minute allowance is given for each use. Otherwise, the unit will be given to those who wish to "sit-in".</p></div>
+                    <div class="rule-item"><span class="rule-num">7</span><p>Observe proper decorum while inside the laboratory. Do not enter unless the instructor is present. Bags must be deposited at the counter. Follow the seating arrangement and keep mobile phones on silent.</p></div>
+                    <div class="rule-item"><span class="rule-num">8</span><p>Anyone who wishes to "sit-in" must have their request approved by the laboratory administrator.</p></div>
+                </div>
+            </div>
+
+        </div>
+    </div>
 
     @await Html.PartialAsync("_Footer")
 
@@ -35,11 +149,15 @@
 </html>
 
 <style>
+    *, *::before, *::after {
+        box-sizing: border-box;
+    }
+
     html, body {
         margin: 0;
         padding: 0;
-        background: #eef1f5;
-        overflow-x: hidden;
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        background: #f1f5f9;
         min-height: 100%;
     }
 
@@ -49,18 +167,281 @@
         min-height: 100vh;
     }
 
-    .simple-home {
+    .page-wrapper {
         flex: 1;
+        padding: 24px 28px 40px;
+        max-width: 1300px;
+        margin: 0 auto;
+        width: 100%;
+    }
+
+    /* Greeting bar */
+    .greeting-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 24px;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    .greeting-name {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #0f172a;
+        margin: 0 0 2px;
+    }
+
+    .greeting-date {
+        font-size: 0.83rem;
+        color: #94a3b8;
+        margin: 0;
+    }
+
+    .session-chip {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 999px;
+        padding: 8px 18px;
+        font-size: 0.85rem;
+        color: #334155;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+
+    .session-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #22c55e;
+        display: inline-block;
+    }
+
+    /* Three column grid */
+    .three-col {
+        display: grid;
+        grid-template-columns: 240px 1fr 1fr;
+        gap: 20px;
+        align-items: start;
+    }
+
+    /* Card panel */
+    .card-panel {
+        background: #fff;
+        border-radius: 14px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        height: 540px;
+    }
+
+    .card-panel-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 14px 18px;
+        font-size: 0.88rem;
+        font-weight: 700;
+        color: #fff;
+        background: linear-gradient(90deg, #0f3460 0%, #1a5276 100%);
+        flex-shrink: 0;
+    }
+
+    .card-panel-body {
+        padding: 18px;
+        overflow-y: auto;
+        flex: 1;
+    }
+
+    /* Avatar */
+    .avatar-wrap {
+        text-align: center;
+        padding-bottom: 16px;
+        border-bottom: 1px solid #f1f5f9;
+        margin-bottom: 14px;
+    }
+
+    .avatar-img {
+        width: 88px;
+        height: 88px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid #e0f2fe;
+        margin-bottom: 8px;
+    }
+
+    .avatar-name {
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: #0f172a;
+        margin: 0 0 4px;
+    }
+
+    .avatar-badge {
+        background: #eff6ff;
+        color: #1d4ed8;
+        font-size: 0.72rem;
+        font-weight: 600;
+        padding: 2px 10px;
+        border-radius: 999px;
+    }
+
+    /* Info rows */
+    .info-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+    }
+
+    .info-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 9px 0;
+        border-bottom: 1px solid #f8fafc;
+        gap: 8px;
+    }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+    .info-label {
+        font-size: 0.78rem;
+        color: #94a3b8;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+        flex-shrink: 0;
+    }
+
+    .info-value {
+        font-size: 0.83rem;
+        color: #1e293b;
+        font-weight: 600;
+        text-align: right;
+        max-width: 130px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .status-inactive {
+        color: #ef4444;
+        background: #fef2f2;
+        padding: 2px 8px;
+        border-radius: 999px;
+        font-size: 0.75rem;
+    }
+
+    /* Announcements */
+    .announce-scroll {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+    }
+
+    .announce-card {
+        border: 1px solid #f1f5f9;
+        border-radius: 10px;
+        padding: 14px 16px;
+        background: #fafcff;
+    }
+
+    .announce-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+    }
+
+    .announce-author {
+        font-size: 0.82rem;
+        font-weight: 700;
+        color: #0f3460;
+    }
+
+    .announce-date {
+        font-size: 0.75rem;
+        color: #94a3b8;
+    }
+
+    .announce-msg {
+        font-size: 0.84rem;
+        color: #475569;
+        margin: 0;
+        line-height: 1.6;
+    }
+
+    /* Rules */
+    .rules-scroll {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .rule-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .rule-num {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: #eff6ff;
+        color: #1d4ed8;
+        font-size: 0.75rem;
+        font-weight: 700;
         display: flex;
         align-items: center;
         justify-content: center;
-        padding: 40px 0;
+        flex-shrink: 0;
+        margin-top: 1px;
     }
 
-    .welcome-title {
+    .rule-item p {
+        font-size: 0.83rem;
+        color: #475569;
         margin: 0;
-        font-size: 3rem;
-        font-weight: 700;
-        color: #1f2937;
+        line-height: 1.6;
+    }
+
+    @@media (max-width: 992px) {
+        .three-col {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .card-panel:first-child {
+            grid-column: span 2;
+            height: auto;
+        }
+    }
+
+    @@media (max-width: 640px) {
+        .three-col {
+            grid-template-columns: 1fr;
+        }
+
+        .card-panel:first-child {
+            grid-column: span 1;
+        }
+
+        .card-panel {
+            height: auto;
+            max-height: 450px;
+        }
+
+        .page-wrapper {
+            padding: 16px;
+        }
+    }
+
+    footer {
+        margin-top: 0 !important;
     }
 </style>
