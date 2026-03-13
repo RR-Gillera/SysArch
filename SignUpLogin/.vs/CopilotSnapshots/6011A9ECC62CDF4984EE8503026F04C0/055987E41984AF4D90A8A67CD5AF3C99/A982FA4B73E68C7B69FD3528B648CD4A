@@ -1,6 +1,0 @@
-﻿
-@{
-    ViewData["Title"] = "_Footer";
-}
-
-<h1>_Footer</h1>
