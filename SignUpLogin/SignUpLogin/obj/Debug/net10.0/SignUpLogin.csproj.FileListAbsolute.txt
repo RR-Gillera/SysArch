@@ -320,7 +320,6 @@ D:\SysArch\SignUpLogin\SignUpLogin\bin\Debug\net10.0\ru\Microsoft.CodeAnalysis.W
 D:\SysArch\SignUpLogin\SignUpLogin\bin\Debug\net10.0\tr\Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.resources.dll
 D:\SysArch\SignUpLogin\SignUpLogin\bin\Debug\net10.0\zh-Hans\Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.resources.dll
 D:\SysArch\SignUpLogin\SignUpLogin\bin\Debug\net10.0\zh-Hant\Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.resources.dll
-D:\SysArch\SignUpLogin\SignUpLogin\obj\Debug\net10.0\staticwebassets.upToDateCheck.txt
 Z:\TT518\GILLERARU\SignUpLogin\SignUpLogin\bin\Debug\net10.0\appsettings.Development.json
 Z:\TT518\GILLERARU\SignUpLogin\SignUpLogin\bin\Debug\net10.0\appsettings.json
 Z:\TT518\GILLERARU\SignUpLogin\SignUpLogin\bin\Debug\net10.0\SignUpLogin.staticwebassets.runtime.json
@@ -645,3 +644,5 @@ Z:\TT518\GILLERARU\SignUpLogin\SignUpLogin\obj\Debug\net10.0\refint\SignUpLogin.
 Z:\TT518\GILLERARU\SignUpLogin\SignUpLogin\obj\Debug\net10.0\SignUpLogin.pdb
 Z:\TT518\GILLERARU\SignUpLogin\SignUpLogin\obj\Debug\net10.0\SignUpLogin.genruntimeconfig.cache
 Z:\TT518\GILLERARU\SignUpLogin\SignUpLogin\obj\Debug\net10.0\ref\SignUpLogin.dll
+D:\SysArch\SignUpLogin\SignUpLogin\bin\Debug\net10.0\BCrypt.Net-Next.dll
+D:\SysArch\SignUpLogin\SignUpLogin\obj\Debug\net10.0\staticwebassets.upToDateCheck.txt

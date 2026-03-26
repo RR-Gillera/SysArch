@@ -1,0 +1,78 @@
+@model SignUpLogin.Models.ViewModels.ProfileEditViewModel
+@{
+    ViewData["Title"] = "My Profile";
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body class="profile-page">
+    @await Html.PartialAsync("_UserNavBar")
+
+    <main class="profile-main container py-4" style="max-width:900px;">
+        @if (TempData["Success"] != null)
+        {
+            <div class="alert alert-success">@TempData["Success"]</div>
+        }
+
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-body">
+                <div class="d-flex flex-wrap gap-3 align-items-center mb-3">
+                    <img src="@(string.IsNullOrEmpty(ViewBag.ProfileImagePath) ? "/images/default-avatar.png" : ViewBag.ProfileImagePath)"
+                         onerror="this.src='/images/default-avatar.png'"
+                         alt="Profile picture" class="rounded-circle border" style="width:92px;height:92px;object-fit:cover;" />
+                    <h3 class="mb-0">My Profile</h3>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-md-6"><strong>ID Number:</strong> @Model.IdNumber</div>
+                    <div class="col-md-6"><strong>Email:</strong> @Model.Email</div>
+                    <div class="col-md-6"><strong>Name:</strong> @Model.FirstName @Model.MiddleName @Model.LastName</div>
+                    <div class="col-md-6"><strong>Course / Year:</strong> @Model.Course - @Model.CourseLevel</div>
+                    <div class="col-12"><strong>Address:</strong> @Model.Address</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <h5 class="mb-3">Quick Actions</h5>
+                <div class="d-flex flex-wrap gap-2">
+                    <a asp-controller="Profile" asp-action="Edit" class="btn btn-primary">Edit Profile Picture</a>
+                    <a asp-controller="Profile" asp-action="ChangePassword" class="btn btn-outline-primary">Change Password</a>
+                    <a asp-controller="Home" asp-action="Index" class="btn btn-light border">Back to Home</a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    @await Html.PartialAsync("_Footer")
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
+
+<style>
+    html, body {
+        height: 100%;
+        margin: 0;
+        overflow: hidden;
+    }
+
+    .profile-page {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .profile-main {
+        flex: 1;
+    }
+</style>

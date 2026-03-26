@@ -1,6 +1,8 @@
+@model SignUpLogin.Models.ViewModels.StudentHomeViewModel
 @{
-    ViewData["Title"] = "College of Computer Studies Sit-in Monitoring System";
+    ViewData["Title"] = "Student Home";
     Layout = null;
+    var today = DateTime.Now.ToString("MMMM dd, yyyy");
 }
 
 <!DOCTYPE html>
@@ -15,56 +17,112 @@
 <body>
     @await Html.PartialAsync("_UserNavBar")
 
-    <!-- Hero -->
-    <div class="hero-section">
-        <div class="container hero-content">
-            <div class="row justify-content-center align-items-center">
-                <div class="col-md-5 text-center">
-                    <img src="~/images/CCS Logo.png" alt="CCS Logo" class="hero-logo" />
+    <div class="student-home container py-4 py-md-5">
+        <div class="profile-panel mb-4">
+            <div class="row g-4 align-items-center">
+                <div class="col-md-3 text-center">
+                    <div class="avatar-wrap mx-auto">
+                        <img src="@(string.IsNullOrWhiteSpace(Model.ProfileImagePath) ? "/images/default-avatar.png" : Model.ProfileImagePath)"
+                             onerror="this.src='https://ui-avatars.com/api/?name=@Model.UserName&background=0b4a94&color=fff&size=160&bold=true'"
+                             alt="Student avatar" class="avatar-img" />
+                    </div>
                 </div>
-                <div class="col-md-6">
-                    <div class="hero-card">
-                        <h1 class="hero-title">College of Computer Studies</h1>
-                        <p class="hero-subtitle">Sit-in Monitoring System</p>
-                        <p class="hero-desc">
-                            A streamlined platform for managing and monitoring student sit-in sessions
-                            in the CCS laboratories. Fast, organized, and easy to use.
-                        </p>
-
+                <div class="col-md-9">
+                    <div class="info-box">
+                        <div class="row g-3">
+                            <div class="col-lg-7">
+                                <h3 class="mb-3">@Model.UserName</h3>
+                                <p class="mb-1"><strong>ID Number:</strong> @Model.IdNumber</p>
+                                <p class="mb-1"><strong>Year Level:</strong> @Model.CourseLevel</p>
+                                <p class="mb-1"><strong>Course:</strong> @Model.Course</p>
+                                <p class="mb-0"><strong>Email:</strong> @Model.Email</p>
+                            </div>
+                            <div class="col-lg-5 text-lg-end d-flex flex-column justify-content-between">
+                                <div class="sessions-chip align-self-lg-end">Sessions Remaining: <strong>@Model.RemainingSessions</strong></div>
+                                <p class="mb-0 mt-3 mt-lg-0"><strong>Date:</strong> @today</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- Features -->
-    <div class="features-section">
-        <div class="container">
-            <h2 class="features-title text-center mb-2">What We Offer</h2>
-            <p class="features-subtitle text-center mb-5">Everything you need for a smooth sit-in experience</p>
-            <div class="row g-4 justify-content-center">
-                <div class="col-md-4">
-                    <div class="feature-card">
-                        <div class="feature-icon">📋</div>
-                        <h5 class="feature-heading">Easy Registration</h5>
-                        <p class="feature-text">Register quickly and get access to sit-in sessions in the CCS laboratories with minimal steps.</p>
+        <div class="row g-4 mb-4">
+            <div class="col-lg-6" id="announcements">
+                <div class="panel-card h-100">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <h5 class="panel-title mb-0">Announcements</h5>
+                        @if (Model.UnreadAnnouncementsCount > 0)
+                        {
+                            <span class="badge text-bg-danger">@Model.UnreadAnnouncementsCount unread</span>
+                        }
                     </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="feature-card">
-                        <div class="feature-icon">🖥️</div>
-                        <h5 class="feature-heading">Lab Monitoring</h5>
-                        <p class="feature-text">Real-time tracking of student sit-in sessions ensures organized and efficient lab usage.</p>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="feature-card">
-                        <div class="feature-icon">📊</div>
-                        <h5 class="feature-heading">Session Records</h5>
-                        <p class="feature-text">Keep track of your sit-in history and remaining session credits all in one place.</p>
-                    </div>
+
+                    @if (Model.Announcements.Any())
+                    {
+                        @foreach (var announcement in Model.Announcements)
+                        {
+                            <div class="announcement-item">
+                                <div class="announcement-meta">@announcement.PostedBy | @announcement.PostedAt.ToLocalTime().ToString("yyyy-MMM-dd")</div>
+                                <div><strong>@announcement.Title</strong></div>
+                                <div>@announcement.Message</div>
+                            </div>
+                        }
+
+                        <form asp-controller="Home" asp-action="MarkAnnouncementsRead" method="post">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-sm btn-outline-primary">Mark all as read</button>
+                        </form>
+                    }
+                    else
+                    {
+                        <div class="empty-state">No announcements yet. New updates from admin will appear here.</div>
+                    }
                 </div>
             </div>
+            <div class="col-lg-6">
+                <div class="panel-card h-100">
+                    <h5 class="panel-title">Recent Sit-in History</h5>
+                    @if (Model.RecentSitInHistory.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-sm align-middle mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Lab</th>
+                                        <th>Time In</th>
+                                        <th>Time Out</th>
+                                        <th>Duration</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                @foreach (var item in Model.RecentSitInHistory)
+                                {
+                                    var duration = item.TimeOut.HasValue ? item.TimeOut.Value - item.TimeIn : (TimeSpan?)null;
+                                    <tr>
+                                        <td>@item.TimeIn.ToString("yyyy-MM-dd")</td>
+                                        <td>@item.Laboratory</td>
+                                        <td>@item.TimeIn.ToString("hh:mm tt")</td>
+                                        <td>@(item.TimeOut?.ToString("hh:mm tt") ?? "In Progress")</td>
+                                        <td>@(duration.HasValue ? $"{(int)duration.Value.TotalHours}h {duration.Value.Minutes}m" : "-")</td>
+                                    </tr>
+                                }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="empty-state">No sit-in history yet. Your latest 5 sessions will show here.</div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="panel-card loading-state mb-4">
+            <div class="loading-title">Loading latest student updates...</div>
+            <div class="loading-sub">If data is empty, ask admin to post announcements or record sit-in sessions.</div>
         </div>
     </div>
 
@@ -79,137 +137,102 @@
     html, body {
         margin: 0;
         padding: 0;
-        background-color: #f5f5f5;
-        overflow-x: hidden;
+        background: #f3f4f6;
     }
 
-    nav.navbar {
-        position: sticky;
-        top: 0;
-        z-index: 1000;
+    .student-home {
+        max-width: 1100px;
     }
 
-    /* Hero */
-    .hero-section {
-        background-color: #f5f5f5;
-        padding: 60px 0 50px;
+    .profile-panel {
+        background: #fff;
+        border: 1px solid #e5e7eb;
+        border-radius: 14px;
+        padding: 24px;
+        box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
     }
 
-    .hero-logo {
-        max-width: 320px;
-        width: 100%;
-        height: auto;
-        object-fit: contain;
+    .avatar-wrap {
+        width: 170px;
+        height: 170px;
+        border: 2px solid #dbeafe;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #eff6ff;
     }
 
-    .hero-card {
-        background-color: #ffffff;
-        padding: 40px;
-        border-radius: 8px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    .avatar-img {
+        width: 145px;
+        height: 145px;
+        object-fit: cover;
+        border-radius: 50%;
+        background: #fff;
     }
 
-    .hero-title {
-        font-size: 1.6rem;
-        font-weight: 800;
-        color: #003d82;
-        margin-bottom: 6px;
+    .info-box {
+        border: 1px solid #d1d5db;
+        border-radius: 10px;
+        padding: 18px 20px;
+        background: #fff;
     }
 
-    .hero-subtitle {
-        font-size: 1rem;
-        font-weight: 600;
-        color: #555;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        margin-bottom: 16px;
-    }
-
-    .hero-desc {
+    .sessions-chip {
+        background: #eaf2ff;
+        color: #0b4a94;
+        border: 1px solid #bfdbfe;
+        padding: 8px 12px;
+        border-radius: 999px;
         font-size: 0.95rem;
-        color: #555;
-        line-height: 1.7;
-        margin-bottom: 0;
     }
 
-    .hero-btn {
-        padding: 10px 32px;
-        font-weight: 600;
-        border-radius: 4px;
-        font-size: 15px;
+    .panel-card {
+        background: #fff;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 18px;
     }
 
-    .btn-primary {
-        background-color: #003d82;
-        border-color: #003d82;
-    }
-
-    .btn-primary:hover {
-        background-color: #002a5c;
-        border-color: #002a5c;
-    }
-
-    .btn-outline-primary {
-        color: #003d82;
-        border-color: #003d82;
-        border-width: 2px;
-    }
-
-    .btn-outline-primary:hover {
-        background-color: #003d82;
-        color: white;
-    }
-
-    /* Features */
-    .features-section {
-        background-color: #f5f5f5;
-        padding: 50px 0 60px;
-    }
-
-    .features-title {
-        font-size: 1.6rem;
+    .panel-title {
+        color: #0b4a94;
         font-weight: 700;
-        color: #003d82;
-    }
-
-    .features-subtitle {
-        color: #666;
-        font-size: 0.95rem;
-    }
-
-    .feature-card {
-        background-color: #ffffff;
-        border-radius: 8px;
-        padding: 32px 28px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        height: 100%;
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
-    }
-
-    .feature-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 6px 20px rgba(0, 61, 130, 0.15);
-    }
-
-    .feature-icon {
-        font-size: 2.2rem;
         margin-bottom: 14px;
     }
 
-    .feature-heading {
-        font-weight: 700;
-        color: #003d82;
+    .announcement-item {
+        padding-bottom: 10px;
         margin-bottom: 10px;
+        border-bottom: 1px solid #e5e7eb;
     }
 
-    .feature-text {
-        color: #555;
-        font-size: 0.93rem;
-        line-height: 1.6;
-        margin-bottom: 0;
+    .announcement-meta {
+        font-weight: 600;
+        margin-bottom: 4px;
     }
 
-    footer {
-        margin-top: 0 !important;
+    .empty-state {
+        border: 1px dashed #cbd5e1;
+        background: #f8fafc;
+        border-radius: 10px;
+        padding: 16px;
+        color: #475569;
+    }
+
+    .loading-state {
+        text-align: center;
+        background: #eff6ff;
+        border-color: #bfdbfe;
+    }
+
+    .loading-title {
+        font-weight: 700;
+        color: #1d4ed8;
+        margin-bottom: 2px;
+    }
+
+    .loading-sub {
+        color: #475569;
+        font-size: 0.92rem;
     }
 </style>

@@ -1,38 +1,105 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using SignUpLogin.Data;
 using SignUpLogin.Models;
+using SignUpLogin.Models.ViewModels;
 using System.Diagnostics;
 
 namespace SignUpLogin.Controllers
 {
     public class HomeController : Controller
     {
-        public IActionResult Index()
+        private readonly ApplicationDbContext _context;
+
+        public HomeController(ApplicationDbContext context)
         {
-            return View();
+            _context = context;
         }
 
-        public IActionResult Home()
+        public async Task<IActionResult> Index()
         {
-            if (string.IsNullOrEmpty(HttpContext.Session.GetString("IdNumber")))
+            var guardResult = EnsureStudentAccess();
+            if (guardResult != null)
+                return guardResult;
+
+            var idNumber = HttpContext.Session.GetString("IdNumber")!;
+
+            var student = await _context.Signups.FirstOrDefaultAsync(s => s.IdNumber == idNumber);
+            if (student == null)
+            {
+                HttpContext.Session.Clear();
                 return RedirectToAction("Index", "Login");
-            ViewBag.UserName = HttpContext.Session.GetString("UserName");
-            ViewBag.IdNumber = HttpContext.Session.GetString("IdNumber");
-            ViewBag.Course = HttpContext.Session.GetString("Course");
-            ViewBag.CourseLevel = HttpContext.Session.GetString("CourseLevel");
-            ViewBag.Email = HttpContext.Session.GetString("Email");
-            return View();
+            }
+
+            if (student.RemainingSessions <= 0)
+            {
+                student.RemainingSessions = 30;
+                await _context.SaveChangesAsync();
+            }
+
+            var recentHistory = await _context.SitInRecords
+                .Where(r => r.StudentIdNumber == idNumber)
+                .OrderByDescending(r => r.TimeIn)
+                .Take(5)
+                .ToListAsync();
+
+            var announcements = await _context.Announcements
+                .OrderByDescending(a => a.PostedAt)
+                .Take(5)
+                .ToListAsync();
+
+            var unreadCount = await _context.Announcements
+                .CountAsync(a => !student.LastAnnouncementsReadAt.HasValue || a.PostedAt > student.LastAnnouncementsReadAt.Value);
+
+            HttpContext.Session.SetInt32("UnreadAnnouncements", unreadCount);
+
+            var vm = new StudentHomeViewModel
+            {
+                UserName = $"{student.FirstName} {student.LastName}".Trim(),
+                IdNumber = student.IdNumber,
+                Course = student.Course,
+                CourseLevel = student.CourseLevel,
+                Email = student.Email,
+                ProfileImagePath = student.ProfileImagePath,
+                RemainingSessions = student.RemainingSessions,
+                UnreadAnnouncementsCount = unreadCount,
+                Announcements = announcements,
+                RecentSitInHistory = recentHistory
+            };
+
+            HttpContext.Session.SetString("ProfileImagePath", student.ProfileImagePath ?? string.Empty);
+
+            return View(vm);
         }
 
-        public IActionResult Dashboard()
+        public Task<IActionResult> Home()
         {
-            if (string.IsNullOrEmpty(HttpContext.Session.GetString("IdNumber")))
-                return RedirectToAction("Index", "Login");
-            ViewBag.UserName = HttpContext.Session.GetString("UserName");
-            ViewBag.IdNumber = HttpContext.Session.GetString("IdNumber");
-            ViewBag.Course = HttpContext.Session.GetString("Course");
-            ViewBag.CourseLevel = HttpContext.Session.GetString("CourseLevel");
-            ViewBag.Email = HttpContext.Session.GetString("Email");
-            return View();
+            return Index();
+        }
+
+        public Task<IActionResult> Dashboard()
+        {
+            return Index();
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> MarkAnnouncementsRead()
+        {
+            var guardResult = EnsureStudentAccess();
+            if (guardResult != null)
+                return guardResult;
+
+            var idNumber = HttpContext.Session.GetString("IdNumber")!;
+            var student = await _context.Signups.FirstOrDefaultAsync(s => s.IdNumber == idNumber);
+            if (student != null)
+            {
+                student.LastAnnouncementsReadAt = DateTime.UtcNow;
+                await _context.SaveChangesAsync();
+                HttpContext.Session.SetInt32("UnreadAnnouncements", 0);
+            }
+
+            return RedirectToAction(nameof(Index));
         }
 
         public IActionResult Privacy()
@@ -44,6 +111,20 @@ namespace SignUpLogin.Controllers
         public IActionResult Error()
         {
             return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+        }
+
+        private IActionResult? EnsureStudentAccess()
+        {
+            var idNumber = HttpContext.Session.GetString("IdNumber");
+            var role = HttpContext.Session.GetString("Role");
+
+            if (string.IsNullOrEmpty(idNumber))
+                return RedirectToAction("Index", "Login");
+
+            if (!string.Equals(role, "Student", StringComparison.OrdinalIgnoreCase))
+                return RedirectToAction("Home", "Admin");
+
+            return null;
         }
     }
 }

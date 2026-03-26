@@ -1,0 +1,287 @@
+﻿@model SignUpLogin.Models.ViewModels.AdminDashboardViewModel
+@{
+    ViewData["Title"] = "Admin Dashboard";
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body class="admin-page">
+    <nav class="navbar navbar-expand-lg navbar-dark admin-nav sticky-top">
+        <div class="container-fluid px-3">
+            <a class="navbar-brand" href="#">College of Computer Studies Admin</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#adminNav" aria-controls="adminNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="adminNav">
+                <ul class="navbar-nav ms-auto align-items-lg-center">
+                    <li class="nav-item"><a class="nav-link" href="#home">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#students">Students</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#current-sit-in">Sit-in</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#records">View Sit-in Records</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#reports">Sit-in Reports</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#feedback">Feedback Reports</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#reservation">Reservation</a></li>
+                    <li class="nav-item ms-lg-2"><a class="btn btn-warning btn-sm" asp-controller="Admin" asp-action="Logout">Log out</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <main class="admin-main container py-4">
+        <section id="home" class="mb-4">
+            <h2 class="mb-3">Admin Dashboard</h2>
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="stat-card">
+                        <div class="stat-label">Students Registered</div>
+                        <div class="stat-value">@Model.StudentsRegistered</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="stat-card">
+                        <div class="stat-label">Currently Sit-in</div>
+                        <div class="stat-value">@Model.CurrentlySitIn</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="stat-card">
+                        <div class="stat-label">Total Sit-in</div>
+                        <div class="stat-value">@Model.TotalSitInRecords</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="students" class="module-card mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h3 class="mb-0">Students Information</h3>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-primary btn-sm" disabled>Add Students</button>
+                    <button class="btn btn-danger btn-sm" disabled>Reset All Session</button>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-sm align-middle">
+                    <thead>
+                        <tr>
+                            <th>ID Number</th>
+                            <th>Name</th>
+                            <th>Year Level</th>
+                            <th>Course</th>
+                            <th>Remaining Session</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @if (Model.Students.Any())
+                    {
+                        @foreach (var student in Model.Students)
+                        {
+                            <tr>
+                                <td>@student.IdNumber</td>
+                                <td>@student.FirstName @student.LastName</td>
+                                <td>@student.CourseLevel</td>
+                                <td>@student.Course</td>
+                                <td>@student.RemainingSessions</td>
+                                <td>
+                                    <button class="btn btn-primary btn-sm me-1" disabled>Edit</button>
+                                    <button class="btn btn-danger btn-sm" disabled>Delete</button>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr><td colspan="6" class="text-center text-muted py-3">No students available.</td></tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="current-sit-in" class="module-card mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h3 class="mb-0">Current Sit in</h3>
+                <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#sitInModal">Open Sit In Form</button>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-sm align-middle">
+                    <thead>
+                        <tr>
+                            <th>Sit ID</th>
+                            <th>ID Number</th>
+                            <th>Name</th>
+                            <th>Purpose</th>
+                            <th>Sit Lab</th>
+                            <th>Session</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @if (Model.CurrentSitIns.Any())
+                    {
+                        @foreach (var sit in Model.CurrentSitIns)
+                        {
+                            <tr>
+                                <td>@sit.Id</td>
+                                <td>@sit.StudentIdNumber</td>
+                                <td>@(sit.Student is null ? "-" : $"{sit.Student.FirstName} {sit.Student.LastName}")</td>
+                                <td>@(string.IsNullOrWhiteSpace(sit.Purpose) ? "-" : sit.Purpose)</td>
+                                <td>@sit.Laboratory</td>
+                                <td>@sit.TimeIn.ToString("hh:mm tt")</td>
+                                <td><span class="badge text-bg-success">Active</span></td>
+                                <td><button class="btn btn-outline-secondary btn-sm" disabled>Close</button></td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr><td colspan="8" class="text-center text-muted py-3">No data available.</td></tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="records" class="module-card mb-4">
+            <h3>Posted Announcement</h3>
+            @if (Model.Announcements.Any())
+            {
+                @foreach (var item in Model.Announcements)
+                {
+                    <div class="announcement-row">
+                        <div class="announcement-meta">@item.PostedBy | @item.PostedAt.ToLocalTime().ToString("yyyy-MMM-dd")</div>
+                        <div><strong>@item.Title</strong></div>
+                        <div>@item.Message</div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="text-muted">No announcements posted yet.</div>
+            }
+        </section>
+
+        <section id="reports" class="module-card mb-3">
+            <h4 class="mb-2">Sit-in Reports</h4>
+            <p class="text-muted mb-0">Module placeholder for reports.</p>
+        </section>
+
+        <section id="feedback" class="module-card mb-3">
+            <h4 class="mb-2">Feedback Reports</h4>
+            <p class="text-muted mb-0">Module placeholder for feedback.</p>
+        </section>
+
+        <section id="reservation" class="module-card">
+            <h4 class="mb-2">Reservation</h4>
+            <p class="text-muted mb-0">Module placeholder for reservations.</p>
+        </section>
+    </main>
+
+    <div class="modal fade" id="sitInModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Sit In Form</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-2"><label class="form-label">ID Number</label><input class="form-control" readonly /></div>
+                    <div class="mb-2"><label class="form-label">Student Name</label><input class="form-control" readonly /></div>
+                    <div class="mb-2"><label class="form-label">Purpose</label><input class="form-control" placeholder="e.g. C Programming" /></div>
+                    <div class="mb-2"><label class="form-label">Lab</label><input class="form-control" placeholder="e.g. 524" /></div>
+                    <div class="mb-2"><label class="form-label">Remaining Session</label><input class="form-control" readonly /></div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button class="btn btn-primary" disabled>Sit In</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @await Html.PartialAsync("_Footer")
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
+
+<style>
+    .admin-page {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        background: #f5f7fb;
+    }
+
+    .admin-main {
+        flex: 1;
+        max-width: 1200px;
+    }
+
+    .admin-nav {
+        background: #003d82;
+    }
+
+    .admin-nav .nav-link {
+        color: rgba(255,255,255,.88);
+        font-size: .82rem;
+    }
+
+    .admin-nav .nav-link:hover {
+        color: #fff;
+    }
+
+    .stat-card {
+        background: #fff;
+        border: 1px solid #dbe4f0;
+        border-radius: 10px;
+        padding: 16px;
+    }
+
+    .stat-label {
+        font-size: .85rem;
+        color: #64748b;
+    }
+
+    .stat-value {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: #0f172a;
+    }
+
+    .module-card {
+        background: #fff;
+        border: 1px solid #dbe4f0;
+        border-radius: 10px;
+        padding: 16px;
+    }
+
+    .announcement-row {
+        border-top: 1px solid #e5e7eb;
+        padding: 10px 0;
+    }
+
+    .announcement-row:first-of-type {
+        border-top: none;
+        padding-top: 0;
+    }
+
+    .announcement-meta {
+        font-size: .82rem;
+        color: #64748b;
+        margin-bottom: 2px;
+    }
+</style>

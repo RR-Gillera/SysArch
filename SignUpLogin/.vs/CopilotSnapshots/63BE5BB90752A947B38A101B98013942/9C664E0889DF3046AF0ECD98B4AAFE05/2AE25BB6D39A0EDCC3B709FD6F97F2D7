@@ -1,0 +1,54 @@
+﻿@model SignUpLogin.Models.ViewModels.ProfileEditViewModel
+@{
+    ViewData["Title"] = "My Profile";
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+    @await Html.PartialAsync("_UserNavBar")
+
+    <div class="container py-4" style="max-width:900px;">
+        @if (TempData["Success"] != null)
+        {
+            <div class="alert alert-success">@TempData["Success"]</div>
+        }
+
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-body">
+                <h3 class="mb-3">My Profile</h3>
+                <div class="row g-3">
+                    <div class="col-md-6"><strong>ID Number:</strong> @Model.IdNumber</div>
+                    <div class="col-md-6"><strong>Email:</strong> @Model.Email</div>
+                    <div class="col-md-6"><strong>Name:</strong> @Model.FirstName @Model.MiddleName @Model.LastName</div>
+                    <div class="col-md-6"><strong>Course / Year:</strong> @Model.Course - @Model.CourseLevel</div>
+                    <div class="col-12"><strong>Address:</strong> @Model.Address</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <h5 class="mb-3">Quick Actions</h5>
+                <div class="d-flex flex-wrap gap-2">
+                    <a asp-controller="Profile" asp-action="Edit" class="btn btn-primary">Edit Profile</a>
+                    <a asp-controller="Profile" asp-action="ChangePassword" class="btn btn-outline-primary">Change Password</a>
+                    <a asp-controller="Home" asp-action="Index" class="btn btn-light border">Back to Home</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @await Html.PartialAsync("_Footer")
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

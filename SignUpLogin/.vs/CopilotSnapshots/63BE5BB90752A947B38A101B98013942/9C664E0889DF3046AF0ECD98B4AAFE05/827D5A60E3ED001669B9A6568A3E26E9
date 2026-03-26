@@ -1,0 +1,167 @@
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using SignUpLogin.Data;
+using SignUpLogin.Models.ViewModels;
+
+namespace SignUpLogin.Controllers
+{
+    public class ProfileController : Controller
+    {
+        private readonly ApplicationDbContext _context;
+        private readonly IWebHostEnvironment _environment;
+
+        public ProfileController(ApplicationDbContext context, IWebHostEnvironment environment)
+        {
+            _context = context;
+            _environment = environment;
+        }
+
+        public async Task<IActionResult> Index()
+        {
+            var guard = EnsureStudentAccess();
+            if (guard != null)
+                return guard;
+
+            var idNumber = HttpContext.Session.GetString("IdNumber")!;
+            var student = await _context.Signups.AsNoTracking().FirstOrDefaultAsync(s => s.IdNumber == idNumber);
+            if (student == null)
+                return RedirectToAction("Index", "Login");
+
+            var vm = new ProfileEditViewModel
+            {
+                IdNumber = student.IdNumber,
+                FirstName = student.FirstName,
+                MiddleName = student.MiddleName,
+                LastName = student.LastName,
+                Email = student.Email,
+                Course = student.Course,
+                CourseLevel = student.CourseLevel,
+                Address = student.Address
+            };
+
+            ViewBag.ProfileImagePath = student.ProfileImagePath;
+            return View(vm);
+        }
+
+        public async Task<IActionResult> Edit()
+        {
+            var guard = EnsureStudentAccess();
+            if (guard != null)
+                return guard;
+
+            var idNumber = HttpContext.Session.GetString("IdNumber")!;
+            var student = await _context.Signups.AsNoTracking().FirstOrDefaultAsync(s => s.IdNumber == idNumber);
+            if (student == null)
+                return RedirectToAction("Index", "Login");
+
+            return View(new ProfilePictureUploadViewModel
+            {
+                CurrentImagePath = student.ProfileImagePath
+            });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(ProfilePictureUploadViewModel model)
+        {
+            var guard = EnsureStudentAccess();
+            if (guard != null)
+                return guard;
+
+            if (model.ProfileImage == null || model.ProfileImage.Length == 0)
+            {
+                ModelState.AddModelError(nameof(ProfilePictureUploadViewModel.ProfileImage), "Please select an image to upload.");
+                return View(model);
+            }
+
+            var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp" };
+            var extension = Path.GetExtension(model.ProfileImage.FileName).ToLowerInvariant();
+            if (!allowedExtensions.Contains(extension))
+            {
+                ModelState.AddModelError(nameof(ProfilePictureUploadViewModel.ProfileImage), "Only .jpg, .jpeg, .png, and .webp files are allowed.");
+                return View(model);
+            }
+
+            if (model.ProfileImage.Length > 5 * 1024 * 1024)
+            {
+                ModelState.AddModelError(nameof(ProfilePictureUploadViewModel.ProfileImage), "Image size must be 5MB or less.");
+                return View(model);
+            }
+
+            var idNumber = HttpContext.Session.GetString("IdNumber")!;
+            var student = await _context.Signups.FirstOrDefaultAsync(s => s.IdNumber == idNumber);
+            if (student == null)
+                return RedirectToAction("Index", "Login");
+
+            var uploadsRoot = Path.Combine(_environment.WebRootPath, "images", "profiles");
+            Directory.CreateDirectory(uploadsRoot);
+
+            var fileName = $"{idNumber}_{Guid.NewGuid():N}{extension}";
+            var savePath = Path.Combine(uploadsRoot, fileName);
+
+            await using (var stream = new FileStream(savePath, FileMode.Create))
+            {
+                await model.ProfileImage.CopyToAsync(stream);
+            }
+
+            student.ProfileImagePath = $"/images/profiles/{fileName}";
+            await _context.SaveChangesAsync();
+
+            HttpContext.Session.SetString("ProfileImagePath", student.ProfileImagePath);
+            TempData["Success"] = "Profile picture updated successfully.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        public IActionResult ChangePassword()
+        {
+            var guard = EnsureStudentAccess();
+            if (guard != null)
+                return guard;
+
+            return View(new ChangePasswordViewModel());
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ChangePassword(ChangePasswordViewModel model)
+        {
+            var guard = EnsureStudentAccess();
+            if (guard != null)
+                return guard;
+
+            if (!ModelState.IsValid)
+                return View(model);
+
+            var idNumber = HttpContext.Session.GetString("IdNumber")!;
+            var student = await _context.Signups.FirstOrDefaultAsync(s => s.IdNumber == idNumber);
+            if (student == null)
+                return RedirectToAction("Index", "Login");
+
+            if (!BCrypt.Net.BCrypt.Verify(model.CurrentPassword, student.Password))
+            {
+                ModelState.AddModelError(nameof(ChangePasswordViewModel.CurrentPassword), "Current password is incorrect.");
+                return View(model);
+            }
+
+            student.Password = BCrypt.Net.BCrypt.HashPassword(model.NewPassword);
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] = "Password changed successfully.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        private IActionResult? EnsureStudentAccess()
+        {
+            var idNumber = HttpContext.Session.GetString("IdNumber");
+            var role = HttpContext.Session.GetString("Role");
+
+            if (string.IsNullOrEmpty(idNumber))
+                return RedirectToAction("Index", "Login");
+
+            if (!string.Equals(role, "Student", StringComparison.OrdinalIgnoreCase))
+                return RedirectToAction("Home", "Admin");
+
+            return null;
+        }
+    }
+}

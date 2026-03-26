@@ -1,0 +1,221 @@
+﻿@{
+    ViewData["Title"] = "Student Home";
+    Layout = null;
+    var today = DateTime.Now.ToString("MMMM dd, yyyy");
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+    @await Html.PartialAsync("_UserNavBar")
+
+    <div class="student-home container py-4 py-md-5">
+        <div class="profile-panel mb-5">
+            <div class="row g-4 align-items-center">
+                <div class="col-md-3 text-center">
+                    <div class="avatar-wrap mx-auto">
+                        <img src="~/images/default-avatar.png"
+                             onerror="this.src='https://ui-avatars.com/api/?name=@ViewBag.UserName&background=0b4a94&color=fff&size=160&bold=true'"
+                             alt="Student avatar" class="avatar-img" />
+                    </div>
+                </div>
+                <div class="col-md-9">
+                    <div class="info-box">
+                        <div class="row g-3">
+                            <div class="col-lg-7">
+                                <h3 class="mb-3">@ViewBag.UserName</h3>
+                                <p class="mb-1"><strong>ID Number:</strong> @ViewBag.IdNumber</p>
+                                <p class="mb-1"><strong>Year Level:</strong> @ViewBag.CourseLevel</p>
+                                <p class="mb-1"><strong>Course:</strong> @ViewBag.Course</p>
+                                <p class="mb-0"><strong>Email:</strong> @ViewBag.Email</p>
+                            </div>
+                            <div class="col-lg-5 text-lg-end d-flex flex-column justify-content-between">
+                                <div class="sessions-chip align-self-lg-end">Sessions Remaining: <strong>30</strong></div>
+                                <p class="mb-0 mt-3 mt-lg-0"><strong>Date:</strong> @today</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4 mb-5">
+            <div class="col-lg-6">
+                <div class="panel-card h-100">
+                    <h5 class="panel-title">Announcements</h5>
+                    <div class="announcement-item">
+                        <div class="announcement-meta">CCS Admin | 2026-Feb-11</div>
+                        <div>No new announcements at this time.</div>
+                    </div>
+                    <div class="announcement-item mb-0">
+                        <div class="announcement-meta">CCS Admin | 2024-May-08</div>
+                        <div>Important announcement: check the lab bulletin for updated schedules and activities.</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="panel-card h-100">
+                    <h5 class="panel-title">Reminders</h5>
+                    <ul class="mb-0 reminder-list">
+                        <li>Bring your school ID when using any laboratory.</li>
+                        <li>Observe proper lab etiquette and keep your station clean.</li>
+                        <li>Always log out after your sit-in session.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="text-center mb-3">
+            <h2 class="offer-title">What We Offer</h2>
+            <p class="offer-subtitle">Everything you need for a smooth sit-in experience</p>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="feature-card h-100">
+                    <div class="feature-icon">🧾</div>
+                    <h5>Easy Registration</h5>
+                    <p class="mb-0">Simple sign-up and quick access to your account.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="feature-card h-100">
+                    <div class="feature-icon">🖥️</div>
+                    <h5>Lab Monitoring</h5>
+                    <p class="mb-0">See your profile and session details in one dashboard.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="feature-card h-100">
+                    <div class="feature-icon">📊</div>
+                    <h5>Session Records</h5>
+                    <p class="mb-0">Track sit-in activity and important updates from CCS.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @await Html.PartialAsync("_Footer")
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
+
+<style>
+    html, body {
+        margin: 0;
+        padding: 0;
+        background: #f3f4f6;
+    }
+
+    .student-home {
+        max-width: 1100px;
+    }
+
+    .profile-panel {
+        background: #fff;
+        border: 1px solid #e5e7eb;
+        border-radius: 14px;
+        padding: 24px;
+        box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+    }
+
+    .avatar-wrap {
+        width: 170px;
+        height: 170px;
+        border: 2px solid #dbeafe;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #eff6ff;
+    }
+
+    .avatar-img {
+        width: 145px;
+        height: 145px;
+        object-fit: cover;
+        border-radius: 50%;
+        background: #fff;
+    }
+
+    .info-box {
+        border: 1px solid #d1d5db;
+        border-radius: 10px;
+        padding: 18px 20px;
+        background: #fff;
+    }
+
+    .sessions-chip {
+        background: #eaf2ff;
+        color: #0b4a94;
+        border: 1px solid #bfdbfe;
+        padding: 8px 12px;
+        border-radius: 999px;
+        font-size: 0.95rem;
+    }
+
+    .panel-card {
+        background: #fff;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 18px;
+    }
+
+    .panel-title {
+        color: #0b4a94;
+        font-weight: 700;
+        margin-bottom: 14px;
+    }
+
+    .announcement-item {
+        padding-bottom: 10px;
+        margin-bottom: 10px;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .announcement-meta {
+        font-weight: 600;
+        margin-bottom: 4px;
+    }
+
+    .reminder-list {
+        padding-left: 18px;
+    }
+
+    .offer-title {
+        color: #0b4a94;
+        font-weight: 800;
+    }
+
+    .offer-subtitle {
+        color: #64748b;
+    }
+
+    .feature-card {
+        background: #fff;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 22px;
+        box-shadow: 0 3px 10px rgba(15, 23, 42, 0.04);
+    }
+
+    .feature-card h5 {
+        color: #0b4a94;
+        font-weight: 700;
+        margin-bottom: 8px;
+    }
+
+    .feature-icon {
+        font-size: 1.7rem;
+        margin-bottom: 10px;
+    }
+</style>

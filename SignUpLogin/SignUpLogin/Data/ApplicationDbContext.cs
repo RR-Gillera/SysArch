@@ -10,6 +10,8 @@ namespace SignUpLogin.Data
         }
 
         public DbSet<Signup> Signups { get; set; } = null!;
+        public DbSet<SitInRecord> SitInRecords { get; set; } = null!;
+        public DbSet<Announcement> Announcements { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -25,6 +27,15 @@ namespace SignUpLogin.Data
             modelBuilder.Entity<Signup>()
                 .HasIndex(s => s.Email)
                 .IsUnique();
+
+            modelBuilder.Entity<SitInRecord>()
+                .HasIndex(r => r.StudentIdNumber);
+
+            modelBuilder.Entity<SitInRecord>()
+                .HasOne(r => r.Student)
+                .WithMany()
+                .HasForeignKey(r => r.StudentIdNumber)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

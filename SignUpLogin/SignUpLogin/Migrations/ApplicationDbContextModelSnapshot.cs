@@ -22,6 +22,37 @@ namespace SignUpLogin.Migrations
 
             MySqlModelBuilderExtensions.AutoIncrementColumns(modelBuilder);
 
+            modelBuilder.Entity("SignUpLogin.Models.Announcement", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("varchar(1000)");
+
+                    b.Property<DateTime>("PostedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("PostedBy")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("varchar(80)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("varchar(120)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Announcements");
+                });
+
             modelBuilder.Entity("SignUpLogin.Models.Signup", b =>
                 {
                     b.Property<string>("IdNumber")
@@ -50,6 +81,9 @@ namespace SignUpLogin.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
+                    b.Property<DateTime?>("LastAnnouncementsReadAt")
+                        .HasColumnType("datetime(6)");
+
                     b.Property<string>("LastName")
                         .IsRequired()
                         .HasColumnType("longtext");
@@ -61,6 +95,12 @@ namespace SignUpLogin.Migrations
                     b.Property<string>("Password")
                         .IsRequired()
                         .HasColumnType("longtext");
+
+                    b.Property<string>("ProfileImagePath")
+                        .HasColumnType("longtext");
+
+                    b.Property<int>("RemainingSessions")
+                        .HasColumnType("int");
 
                     b.Property<string>("Role")
                         .IsRequired()
@@ -75,6 +115,52 @@ namespace SignUpLogin.Migrations
                         .IsUnique();
 
                     b.ToTable("Signups");
+                });
+
+            modelBuilder.Entity("SignUpLogin.Models.SitInRecord", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Laboratory")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<string>("Purpose")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("varchar(120)");
+
+                    b.Property<string>("StudentIdNumber")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<DateTime>("TimeIn")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("TimeOut")
+                        .HasColumnType("datetime(6)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("StudentIdNumber");
+
+                    b.ToTable("SitInRecords");
+                });
+
+            modelBuilder.Entity("SignUpLogin.Models.SitInRecord", b =>
+                {
+                    b.HasOne("SignUpLogin.Models.Signup", "Student")
+                        .WithMany()
+                        .HasForeignKey("StudentIdNumber")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Student");
                 });
 #pragma warning restore 612, 618
         }

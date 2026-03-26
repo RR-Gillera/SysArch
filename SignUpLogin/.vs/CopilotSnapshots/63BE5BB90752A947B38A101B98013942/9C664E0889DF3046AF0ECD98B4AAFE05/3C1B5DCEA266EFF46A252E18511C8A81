@@ -1,0 +1,238 @@
+﻿@model SignUpLogin.Models.ViewModels.StudentHomeViewModel
+@{
+    ViewData["Title"] = "Student Home";
+    Layout = null;
+    var today = DateTime.Now.ToString("MMMM dd, yyyy");
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+    @await Html.PartialAsync("_UserNavBar")
+
+    <div class="student-home container py-4 py-md-5">
+        <div class="profile-panel mb-4">
+            <div class="row g-4 align-items-center">
+                <div class="col-md-3 text-center">
+                    <div class="avatar-wrap mx-auto">
+                        <img src="~/images/default-avatar.png"
+                             onerror="this.src='https://ui-avatars.com/api/?name=@Model.UserName&background=0b4a94&color=fff&size=160&bold=true'"
+                             alt="Student avatar" class="avatar-img" />
+                    </div>
+                </div>
+                <div class="col-md-9">
+                    <div class="info-box">
+                        <div class="row g-3">
+                            <div class="col-lg-7">
+                                <h3 class="mb-3">@Model.UserName</h3>
+                                <p class="mb-1"><strong>ID Number:</strong> @Model.IdNumber</p>
+                                <p class="mb-1"><strong>Year Level:</strong> @Model.CourseLevel</p>
+                                <p class="mb-1"><strong>Course:</strong> @Model.Course</p>
+                                <p class="mb-0"><strong>Email:</strong> @Model.Email</p>
+                            </div>
+                            <div class="col-lg-5 text-lg-end d-flex flex-column justify-content-between">
+                                <div class="sessions-chip align-self-lg-end">Sessions Remaining: <strong>@Model.RemainingSessions</strong></div>
+                                <p class="mb-0 mt-3 mt-lg-0"><strong>Date:</strong> @today</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4 mb-4">
+            <div class="col-lg-6" id="announcements">
+                <div class="panel-card h-100">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <h5 class="panel-title mb-0">Announcements</h5>
+                        @if (Model.UnreadAnnouncementsCount > 0)
+                        {
+                            <span class="badge text-bg-danger">@Model.UnreadAnnouncementsCount unread</span>
+                        }
+                    </div>
+
+                    @if (Model.Announcements.Any())
+                    {
+                        @foreach (var announcement in Model.Announcements)
+                        {
+                            <div class="announcement-item">
+                                <div class="announcement-meta">@announcement.PostedBy | @announcement.PostedAt.ToLocalTime().ToString("yyyy-MMM-dd")</div>
+                                <div><strong>@announcement.Title</strong></div>
+                                <div>@announcement.Message</div>
+                            </div>
+                        }
+
+                        <form asp-controller="Home" asp-action="MarkAnnouncementsRead" method="post">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-sm btn-outline-primary">Mark all as read</button>
+                        </form>
+                    }
+                    else
+                    {
+                        <div class="empty-state">No announcements yet. New updates from admin will appear here.</div>
+                    }
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="panel-card h-100">
+                    <h5 class="panel-title">Recent Sit-in History</h5>
+                    @if (Model.RecentSitInHistory.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-sm align-middle mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Lab</th>
+                                        <th>Time In</th>
+                                        <th>Time Out</th>
+                                        <th>Duration</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                @foreach (var item in Model.RecentSitInHistory)
+                                {
+                                    var duration = item.TimeOut.HasValue ? item.TimeOut.Value - item.TimeIn : (TimeSpan?)null;
+                                    <tr>
+                                        <td>@item.TimeIn.ToString("yyyy-MM-dd")</td>
+                                        <td>@item.Laboratory</td>
+                                        <td>@item.TimeIn.ToString("hh:mm tt")</td>
+                                        <td>@(item.TimeOut?.ToString("hh:mm tt") ?? "In Progress")</td>
+                                        <td>@(duration.HasValue ? $"{(int)duration.Value.TotalHours}h {duration.Value.Minutes}m" : "-")</td>
+                                    </tr>
+                                }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="empty-state">No sit-in history yet. Your latest 5 sessions will show here.</div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="panel-card loading-state mb-4">
+            <div class="loading-title">Loading latest student updates...</div>
+            <div class="loading-sub">If data is empty, ask admin to post announcements or record sit-in sessions.</div>
+        </div>
+    </div>
+
+    @await Html.PartialAsync("_Footer")
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
+
+<style>
+    html, body {
+        margin: 0;
+        padding: 0;
+        background: #f3f4f6;
+    }
+
+    .student-home {
+        max-width: 1100px;
+    }
+
+    .profile-panel {
+        background: #fff;
+        border: 1px solid #e5e7eb;
+        border-radius: 14px;
+        padding: 24px;
+        box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+    }
+
+    .avatar-wrap {
+        width: 170px;
+        height: 170px;
+        border: 2px solid #dbeafe;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #eff6ff;
+    }
+
+    .avatar-img {
+        width: 145px;
+        height: 145px;
+        object-fit: cover;
+        border-radius: 50%;
+        background: #fff;
+    }
+
+    .info-box {
+        border: 1px solid #d1d5db;
+        border-radius: 10px;
+        padding: 18px 20px;
+        background: #fff;
+    }
+
+    .sessions-chip {
+        background: #eaf2ff;
+        color: #0b4a94;
+        border: 1px solid #bfdbfe;
+        padding: 8px 12px;
+        border-radius: 999px;
+        font-size: 0.95rem;
+    }
+
+    .panel-card {
+        background: #fff;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 18px;
+    }
+
+    .panel-title {
+        color: #0b4a94;
+        font-weight: 700;
+        margin-bottom: 14px;
+    }
+
+    .announcement-item {
+        padding-bottom: 10px;
+        margin-bottom: 10px;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .announcement-meta {
+        font-weight: 600;
+        margin-bottom: 4px;
+    }
+
+    .empty-state {
+        border: 1px dashed #cbd5e1;
+        background: #f8fafc;
+        border-radius: 10px;
+        padding: 16px;
+        color: #475569;
+    }
+
+    .loading-state {
+        text-align: center;
+        background: #eff6ff;
+        border-color: #bfdbfe;
+    }
+
+    .loading-title {
+        font-weight: 700;
+        color: #1d4ed8;
+        margin-bottom: 2px;
+    }
+
+    .loading-sub {
+        color: #475569;
+        font-size: 0.92rem;
+    }
+</style>

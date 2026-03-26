@@ -1,0 +1,41 @@
+﻿using Microsoft.EntityFrameworkCore;
+using SignUpLogin.Models;
+
+namespace SignUpLogin.Data
+{
+    public class ApplicationDbContext : DbContext
+    {
+        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
+        {
+        }
+
+        public DbSet<Signup> Signups { get; set; } = null!;
+        public DbSet<SitInRecord> SitInRecords { get; set; } = null!;
+        public DbSet<Announcement> Announcements { get; set; } = null!;
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<Signup>()
+                .HasKey(s => s.IdNumber);
+
+            modelBuilder.Entity<Signup>()
+                .HasIndex(s => s.IdNumber)
+                .IsUnique();
+
+            modelBuilder.Entity<Signup>()
+                .HasIndex(s => s.Email)
+                .IsUnique();
+
+            modelBuilder.Entity<SitInRecord>()
+                .HasIndex(r => r.StudentIdNumber);
+
+            modelBuilder.Entity<SitInRecord>()
+                .HasOne(r => r.Student)
+                .WithMany()
+                .HasForeignKey(r => r.StudentIdNumber)
+                .OnDelete(DeleteBehavior.Cascade);
+        }
+    }
+}

@@ -1,0 +1,65 @@
+﻿@model SignUpLogin.Models.ViewModels.ProfilePictureUploadViewModel
+@{
+    ViewData["Title"] = "Edit Profile Picture";
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body class="profile-page">
+    @await Html.PartialAsync("_UserNavBar")
+
+    <main class="profile-main container py-4" style="max-width:760px;">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <h3 class="mb-3">Update Profile Picture</h3>
+                <form asp-action="Edit" method="post" enctype="multipart/form-data">
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
+
+                    <div class="mb-3 text-center">
+                        <img src="@(string.IsNullOrEmpty(Model.CurrentImagePath) ? "/images/default-avatar.png" : Model.CurrentImagePath)"
+                             onerror="this.src='/images/default-avatar.png'"
+                             alt="Profile picture" class="rounded-circle border" style="width:120px;height:120px;object-fit:cover;" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="ProfileImage" class="form-label"></label>
+                        <input asp-for="ProfileImage" class="form-control" accept=".jpg,.jpeg,.png,.webp,image/*" />
+                        <span asp-validation-for="ProfileImage" class="text-danger"></span>
+                        <small class="text-muted">Allowed: jpg, jpeg, png, webp (max 5MB).</small>
+                    </div>
+
+                    <div class="mt-3 d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">Upload</button>
+                        <a asp-action="Index" class="btn btn-light border">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    @await Html.PartialAsync("_Footer")
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    @await Html.PartialAsync("_ValidationScriptsPartial")
+</body>
+</html>
+
+<style>
+    .profile-page {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .profile-main {
+        flex: 1;
+    }
+</style>

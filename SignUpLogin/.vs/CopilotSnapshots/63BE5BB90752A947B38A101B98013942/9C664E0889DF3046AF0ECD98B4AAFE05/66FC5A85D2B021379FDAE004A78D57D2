@@ -1,0 +1,16 @@
+﻿namespace SignUpLogin.Models.ViewModels
+{
+    public class StudentHomeViewModel
+    {
+        public string UserName { get; set; } = string.Empty;
+        public string IdNumber { get; set; } = string.Empty;
+        public string Course { get; set; } = string.Empty;
+        public string CourseLevel { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public string? ProfileImagePath { get; set; }
+        public int RemainingSessions { get; set; }
+        public int UnreadAnnouncementsCount { get; set; }
+        public List<Announcement> Announcements { get; set; } = new();
+        public List<SitInRecord> RecentSitInHistory { get; set; } = new();
+    }
+}

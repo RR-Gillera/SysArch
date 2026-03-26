@@ -1,0 +1,157 @@
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using SignUpLogin.Data;
+using SignUpLogin.Models.ViewModels;
+
+namespace SignUpLogin.Controllers
+{
+    public class ProfileController : Controller
+    {
+        private readonly ApplicationDbContext _context;
+
+        public ProfileController(ApplicationDbContext context)
+        {
+            _context = context;
+        }
+
+        public async Task<IActionResult> Index()
+        {
+            var guard = EnsureStudentAccess();
+            if (guard != null)
+                return guard;
+
+            var idNumber = HttpContext.Session.GetString("IdNumber")!;
+            var student = await _context.Signups.AsNoTracking().FirstOrDefaultAsync(s => s.IdNumber == idNumber);
+            if (student == null)
+                return RedirectToAction("Index", "Login");
+
+            var vm = new ProfileEditViewModel
+            {
+                IdNumber = student.IdNumber,
+                FirstName = student.FirstName,
+                MiddleName = student.MiddleName,
+                LastName = student.LastName,
+                Email = student.Email,
+                Course = student.Course,
+                CourseLevel = student.CourseLevel,
+                Address = student.Address
+            };
+
+            return View(vm);
+        }
+
+        public async Task<IActionResult> Edit()
+        {
+            var guard = EnsureStudentAccess();
+            if (guard != null)
+                return guard;
+
+            var idNumber = HttpContext.Session.GetString("IdNumber")!;
+            var student = await _context.Signups.AsNoTracking().FirstOrDefaultAsync(s => s.IdNumber == idNumber);
+            if (student == null)
+                return RedirectToAction("Index", "Login");
+
+            return View(new ProfileEditViewModel
+            {
+                IdNumber = student.IdNumber,
+                FirstName = student.FirstName,
+                MiddleName = student.MiddleName,
+                LastName = student.LastName,
+                Email = student.Email,
+                Course = student.Course,
+                CourseLevel = student.CourseLevel,
+                Address = student.Address
+            });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(ProfileEditViewModel model)
+        {
+            var guard = EnsureStudentAccess();
+            if (guard != null)
+                return guard;
+
+            if (!ModelState.IsValid)
+                return View(model);
+
+            var idNumber = HttpContext.Session.GetString("IdNumber")!;
+            if (!string.Equals(idNumber, model.IdNumber, StringComparison.Ordinal))
+                return RedirectToAction(nameof(Index));
+
+            var student = await _context.Signups.FirstOrDefaultAsync(s => s.IdNumber == idNumber);
+            if (student == null)
+                return RedirectToAction("Index", "Login");
+
+            student.FirstName = model.FirstName.Trim();
+            student.MiddleName = model.MiddleName.Trim();
+            student.LastName = model.LastName.Trim();
+            student.Email = model.Email.Trim();
+            student.Course = model.Course;
+            student.CourseLevel = model.CourseLevel;
+            student.Address = model.Address.Trim();
+
+            await _context.SaveChangesAsync();
+
+            HttpContext.Session.SetString("UserName", $"{student.FirstName} {student.LastName}".Trim());
+            HttpContext.Session.SetString("Course", student.Course);
+            HttpContext.Session.SetString("CourseLevel", student.CourseLevel);
+            HttpContext.Session.SetString("Email", student.Email);
+
+            TempData["Success"] = "Profile updated successfully.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        public IActionResult ChangePassword()
+        {
+            var guard = EnsureStudentAccess();
+            if (guard != null)
+                return guard;
+
+            return View(new ChangePasswordViewModel());
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ChangePassword(ChangePasswordViewModel model)
+        {
+            var guard = EnsureStudentAccess();
+            if (guard != null)
+                return guard;
+
+            if (!ModelState.IsValid)
+                return View(model);
+
+            var idNumber = HttpContext.Session.GetString("IdNumber")!;
+            var student = await _context.Signups.FirstOrDefaultAsync(s => s.IdNumber == idNumber);
+            if (student == null)
+                return RedirectToAction("Index", "Login");
+
+            if (!BCrypt.Net.BCrypt.Verify(model.CurrentPassword, student.Password))
+            {
+                ModelState.AddModelError(nameof(ChangePasswordViewModel.CurrentPassword), "Current password is incorrect.");
+                return View(model);
+            }
+
+            student.Password = BCrypt.Net.BCrypt.HashPassword(model.NewPassword);
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] = "Password changed successfully.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        private IActionResult? EnsureStudentAccess()
+        {
+            var idNumber = HttpContext.Session.GetString("IdNumber");
+            var role = HttpContext.Session.GetString("Role");
+
+            if (string.IsNullOrEmpty(idNumber))
+                return RedirectToAction("Index", "Login");
+
+            if (!string.Equals(role, "Student", StringComparison.OrdinalIgnoreCase))
+                return RedirectToAction("Home", "Admin");
+
+            return null;
+        }
+    }
+}
