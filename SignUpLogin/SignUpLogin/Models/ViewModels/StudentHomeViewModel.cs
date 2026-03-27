@@ -12,5 +12,7 @@ namespace SignUpLogin.Models.ViewModels
         public int UnreadAnnouncementsCount { get; set; }
         public List<Announcement> Announcements { get; set; } = new();
         public List<SitInRecord> RecentSitInHistory { get; set; } = new();
+        public bool IsCurrentlyActive { get; set; }
+        public SitInRecord? ActiveSitIn { get; set; }
     }
 }

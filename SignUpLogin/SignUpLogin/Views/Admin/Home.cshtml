@@ -12,200 +12,311 @@
     <title>@ViewData["Title"]</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
 </head>
 <body class="admin-page">
+
+    <!-- ── Navbar ── -->
     <nav class="navbar navbar-expand-lg navbar-dark admin-nav sticky-top">
-        <div class="container-fluid px-3">
-            <a class="navbar-brand" href="#">College of Computer Studies Admin</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#adminNav" aria-controls="adminNav" aria-expanded="false" aria-label="Toggle navigation">
+        <div class="container-fluid px-4">
+            <a class="navbar-brand fw-semibold" href="#">CCS Admin</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#adminNav" aria-controls="adminNav"
+                    aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="adminNav">
-                <ul class="navbar-nav ms-auto align-items-lg-center">
-                    <li class="nav-item"><a class="nav-link" href="#home">Home</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#students">Students</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#current-sit-in">Sit-in</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#records">View Sit-in Records</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#reports">Sit-in Reports</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#feedback">Feedback Reports</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#reservation">Reservation</a></li>
-                    <li class="nav-item ms-lg-2"><a class="btn btn-warning btn-sm" asp-controller="Admin" asp-action="Logout">Log out</a></li>
+                <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-1">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#home">
+                            <i class="bi bi-house-door me-1"></i>Home
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" asp-controller="Admin" asp-action="Students">
+                            <i class="bi bi-people me-1"></i>Students
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" asp-controller="Admin" asp-action="SitInRecords">
+                            <i class="bi bi-journal-text me-1"></i>Sit-in Records
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" asp-controller="Admin" asp-action="Announcements">
+                            <i class="bi bi-megaphone me-1"></i>Announcements
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" asp-controller="Admin" asp-action="Feedback">
+                            <i class="bi bi-chat-left-text me-1"></i>Feedback
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" asp-controller="Admin" asp-action="Reservations">
+                            <i class="bi bi-calendar-check me-1"></i>Reservations
+                        </a>
+                    </li>
+                    <li class="nav-item ms-lg-2">
+                        <a class="btn btn-warning btn-sm px-3" asp-controller="Admin" asp-action="Logout">
+                            Log out
+                        </a>
+                    </li>
                 </ul>
             </div>
         </div>
     </nav>
 
-    <main class="admin-main container py-4">
-        <section id="home" class="mb-4">
-            <h2 class="mb-3">Admin Dashboard</h2>
-            <div class="row g-3">
-                <div class="col-md-4">
-                    <div class="stat-card">
+    <main class="admin-main px-4 py-4">
+
+        <!-- ── Page header ── -->
+        <div class="d-flex align-items-center justify-content-between mb-4">
+            <div>
+                <h4 class="mb-0 fw-bold">Admin Dashboard</h4>
+                <p class="text-muted small mb-0">Welcome back, @Model.UserName</p>
+            </div>
+        </div>
+
+        <!-- ── Stat Cards ── -->
+        <section id="home" class="row g-3 mb-4">
+            <div class="col-sm-4">
+                <div class="stat-card">
+                    <div class="stat-icon bg-primary-soft text-primary">
+                        <i class="bi bi-person-check fs-4"></i>
+                    </div>
+                    <div>
                         <div class="stat-label">Students Registered</div>
                         <div class="stat-value">@Model.StudentsRegistered</div>
                     </div>
                 </div>
-                <div class="col-md-4">
-                    <div class="stat-card">
+            </div>
+            <div class="col-sm-4">
+                <div class="stat-card">
+                    <div class="stat-icon bg-success-soft text-success">
+                        <i class="bi bi-display fs-4"></i>
+                    </div>
+                    <div>
                         <div class="stat-label">Currently Sit-in</div>
                         <div class="stat-value">@Model.CurrentlySitIn</div>
                     </div>
                 </div>
-                <div class="col-md-4">
-                    <div class="stat-card">
-                        <div class="stat-label">Total Sit-in</div>
+            </div>
+            <div class="col-sm-4">
+                <div class="stat-card">
+                    <div class="stat-icon bg-warning-soft text-warning">
+                        <i class="bi bi-journal-richtext fs-4"></i>
+                    </div>
+                    <div>
+                        <div class="stat-label">Total Sit-in Sessions</div>
                         <div class="stat-value">@Model.TotalSitInRecords</div>
                     </div>
                 </div>
             </div>
         </section>
 
-        <section id="students" class="module-card mb-4">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <h3 class="mb-0">Students Information</h3>
-                <div class="d-flex gap-2">
-                    <button class="btn btn-primary btn-sm" disabled>Add Students</button>
-                    <button class="btn btn-danger btn-sm" disabled>Reset All Session</button>
+        <!-- ── Sit-in Form + Current Sit-ins ── -->
+        <section id="current-sit-in" class="row g-4 mb-4">
+
+            <!-- Sit-in Form -->
+            <div class="col-lg-4">
+                <div class="module-card h-100">
+                    <h5 class="section-title mb-3">
+                        <i class="bi bi-person-plus me-2 text-primary"></i>New Sit-in
+                    </h5>
+
+                    @if (TempData["Error"] != null)
+                    {
+                        <div class="alert alert-danger alert-dismissible py-2 small fade show" role="alert">
+                            <i class="bi bi-exclamation-circle me-1"></i>@TempData["Error"]
+                            <button type="button" class="btn-close btn-close-sm" data-bs-dismiss="alert"></button>
+                        </div>
+                    }
+                    @if (TempData["Success"] != null)
+                    {
+                        <div class="alert alert-success alert-dismissible py-2 small fade show" role="alert">
+                            <i class="bi bi-check-circle me-1"></i>@TempData["Success"]
+                            <button type="button" class="btn-close btn-close-sm" data-bs-dismiss="alert"></button>
+                        </div>
+                    }
+
+                    <form id="sitInForm" asp-controller="Admin" asp-action="SitIn" method="post">
+                        @Html.AntiForgeryToken()
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold small">ID Number</label>
+                            <div class="input-group input-group-sm">
+                                <input type="text" id="idNumberInput" name="IdNumber"
+                                       class="form-control" placeholder="Enter student ID"
+                                       autocomplete="off" />
+                                <button type="button" class="btn btn-primary" id="lookupBtn">
+                                    <i class="bi bi-search"></i>
+                                </button>
+                            </div>
+                            <div id="lookupFeedback" class="form-text text-danger d-none">
+                                <i class="bi bi-exclamation-circle me-1"></i>Student not found.
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold small">Student Name</label>
+                            <input type="text" id="studentName" class="form-control form-control-sm bg-light"
+                                   readonly placeholder="Auto-populated" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold small">Remaining Sessions</label>
+                            <input type="text" id="remainingSessions" class="form-control form-control-sm bg-light"
+                                   readonly placeholder="Auto-populated" />
+                            <input type="hidden" id="studentIdHidden" name="StudentIdNumber" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold small">Purpose</label>
+                            <input type="text" name="Purpose" class="form-control form-control-sm"
+                                   placeholder="e.g. C Programming" required />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold small">Laboratory</label>
+                            <select name="Laboratory" class="form-select form-select-sm" required>
+                                <option value="" disabled selected>Select lab</option>
+                                <option value="Lab 524">Lab 524</option>
+                                <option value="Lab 526">Lab 526</option>
+                                <option value="Lab 528">Lab 528</option>
+                                <option value="Lab 542">Lab 542</option>
+                                <option value="Lab 544">Lab 544</option>
+                            </select>
+                        </div>
+
+                        <button type="submit" id="sitInBtn" class="btn btn-success btn-sm w-100" disabled>
+                            <i class="bi bi-box-arrow-in-right me-1"></i>Sit In
+                        </button>
+                    </form>
                 </div>
             </div>
 
-            <div class="table-responsive">
-                <table class="table table-sm align-middle">
-                    <thead>
-                        <tr>
-                            <th>ID Number</th>
-                            <th>Name</th>
-                            <th>Year Level</th>
-                            <th>Course</th>
-                            <th>Remaining Session</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                    @if (Model.Students.Any())
-                    {
-                        @foreach (var student in Model.Students)
-                        {
-                            <tr>
-                                <td>@student.IdNumber</td>
-                                <td>@student.FirstName @student.LastName</td>
-                                <td>@student.CourseLevel</td>
-                                <td>@student.Course</td>
-                                <td>@student.RemainingSessions</td>
-                                <td>
-                                    <button class="btn btn-primary btn-sm me-1" disabled>Edit</button>
-                                    <button class="btn btn-danger btn-sm" disabled>Delete</button>
-                                </td>
-                            </tr>
-                        }
-                    }
-                    else
-                    {
-                        <tr><td colspan="6" class="text-center text-muted py-3">No students available.</td></tr>
-                    }
-                    </tbody>
-                </table>
+            <!-- Active Sit-ins Table -->
+            <div class="col-lg-8">
+                <div class="module-card h-100">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <h5 class="section-title mb-0">
+                            <i class="bi bi-display me-2 text-success"></i>Current Sit-in
+                        </h5>
+                        <span class="badge bg-success rounded-pill">@Model.CurrentlySitIn active</span>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>#</th>
+                                    <th>ID Number</th>
+                                    <th>Name</th>
+                                    <th>Purpose</th>
+                                    <th>Lab</th>
+                                    <th>Time In</th>
+                                    <th>Status</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (Model.CurrentSitIns.Any())
+                                {
+                                    @foreach (var sit in Model.CurrentSitIns)
+                                    {
+                                        <tr>
+                                            <td class="text-muted small">@sit.Id</td>
+                                            <td>@sit.StudentIdNumber</td>
+                                            <td>@(sit.Student is null ? "-" : $"{sit.Student.FirstName} {sit.Student.LastName}")</td>
+                                            <td>@(string.IsNullOrWhiteSpace(sit.Purpose) ? "-" : sit.Purpose)</td>
+                                            <td>@sit.Laboratory</td>
+                                            <td class="text-nowrap">@sit.TimeIn.ToString("hh:mm tt")</td>
+                                            <td><span class="badge text-bg-success">Active</span></td>
+                                            <td>
+                                                <button type="button"
+                                                        class="btn btn-outline-danger btn-sm close-sitin-btn"
+                                                        data-sit-id="@sit.Id"
+                                                        data-student-name="@(sit.Student is null ? sit.StudentIdNumber : $"{sit.Student.FirstName} {sit.Student.LastName}")">
+                                                    <i class="bi bi-stop-circle me-1"></i>End
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                                else
+                                {
+                                    <tr>
+                                        <td colspan="8" class="text-center text-muted py-4">
+                                            <i class="bi bi-inbox fs-5 d-block mb-1"></i>No active sit-ins.
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </section>
 
-        <section id="current-sit-in" class="module-card mb-4">
+        <!-- ── Latest Announcements Preview ── -->
+        <section class="module-card mb-4">
             <div class="d-flex justify-content-between align-items-center mb-3">
-                <h3 class="mb-0">Current Sit in</h3>
-                <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#sitInModal">Open Sit In Form</button>
+                <h5 class="section-title mb-0">
+                    <i class="bi bi-megaphone me-2 text-warning"></i>Latest Announcements
+                </h5>
+                <a asp-controller="Admin" asp-action="Announcements"
+                   class="btn btn-outline-primary btn-sm">
+                    Manage <i class="bi bi-arrow-right ms-1"></i>
+                </a>
             </div>
-
-            <div class="table-responsive">
-                <table class="table table-sm align-middle">
-                    <thead>
-                        <tr>
-                            <th>Sit ID</th>
-                            <th>ID Number</th>
-                            <th>Name</th>
-                            <th>Purpose</th>
-                            <th>Sit Lab</th>
-                            <th>Session</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                    @if (Model.CurrentSitIns.Any())
-                    {
-                        @foreach (var sit in Model.CurrentSitIns)
-                        {
-                            <tr>
-                                <td>@sit.Id</td>
-                                <td>@sit.StudentIdNumber</td>
-                                <td>@(sit.Student is null ? "-" : $"{sit.Student.FirstName} {sit.Student.LastName}")</td>
-                                <td>@(string.IsNullOrWhiteSpace(sit.Purpose) ? "-" : sit.Purpose)</td>
-                                <td>@sit.Laboratory</td>
-                                <td>@sit.TimeIn.ToString("hh:mm tt")</td>
-                                <td><span class="badge text-bg-success">Active</span></td>
-                                <td><button class="btn btn-outline-secondary btn-sm" disabled>Close</button></td>
-                            </tr>
-                        }
-                    }
-                    else
-                    {
-                        <tr><td colspan="8" class="text-center text-muted py-3">No data available.</td></tr>
-                    }
-                    </tbody>
-                </table>
-            </div>
-        </section>
-
-        <section id="records" class="module-card mb-4">
-            <h3>Posted Announcement</h3>
             @if (Model.Announcements.Any())
             {
                 @foreach (var item in Model.Announcements)
                 {
                     <div class="announcement-row">
-                        <div class="announcement-meta">@item.PostedBy | @item.PostedAt.ToLocalTime().ToString("yyyy-MMM-dd")</div>
-                        <div><strong>@item.Title</strong></div>
-                        <div>@item.Message</div>
+                        <div class="announcement-meta">
+                            <i class="bi bi-person-circle me-1"></i>@item.PostedBy
+                            &nbsp;·&nbsp;
+                            @item.PostedAt.ToLocalTime().ToString("MMM dd, yyyy")
+                        </div>
+                        <div class="fw-semibold small">@item.Title</div>
+                        <div class="text-muted small">@item.Message</div>
                     </div>
                 }
             }
             else
             {
-                <div class="text-muted">No announcements posted yet.</div>
+                <div class="text-muted small py-2">
+                    <i class="bi bi-info-circle me-1"></i>No announcements posted yet.
+                    <a asp-controller="Admin" asp-action="Announcements" class="ms-2">Post one now</a>
+                </div>
             }
         </section>
 
-        <section id="reports" class="module-card mb-3">
-            <h4 class="mb-2">Sit-in Reports</h4>
-            <p class="text-muted mb-0">Module placeholder for reports.</p>
-        </section>
-
-        <section id="feedback" class="module-card mb-3">
-            <h4 class="mb-2">Feedback Reports</h4>
-            <p class="text-muted mb-0">Module placeholder for feedback.</p>
-        </section>
-
-        <section id="reservation" class="module-card">
-            <h4 class="mb-2">Reservation</h4>
-            <p class="text-muted mb-0">Module placeholder for reservations.</p>
-        </section>
     </main>
 
-    <div class="modal fade" id="sitInModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
+    <!-- ── Confirm End Sit-in Modal ── -->
+    <div class="modal fade" id="closeSitInModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
             <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Sit In Form</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <div class="modal-header border-0 pb-0">
+                    <h6 class="modal-title fw-bold">
+                        <i class="bi bi-stop-circle text-danger me-2"></i>End Sit-in Session
+                    </h6>
+                    <button type="button" class="btn-close btn-sm" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body">
-                    <div class="mb-2"><label class="form-label">ID Number</label><input class="form-control" readonly /></div>
-                    <div class="mb-2"><label class="form-label">Student Name</label><input class="form-control" readonly /></div>
-                    <div class="mb-2"><label class="form-label">Purpose</label><input class="form-control" placeholder="e.g. C Programming" /></div>
-                    <div class="mb-2"><label class="form-label">Lab</label><input class="form-control" placeholder="e.g. 524" /></div>
-                    <div class="mb-2"><label class="form-label">Remaining Session</label><input class="form-control" readonly /></div>
+                <div class="modal-body pt-2 small">
+                    End session for <strong id="closeSitInStudentName"></strong>?
+                    The current time will be recorded as the time-out.
                 </div>
-                <div class="modal-footer">
-                    <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button class="btn btn-primary" disabled>Sit In</button>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <form id="closeSitInForm" asp-controller="Admin" asp-action="EndSitIn" method="post" class="d-inline">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" id="closeSitInId" name="sitInId" />
+                        <button type="submit" class="btn btn-danger btn-sm">
+                            <i class="bi bi-stop-circle me-1"></i>End Session
+                        </button>
+                    </form>
                 </div>
             </div>
         </div>
@@ -215,73 +326,87 @@
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // ── Sit-in lookup ──
+        const lookupBtn = document.getElementById('lookupBtn');
+        const idInput   = document.getElementById('idNumberInput');
+        const nameField = document.getElementById('studentName');
+        const sessField = document.getElementById('remainingSessions');
+        const hiddenId  = document.getElementById('studentIdHidden');
+        const sitInBtn  = document.getElementById('sitInBtn');
+        const fbk       = document.getElementById('lookupFeedback');
+
+        function resetFields() {
+            nameField.value = sessField.value = hiddenId.value = '';
+            sitInBtn.disabled = true;
+            fbk.classList.add('d-none');
+        }
+
+        async function lookupStudent() {
+            const id = idInput.value.trim();
+            if (!id) return;
+            resetFields();
+            try {
+                const res  = await fetch(`/Admin/LookupStudent?idNumber=${encodeURIComponent(id)}`);
+                const data = await res.json();
+                if (data.found) {
+                    nameField.value   = data.name;
+                    sessField.value   = data.remainingSessions;
+                    hiddenId.value    = data.idNumber;
+                    sitInBtn.disabled = false;
+                } else {
+                    fbk.classList.remove('d-none');
+                }
+            } catch { fbk.classList.remove('d-none'); }
+        }
+
+        lookupBtn.addEventListener('click', lookupStudent);
+        idInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); lookupStudent(); } });
+        idInput.addEventListener('input', resetFields);
+
+        // ── End Sit-in modal ──
+        const closeSitInModal = new bootstrap.Modal(document.getElementById('closeSitInModal'));
+        document.querySelectorAll('.close-sitin-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.getElementById('closeSitInId').value = btn.dataset.sitId;
+                document.getElementById('closeSitInStudentName').textContent = btn.dataset.studentName;
+                closeSitInModal.show();
+            });
+        });
+    </script>
 </body>
 </html>
 
 <style>
-    .admin-page {
-        min-height: 100vh;
-        display: flex;
-        flex-direction: column;
-        background: #f5f7fb;
-    }
+    .admin-page  { min-height: 100vh; display: flex; flex-direction: column; background: #f0f4f8; }
+    .admin-main  { flex: 1; max-width: 1300px; margin: 0 auto; width: 100%; }
 
-    .admin-main {
-        flex: 1;
-        max-width: 1200px;
-    }
+    /* Navbar */
+    .admin-nav { background: #0a2a6e; box-shadow: 0 2px 8px rgba(0,0,0,.18); }
+    .admin-nav .navbar-brand { font-size: .95rem; color: #fff; }
+    .admin-nav .nav-link { color: rgba(255,255,255,.78); font-size: .82rem; padding: .4rem .65rem; border-radius: 6px; transition: background .15s; }
+    .admin-nav .nav-link:hover,
+    .admin-nav .nav-link.active { color: #fff; background: rgba(255,255,255,.13); }
 
-    .admin-nav {
-        background: #003d82;
-    }
+    /* Stat cards */
+    .stat-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 18px 20px; display: flex; align-items: center; gap: 16px; box-shadow: 0 1px 4px rgba(0,0,0,.05); }
+    .stat-icon  { width: 48px; height: 48px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .bg-primary-soft { background: #e8f0fe; }
+    .bg-success-soft  { background: #e6f4ea; }
+    .bg-warning-soft  { background: #fef9e7; }
+    .stat-label { font-size: .8rem; color: #64748b; }
+    .stat-value { font-size: 1.75rem; font-weight: 700; color: #0f172a; line-height: 1.1; }
 
-    .admin-nav .nav-link {
-        color: rgba(255,255,255,.88);
-        font-size: .82rem;
-    }
+    /* Module card */
+    .module-card  { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 22px; box-shadow: 0 1px 4px rgba(0,0,0,.05); }
+    .section-title { font-size: .93rem; font-weight: 600; color: #1e293b; }
 
-    .admin-nav .nav-link:hover {
-        color: #fff;
-    }
+    /* Table */
+    .table th { font-size: .75rem; text-transform: uppercase; letter-spacing: .04em; color: #64748b; font-weight: 600; white-space: nowrap; }
+    .table td { font-size: .85rem; }
 
-    .stat-card {
-        background: #fff;
-        border: 1px solid #dbe4f0;
-        border-radius: 10px;
-        padding: 16px;
-    }
-
-    .stat-label {
-        font-size: .85rem;
-        color: #64748b;
-    }
-
-    .stat-value {
-        font-size: 1.8rem;
-        font-weight: 700;
-        color: #0f172a;
-    }
-
-    .module-card {
-        background: #fff;
-        border: 1px solid #dbe4f0;
-        border-radius: 10px;
-        padding: 16px;
-    }
-
-    .announcement-row {
-        border-top: 1px solid #e5e7eb;
-        padding: 10px 0;
-    }
-
-    .announcement-row:first-of-type {
-        border-top: none;
-        padding-top: 0;
-    }
-
-    .announcement-meta {
-        font-size: .82rem;
-        color: #64748b;
-        margin-bottom: 2px;
-    }
+    /* Announcements */
+    .announcement-row { border-top: 1px solid #f1f5f9; padding: 10px 0; }
+    .announcement-row:first-of-type { border-top: none; padding-top: 0; }
+    .announcement-meta { font-size: .75rem; color: #94a3b8; margin-bottom: 2px; }
 </style>

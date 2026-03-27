@@ -53,6 +53,9 @@ namespace SignUpLogin.Controllers
 
             HttpContext.Session.SetInt32("UnreadAnnouncements", unreadCount);
 
+            var activeSitIn = await _context.SitInRecords
+                .FirstOrDefaultAsync(r => r.StudentIdNumber == idNumber && r.TimeOut == null);
+
             var vm = new StudentHomeViewModel
             {
                 UserName = $"{student.FirstName} {student.LastName}".Trim(),
@@ -64,7 +67,9 @@ namespace SignUpLogin.Controllers
                 RemainingSessions = student.RemainingSessions,
                 UnreadAnnouncementsCount = unreadCount,
                 Announcements = announcements,
-                RecentSitInHistory = recentHistory
+                RecentSitInHistory = recentHistory,
+                IsCurrentlyActive = activeSitIn != null,
+                ActiveSitIn = activeSitIn
             };
 
             HttpContext.Session.SetString("ProfileImagePath", student.ProfileImagePath ?? string.Empty);
