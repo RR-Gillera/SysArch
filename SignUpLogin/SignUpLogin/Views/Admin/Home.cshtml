@@ -178,7 +178,8 @@
 
                         <div class="mb-3">
                             <label class="form-label fw-semibold small">Laboratory</label>
-                            <select name="Laboratory" class="form-select form-select-sm" required>
+                            <select id="adminLabSelect" name="Laboratory" class="form-select form-select-sm" required
+                                    onchange="adminLoadPcs(this.value)">
                                 <option value="" disabled selected>Select lab</option>
                                 <option value="Lab 524">Lab 524</option>
                                 <option value="Lab 526">Lab 526</option>
@@ -186,6 +187,17 @@
                                 <option value="Lab 542">Lab 542</option>
                                 <option value="Lab 544">Lab 544</option>
                             </select>
+                        </div>
+
+                        <div class="mb-3" id="adminPcWrapper" style="display:none;">
+                            <label class="form-label fw-semibold small">
+                                Assign PC
+                                <span id="adminPcAvailBadge" class="badge bg-secondary ms-1" style="font-size:.7rem;"></span>
+                            </label>
+                            <select id="adminPcSelect" name="PcNumber" class="form-select form-select-sm" required>
+                                <option value="">— Select PC —</option>
+                            </select>
+                            <div class="form-text text-muted small" id="adminPcHint"></div>
                         </div>
 
                         <button type="submit" id="sitInBtn" class="btn btn-success btn-sm w-100" disabled>
@@ -213,6 +225,7 @@
                                     <th>Name</th>
                                     <th>Purpose</th>
                                     <th>Lab</th>
+                                    <th>PC</th>
                                     <th>Time In</th>
                                     <th>Status</th>
                                     <th>Action</th>
@@ -229,6 +242,7 @@
                                             <td>@(sit.Student is null ? "-" : $"{sit.Student.FirstName} {sit.Student.LastName}")</td>
                                             <td>@(string.IsNullOrWhiteSpace(sit.Purpose) ? "-" : sit.Purpose)</td>
                                             <td>@sit.Laboratory</td>
+                                            <td>@(string.IsNullOrWhiteSpace(sit.PcNumber) ? "-" : sit.PcNumber)</td>
                                             <td class="text-nowrap">@sit.TimeIn.ToString("hh:mm tt")</td>
                                             <td><span class="badge text-bg-success">Active</span></td>
                                             <td>
@@ -245,7 +259,7 @@
                                 else
                                 {
                                     <tr>
-                                        <td colspan="8" class="text-center text-muted py-4">
+                                        <td colspan="9" class="text-center text-muted py-4">
                                             <i class="bi bi-inbox fs-5 d-block mb-1"></i>No active sit-ins.
                                         </td>
                                     </tr>
@@ -327,6 +341,48 @@
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        // ── PC-per-lab occupied map (built from active sit-ins) ──
+        const occupiedPcs = @Html.Raw(
+                        System.Text.Json.JsonSerializer.Serialize(
+                                Model.CurrentSitIns
+                                        .Where(r => !string.IsNullOrWhiteSpace(r.PcNumber))
+                                        .GroupBy(r => r.Laboratory)
+                                        .ToDictionary(
+                                                g => g.Key,
+                                                g => g.Select(r => r.PcNumber).ToList()
+                                        )
+                        )
+                );
+
+        function adminLoadPcs(labName) {
+            const wrapper = document.getElementById('adminPcWrapper');
+            const select  = document.getElementById('adminPcSelect');
+            const hint    = document.getElementById('adminPcHint');
+            const badge   = document.getElementById('adminPcAvailBadge');
+
+            select.innerHTML = '<option value="">— Select PC —</option>';
+
+            if (!labName) { wrapper.style.display = 'none'; return; }
+
+            const used  = occupiedPcs[labName] || [];
+            let   avail = 0;
+
+            for (let i = 1; i <= 49; i++) {
+                const pcId = 'PC ' + String(i).padStart(2, '0');
+                if (!used.includes(pcId)) {
+                    const opt = document.createElement('option');
+                    opt.value = opt.textContent = pcId;
+                    select.appendChild(opt);
+                    avail++;
+                }
+            }
+
+            badge.textContent = avail + ' available';
+            badge.className   = avail > 0 ? 'badge bg-success ms-1' : 'badge bg-danger ms-1';
+            hint.textContent  = avail + ' of 49 PCs free in ' + labName + '. Occupied PCs are hidden.';
+            wrapper.style.display = 'block';
+        }
+
         // ── Sit-in lookup ──
         const lookupBtn = document.getElementById('lookupBtn');
         const idInput   = document.getElementById('idNumberInput');
@@ -347,7 +403,7 @@
             if (!id) return;
             resetFields();
             try {
-                const res  = await fetch(`/Admin/LookupStudent?idNumber=${encodeURIComponent(id)}`);
+                const res = await fetch('/Admin/LookupStudent?idNumber=' + encodeURIComponent(id));
                 const data = await res.json();
                 if (data.found) {
                     nameField.value   = data.name;
@@ -378,35 +434,134 @@
 </html>
 
 <style>
-    .admin-page  { min-height: 100vh; display: flex; flex-direction: column; background: #f0f4f8; }
-    .admin-main  { flex: 1; max-width: 1300px; margin: 0 auto; width: 100%; }
+    .admin-page {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        background: #f0f4f8;
+    }
+
+    .admin-main {
+        flex: 1;
+        max-width: 1300px;
+        margin: 0 auto;
+        width: 100%;
+    }
 
     /* Navbar */
-    .admin-nav { background: #0a2a6e; box-shadow: 0 2px 8px rgba(0,0,0,.18); }
-    .admin-nav .navbar-brand { font-size: .95rem; color: #fff; }
-    .admin-nav .nav-link { color: rgba(255,255,255,.78); font-size: .82rem; padding: .4rem .65rem; border-radius: 6px; transition: background .15s; }
-    .admin-nav .nav-link:hover,
-    .admin-nav .nav-link.active { color: #fff; background: rgba(255,255,255,.13); }
+    .admin-nav {
+        background: #0a2a6e;
+        box-shadow: 0 2px 8px rgba(0,0,0,.18);
+    }
+
+        .admin-nav .navbar-brand {
+            font-size: .95rem;
+            color: #fff;
+        }
+
+        .admin-nav .nav-link {
+            color: rgba(255,255,255,.78);
+            font-size: .82rem;
+            padding: .4rem .65rem;
+            border-radius: 6px;
+            transition: background .15s;
+        }
+
+            .admin-nav .nav-link:hover,
+            .admin-nav .nav-link.active {
+                color: #fff;
+                background: rgba(255,255,255,.13);
+            }
 
     /* Stat cards */
-    .stat-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 18px 20px; display: flex; align-items: center; gap: 16px; box-shadow: 0 1px 4px rgba(0,0,0,.05); }
-    .stat-icon  { width: 48px; height: 48px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-    .bg-primary-soft { background: #e8f0fe; }
-    .bg-success-soft  { background: #e6f4ea; }
-    .bg-warning-soft  { background: #fef9e7; }
-    .stat-label { font-size: .8rem; color: #64748b; }
-    .stat-value { font-size: 1.75rem; font-weight: 700; color: #0f172a; line-height: 1.1; }
+    .stat-card {
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 18px 20px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        box-shadow: 0 1px 4px rgba(0,0,0,.05);
+    }
+
+    .stat-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .bg-primary-soft {
+        background: #e8f0fe;
+    }
+
+    .bg-success-soft {
+        background: #e6f4ea;
+    }
+
+    .bg-warning-soft {
+        background: #fef9e7;
+    }
+
+    .stat-label {
+        font-size: .8rem;
+        color: #64748b;
+    }
+
+    .stat-value {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: #0f172a;
+        line-height: 1.1;
+    }
 
     /* Module card */
-    .module-card  { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 22px; box-shadow: 0 1px 4px rgba(0,0,0,.05); }
-    .section-title { font-size: .93rem; font-weight: 600; color: #1e293b; }
+    .module-card {
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 22px;
+        box-shadow: 0 1px 4px rgba(0,0,0,.05);
+    }
+
+    .section-title {
+        font-size: .93rem;
+        font-weight: 600;
+        color: #1e293b;
+    }
 
     /* Table */
-    .table th { font-size: .75rem; text-transform: uppercase; letter-spacing: .04em; color: #64748b; font-weight: 600; white-space: nowrap; }
-    .table td { font-size: .85rem; }
+    .table th {
+        font-size: .75rem;
+        text-transform: uppercase;
+        letter-spacing: .04em;
+        color: #64748b;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .table td {
+        font-size: .85rem;
+    }
 
     /* Announcements */
-    .announcement-row { border-top: 1px solid #f1f5f9; padding: 10px 0; }
-    .announcement-row:first-of-type { border-top: none; padding-top: 0; }
-    .announcement-meta { font-size: .75rem; color: #94a3b8; margin-bottom: 2px; }
+    .announcement-row {
+        border-top: 1px solid #f1f5f9;
+        padding: 10px 0;
+    }
+
+        .announcement-row:first-of-type {
+            border-top: none;
+            padding-top: 0;
+        }
+
+    .announcement-meta {
+        font-size: .75rem;
+        color: #94a3b8;
+        margin-bottom: 2px;
+    }
 </style>

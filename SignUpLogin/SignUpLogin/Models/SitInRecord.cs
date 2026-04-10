@@ -19,6 +19,9 @@ namespace SignUpLogin.Models
         [StringLength(50)]
         public string Laboratory { get; set; } = string.Empty;
 
+        [StringLength(10)]
+        public string? PcNumber { get; set; }
+
         public DateTime TimeIn { get; set; }
 
         public DateTime? TimeOut { get; set; }

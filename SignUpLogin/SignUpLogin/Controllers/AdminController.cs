@@ -156,7 +156,7 @@ namespace SignUpLogin.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> SitIn(string StudentIdNumber, string Purpose, string Laboratory)
+        public async Task<IActionResult> SitIn(string StudentIdNumber, string Purpose, string Laboratory, string? PcNumber)
         {
             if (!IsAdmin()) return RedirectToAction("Index", "Login");
 
@@ -186,11 +186,27 @@ namespace SignUpLogin.Controllers
                 return RedirectToAction(nameof(Home));
             }
 
+            // Block if chosen PC is already taken
+            if (!string.IsNullOrWhiteSpace(PcNumber))
+            {
+                var pcTaken = await _context.SitInRecords
+                    .AnyAsync(r => r.Laboratory == Laboratory
+                                && r.PcNumber == PcNumber
+                                && r.TimeOut == null);
+
+                if (pcTaken)
+                {
+                    TempData["Error"] = $"{PcNumber} in {Laboratory} is already occupied. Please choose another.";
+                    return RedirectToAction(nameof(Home));
+                }
+            }
+
             var record = new SitInRecord
             {
                 StudentIdNumber = StudentIdNumber,
                 Purpose = Purpose,
                 Laboratory = Laboratory,
+                PcNumber = string.IsNullOrWhiteSpace(PcNumber) ? null : PcNumber,
                 TimeIn = DateTime.Now
             };
 

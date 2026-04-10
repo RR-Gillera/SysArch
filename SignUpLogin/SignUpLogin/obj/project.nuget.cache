@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "I9DGNo4yWuU=",
+  "dgSpecHash": "JhGTCl0KqA4=",
   "success": true,
-  "projectFilePath": "Z:\\TT518\\GILLERARU\\SysArch\\SignUpLogin\\SignUpLogin\\SignUpLogin.csproj",
+  "projectFilePath": "Z:\\TT518\\SysArch\\SignUpLogin\\SignUpLogin\\SignUpLogin.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\TT518\\.nuget\\packages\\bcrypt.net-next\\4.1.0\\bcrypt.net-next.4.1.0.nupkg.sha512",
     "C:\\Users\\TT518\\.nuget\\packages\\bouncycastle.cryptography\\2.6.2\\bouncycastle.cryptography.2.6.2.nupkg.sha512",
@@ -129,9 +129,9 @@
       "code": "NU1903",
       "level": "Warning",
       "message": "Package 'Microsoft.Build' 17.10.4 has a known high severity vulnerability, https://github.com/advisories/GHSA-w3q9-fxm7-j8fq",
-      "projectPath": "Z:\\TT518\\GILLERARU\\SysArch\\SignUpLogin\\SignUpLogin\\SignUpLogin.csproj",
+      "projectPath": "Z:\\TT518\\SysArch\\SignUpLogin\\SignUpLogin\\SignUpLogin.csproj",
       "warningLevel": 1,
-      "filePath": "Z:\\TT518\\GILLERARU\\SysArch\\SignUpLogin\\SignUpLogin\\SignUpLogin.csproj",
+      "filePath": "Z:\\TT518\\SysArch\\SignUpLogin\\SignUpLogin\\SignUpLogin.csproj",
       "libraryId": "Microsoft.Build",
       "targetGraphs": [
         "net10.0"

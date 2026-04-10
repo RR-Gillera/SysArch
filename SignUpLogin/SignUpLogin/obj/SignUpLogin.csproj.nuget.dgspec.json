@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "Z:\\TT518\\GILLERARU\\SysArch\\SignUpLogin\\SignUpLogin\\SignUpLogin.csproj": {}
+    "Z:\\TT518\\SysArch\\SignUpLogin\\SignUpLogin\\SignUpLogin.csproj": {}
   },
   "projects": {
-    "Z:\\TT518\\GILLERARU\\SysArch\\SignUpLogin\\SignUpLogin\\SignUpLogin.csproj": {
+    "Z:\\TT518\\SysArch\\SignUpLogin\\SignUpLogin\\SignUpLogin.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "Z:\\TT518\\GILLERARU\\SysArch\\SignUpLogin\\SignUpLogin\\SignUpLogin.csproj",
+        "projectUniqueName": "Z:\\TT518\\SysArch\\SignUpLogin\\SignUpLogin\\SignUpLogin.csproj",
         "projectName": "SignUpLogin",
-        "projectPath": "Z:\\TT518\\GILLERARU\\SysArch\\SignUpLogin\\SignUpLogin\\SignUpLogin.csproj",
+        "projectPath": "Z:\\TT518\\SysArch\\SignUpLogin\\SignUpLogin\\SignUpLogin.csproj",
         "packagesPath": "C:\\Users\\TT518\\.nuget\\packages\\",
-        "outputPath": "Z:\\TT518\\GILLERARU\\SysArch\\SignUpLogin\\SignUpLogin\\obj\\",
+        "outputPath": "Z:\\TT518\\SysArch\\SignUpLogin\\SignUpLogin\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"

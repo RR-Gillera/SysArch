@@ -82,12 +82,14 @@
                     @foreach (var lab in labs)
                     {
                         var isOccupied = activeLabs.Contains("Lab " + lab) || activeLabs.Contains(lab);
-                        <div class="lab-card @(isOccupied ? "lab-occupied" : "lab-available")">
+                        <div class="lab-card @(isOccupied ? "lab-occupied" : "lab-available") lab-clickable"
+                             onclick="openLabModal('Lab @lab')">
                             <div class="lab-number">Lab @lab</div>
                             <div class="lab-status-row">
                                 <span class="lab-dot-sm"></span>
                                 <span class="lab-status-text">@(isOccupied ? "Occupied" : "Available")</span>
                             </div>
+                            <div class="lab-click-hint">View PCs</div>
                         </div>
                     }
                 </div>
@@ -171,9 +173,66 @@
 
     @await Html.PartialAsync("_Footer")
 
+    <!-- PC Picker Modal -->
+    <div class="modal fade" id="pcModal" tabindex="-1" aria-labelledby="pcModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header" style="border-bottom:1px solid #e5e7eb;">
+                    <div>
+                        <h5 class="modal-title fw-bold" id="pcModalLabel" style="color:#0b4a94;">
+                            <span id="modalLabName">Lab 524</span> &mdash; PC Availability
+                        </h5>
+                        <p class="mb-0" style="font-size:0.8rem;color:#64748b;">
+                            <span class="pc-legend pc-legend-free"></span> Available &nbsp;
+                            <span class="pc-legend pc-legend-used"></span> In Use
+                        </p>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="pcGrid" class="pc-grid"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-</body>
+    <script>
+        // PCs occupied per lab — comes from server; we embed as JSON
+        var occupiedPcs = @Html.Raw(
+                        System.Text.Json.JsonSerializer.Serialize(
+                                Model.RecentSitInHistory
+                                        .Where(r => r.TimeOut == null && r.PcNumber != null)
+                                        .GroupBy(r => r.Laboratory)
+                                        .ToDictionary(
+                                                g => g.Key,
+                                                g => g.Select(r => r.PcNumber).ToList()
+                                        )
+                        )
+                );
+
+        function openLabModal(labName) {
+            document.getElementById('modalLabName').textContent = labName;
+            var used = occupiedPcs[labName] || [];
+            var grid = document.getElementById('pcGrid');
+            grid.innerHTML = '';
+            for (var i = 1; i <= 49; i++) {
+                var pcId = 'PC ' + String(i).padStart(2, '0');
+                var isUsed = used.indexOf(pcId) !== -1;
+                var card = document.createElement('div');
+                card.className = 'pc-card ' + (isUsed ? 'pc-used' : 'pc-free');
+                card.innerHTML =
+                    '<div class="pc-icon">&#128187;</div>' +
+                    '<div class="pc-label">' + pcId + '</div>' +
+                    '<div class="pc-status-text">' + (isUsed ? 'In Use' : 'Available') + '</div>';
+                grid.appendChild(card);
+            }
+            var modal = new bootstrap.Modal(document.getElementById('pcModal'));
+            modal.show();
+        }
+    </script>
+    </body>
 </html>
 
 <style>
@@ -397,6 +456,91 @@
         .lab-grid {
             grid-template-columns: repeat(2, 1fr);
         }
+    }
+
+    .lab-clickable {
+        cursor: pointer;
+        transition: transform .15s, box-shadow .15s;
+    }
+
+        .lab-clickable:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 18px rgba(11,74,148,0.13);
+        }
+
+    .lab-click-hint {
+        font-size: 0.72rem;
+        color: #94a3b8;
+        margin-top: 6px;
+        font-style: italic;
+    }
+
+    /* PC Grid inside modal */
+    .pc-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+        gap: 10px;
+    }
+
+    .pc-card {
+        border-radius: 8px;
+        padding: 12px 6px 8px;
+        text-align: center;
+        border: 1.5px solid;
+        user-select: none;
+    }
+
+    .pc-free {
+        background: #f0fdf4;
+        border-color: #bbf7d0;
+    }
+
+    .pc-used {
+        background: #fef2f2;
+        border-color: #fecaca;
+        opacity: 0.75;
+    }
+
+    .pc-icon {
+        font-size: 1.4rem;
+        margin-bottom: 4px;
+    }
+
+    .pc-label {
+        font-size: 0.78rem;
+        font-weight: 700;
+        color: #1e293b;
+    }
+
+    .pc-status-text {
+        font-size: 0.7rem;
+        font-weight: 600;
+        margin-top: 3px;
+    }
+
+    .pc-free .pc-status-text {
+        color: #15803d;
+    }
+
+    .pc-used .pc-status-text {
+        color: #b91c1c;
+    }
+
+    .pc-legend {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        margin-right: 3px;
+        vertical-align: middle;
+    }
+
+    .pc-legend-free {
+        background: #22c55e;
+    }
+
+    .pc-legend-used {
+        background: #ef4444;
     }
 
     footer {
