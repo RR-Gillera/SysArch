@@ -1,0 +1,6 @@
+<footer class="border-top"
+        style="background-color:#003d82;color:white;text-align:center;padding:20px 0;">
+    <div class="container">
+        &copy; 2026 College of Computer Studies
+    </div>
+</footer>
