@@ -30,6 +30,10 @@ build_property._RazorSourceGeneratorDebug =
 build_property.EffectiveAnalysisLevelStyle = 10.0
 build_property.EnableCodeStyleSeverity = 
 
+[Z:/TT518/SysArch/SignUpLogin/SignUpLogin/Views/Admin/Analytics.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWRtaW5cQW5hbHl0aWNzLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
 [Z:/TT518/SysArch/SignUpLogin/SignUpLogin/Views/Admin/Announcements.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWRtaW5cQW5ub3VuY2VtZW50cy5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
@@ -52,10 +56,6 @@ build_metadata.AdditionalFiles.CssScope =
 
 [Z:/TT518/SysArch/SignUpLogin/SignUpLogin/Views/Admin/Students.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWRtaW5cU3R1ZGVudHMuY3NodG1s
-build_metadata.AdditionalFiles.CssScope = 
-
-[Z:/TT518/SysArch/SignUpLogin/SignUpLogin/Views/Home/Dashboard.cshtml]
-build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9tZVxEYXNoYm9hcmQuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
 [Z:/TT518/SysArch/SignUpLogin/SignUpLogin/Views/Home/Index.cshtml]

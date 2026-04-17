@@ -12,6 +12,9 @@ namespace SignUpLogin.Data
         public DbSet<Signup> Signups { get; set; } = null!;
         public DbSet<SitInRecord> SitInRecords { get; set; } = null!;
         public DbSet<Announcement> Announcements { get; set; } = null!;
+        public DbSet<LabStatus> LabStatuses { get; set; }
+        public DbSet<Feedback> Feedbacks { get; set; }
+        public DbSet<StudentPoints> StudentPoints { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

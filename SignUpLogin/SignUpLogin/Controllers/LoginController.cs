@@ -68,17 +68,22 @@ namespace SignUpLogin.Controllers
             HttpContext.Session.SetString("Role", user.Role);
             HttpContext.Session.SetString("ProfileImagePath", user.ProfileImagePath ?? string.Empty);
 
-            TempData["Success"] = "Login successful!";
+            TempData["LoginSuccess"] = $"Welcome back, {user.FirstName}!";
 
             if (user.Role == "Admin")
+            {
                 return RedirectToAction("Home", "Admin");
-
-            return RedirectToAction("Index", "Home");
+            }
+            else
+            {
+                return RedirectToAction("Index", "Home");
+            }
         }
 
         public IActionResult Logout()
         {
             HttpContext.Session.Clear();
+            TempData["LoggedOut"] = "You have been logged out successfully.";
             return RedirectToAction("Index");
         }
     }

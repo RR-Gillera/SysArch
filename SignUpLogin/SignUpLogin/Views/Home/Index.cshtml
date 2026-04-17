@@ -13,6 +13,7 @@
     <title>@ViewData["Title"]</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
 </head>
 <body>
     @await Html.PartialAsync("_UserNavBar")
@@ -69,27 +70,44 @@
                 </div>
             </div>
 
+            <!-- ── Laboratory Availability ── -->
             <div class="panel-card mb-4">
-                <h5 class="panel-title">Laboratory Availability</h5>
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <h5 class="panel-title mb-0">Laboratory Availability</h5>
+                    <span class="text-muted small">Click a lab to view PC availability</span>
+                </div>
+
+                <!-- Status legend -->
+                <div class="d-flex flex-wrap gap-3 mb-3">
+                    <span class="lab-legend lab-legend-available"><span class="lab-legend-dot"></span>Available</span>
+                    <span class="lab-legend lab-legend-class"><span class="lab-legend-dot"></span>Class is in session</span>
+                    <span class="lab-legend lab-legend-maintenance"><span class="lab-legend-dot"></span>Maintenance</span>
+                    <span class="lab-legend lab-legend-unavailable"><span class="lab-legend-dot"></span>Unavailable</span>
+                </div>
+
                 <div class="lab-grid">
-                    @{
-                        var labs = new[] { "524", "526", "528", "542", "544" };
-                        var activeLabs = Model.RecentSitInHistory
-                        .Where(r => r.TimeOut == null)
-                        .Select(r => r.Laboratory)
-                        .ToHashSet(StringComparer.OrdinalIgnoreCase);
-                    }
-                    @foreach (var lab in labs)
+                    @foreach (var lab in Model.LabStatuses)
                     {
-                        var isOccupied = activeLabs.Contains("Lab " + lab) || activeLabs.Contains(lab);
-                        <div class="lab-card @(isOccupied ? "lab-occupied" : "lab-available") lab-clickable"
-                             onclick="openLabModal('Lab @lab')">
-                            <div class="lab-number">Lab @lab</div>
+                        var statusLower = lab.Status.ToLower();
+                        var cardClass = statusLower switch
+                        {
+                            "class is in session" => "lab-class",
+                            "maintenance"         => "lab-maintenance",
+                            "unavailable"         => "lab-unavailable",
+                            _                     => "lab-available"
+                        };
+                        <div class="lab-card @cardClass lab-clickable"
+                             onclick="openLabModal('@lab.LabName', '@lab.Status', '@Html.Raw((lab.Remarks ?? "").Replace("'", "\\'"))')">
+                            <div class="lab-number">@lab.LabName</div>
                             <div class="lab-status-row">
                                 <span class="lab-dot-sm"></span>
-                                <span class="lab-status-text">@(isOccupied ? "Occupied" : "Available")</span>
+                                <span class="lab-status-text">@lab.Status</span>
                             </div>
-                            <div class="lab-click-hint">View PCs</div>
+                            @if (!string.IsNullOrWhiteSpace(lab.Remarks))
+                            {
+                                <div class="lab-remarks">@lab.Remarks</div>
+                            }
+                            <div class="lab-click-hint"><i class="bi bi-display me-1"></i>View PCs</div>
                         </div>
                     }
                 </div>
@@ -173,23 +191,46 @@
 
     @await Html.PartialAsync("_Footer")
 
-    <!-- PC Picker Modal -->
+    @if (TempData["LoginSuccess"] != null)
+    {
+        <div class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,0.5)" id="loginSuccessModal">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content text-center p-4">
+                    <div class="mb-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" fill="#28a745" viewBox="0 0 16 16">
+                            <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z" />
+                        </svg>
+                    </div>
+                    <h5 class="fw-bold">Login Successful!</h5>
+                    <p class="text-muted small">@TempData["LoginSuccess"]</p>
+                    <button class="btn btn-success mt-2 px-4" onclick="this.closest('.modal').remove()">Continue</button>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- ── Lab PC Modal ── -->
     <div class="modal fade" id="pcModal" tabindex="-1" aria-labelledby="pcModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
             <div class="modal-content">
                 <div class="modal-header" style="border-bottom:1px solid #e5e7eb;">
                     <div>
                         <h5 class="modal-title fw-bold" id="pcModalLabel" style="color:#0b4a94;">
-                            <span id="modalLabName">Lab 524</span> &mdash; PC Availability
+                            <i class="bi bi-pc-display me-2"></i><span id="modalLabName">Lab</span> &mdash; PC Availability
                         </h5>
-                        <p class="mb-0" style="font-size:0.8rem;color:#64748b;">
-                            <span class="pc-legend pc-legend-free"></span> Available &nbsp;
-                            <span class="pc-legend pc-legend-used"></span> In Use
+                        <p class="mb-1 mt-1" id="modalLabStatusRow" style="font-size:0.82rem;"></p>
+                        <p class="mb-0" style="font-size:0.78rem;color:#64748b;">
+                            <span class="pc-legend pc-legend-free"></span>&nbsp;Free &nbsp;&nbsp;
+                            <span class="pc-legend pc-legend-used"></span>&nbsp;In Use
                         </p>
                     </div>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
+                    <div id="pcLoadingSpinner" class="text-center py-4 d-none">
+                        <div class="spinner-border text-primary" role="status"></div>
+                        <p class="text-muted small mt-2">Loading PC availability…</p>
+                    </div>
                     <div id="pcGrid" class="pc-grid"></div>
                 </div>
             </div>
@@ -199,28 +240,52 @@
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // PCs occupied per lab � comes from server; we embed as JSON
-        var occupiedPcs = @Html.Raw(
-                        System.Text.Json.JsonSerializer.Serialize(
-                                Model.RecentSitInHistory
-                                        .Where(r => r.TimeOut == null && r.PcNumber != null)
-                                        .GroupBy(r => r.Laboratory)
-                                        .ToDictionary(
-                                                g => g.Key,
-                                                g => g.Select(r => r.PcNumber).ToList()
-                                        )
-                        )
-                );
+        const pcModal = new bootstrap.Modal(document.getElementById('pcModal'));
 
-        function openLabModal(labName) {
+        // Status → badge style mapping (mirrors admin colour scheme)
+        const statusBadgeMap = {
+            'available':           { cls: 'badge-available',     label: 'Available' },
+            'class is in session': { cls: 'badge-class',         label: 'Class is in session' },
+            'maintenance':         { cls: 'badge-maintenance',   label: 'Maintenance' },
+            'unavailable':         { cls: 'badge-unavailable',   label: 'Unavailable' }
+        };
+
+        async function openLabModal(labName, labStatus, labRemarks) {
+            // Set title
             document.getElementById('modalLabName').textContent = labName;
-            var used = occupiedPcs[labName] || [];
-            var grid = document.getElementById('pcGrid');
+
+            // Set status badge
+            const statusRow = document.getElementById('modalLabStatusRow');
+            const key = (labStatus || '').toLowerCase();
+            const badge = statusBadgeMap[key] || { cls: 'badge-available', label: labStatus };
+            let remarkHtml = labRemarks ? `<span class="text-muted ms-2" style="font-size:.78rem;">${labRemarks}</span>` : '';
+            statusRow.innerHTML = `<span class="lab-status-badge ${badge.cls}">${badge.label}</span>${remarkHtml}`;
+
+            // Clear and show spinner
+            const grid = document.getElementById('pcGrid');
+            const spinner = document.getElementById('pcLoadingSpinner');
             grid.innerHTML = '';
-            for (var i = 1; i <= 49; i++) {
-                var pcId = 'PC ' + String(i).padStart(2, '0');
-                var isUsed = used.indexOf(pcId) !== -1;
-                var card = document.createElement('div');
+            spinner.classList.remove('d-none');
+
+            pcModal.show();
+
+            // Fetch live occupied PCs from server
+            let occupiedPcs = [];
+            try {
+                const res  = await fetch(`/Home/GetOccupiedPcs?laboratory=${encodeURIComponent(labName)}`);
+                const data = await res.json();
+                occupiedPcs = data.occupiedPcs ?? [];
+            } catch (e) {
+                console.warn('Could not fetch occupied PCs:', e);
+            }
+
+            spinner.classList.add('d-none');
+
+            // Build PC grid (PC-1 … PC-49, matching admin format)
+            for (let i = 1; i <= 49; i++) {
+                const pcId   = 'PC-' + i;
+                const isUsed = occupiedPcs.includes(pcId);
+                const card   = document.createElement('div');
                 card.className = 'pc-card ' + (isUsed ? 'pc-used' : 'pc-free');
                 card.innerHTML =
                     '<div class="pc-icon">&#128187;</div>' +
@@ -228,8 +293,6 @@
                     '<div class="pc-status-text">' + (isUsed ? 'In Use' : 'Available') + '</div>';
                 grid.appendChild(card);
             }
-            var modal = new bootstrap.Modal(document.getElementById('pcModal'));
-            modal.show();
         }
     </script>
     </body>
@@ -360,7 +423,35 @@
         margin-bottom: 14px;
     }
 
-    /* Lab availability */
+    /* ── Lab status legend ── */
+    .lab-legend {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: .78rem;
+        font-weight: 600;
+    }
+
+    .lab-legend-dot {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        flex-shrink: 0;
+    }
+
+    .lab-legend-available .lab-legend-dot { background: #22c55e; }
+    .lab-legend-available { color: #15803d; }
+
+    .lab-legend-class .lab-legend-dot { background: #3b82f6; }
+    .lab-legend-class { color: #1d4ed8; }
+
+    .lab-legend-maintenance .lab-legend-dot { background: #f59e0b; }
+    .lab-legend-maintenance { color: #b45309; }
+
+    .lab-legend-unavailable .lab-legend-dot { background: #ef4444; }
+    .lab-legend-unavailable { color: #b91c1c; }
+
+    /* ── Lab grid ── */
     .lab-grid {
         display: grid;
         grid-template-columns: repeat(5, 1fr);
@@ -372,17 +463,40 @@
         padding: 16px 14px;
         text-align: center;
         border: 1.5px solid;
+        position: relative;
     }
 
+    /* Available — green */
     .lab-available {
         background: #f0fdf4;
         border-color: #bbf7d0;
     }
+    .lab-available .lab-dot-sm { background: #22c55e; }
+    .lab-available .lab-status-text { color: #15803d; }
 
-    .lab-occupied {
+    /* Class is in session — blue */
+    .lab-class {
+        background: #eff6ff;
+        border-color: #bfdbfe;
+    }
+    .lab-class .lab-dot-sm { background: #3b82f6; }
+    .lab-class .lab-status-text { color: #1d4ed8; }
+
+    /* Maintenance — amber */
+    .lab-maintenance {
+        background: #fffbeb;
+        border-color: #fde68a;
+    }
+    .lab-maintenance .lab-dot-sm { background: #f59e0b; }
+    .lab-maintenance .lab-status-text { color: #b45309; }
+
+    /* Unavailable — red */
+    .lab-unavailable {
         background: #fef2f2;
         border-color: #fecaca;
     }
+    .lab-unavailable .lab-dot-sm { background: #ef4444; }
+    .lab-unavailable .lab-status-text { color: #b91c1c; }
 
     .lab-number {
         font-size: 1rem;
@@ -405,57 +519,16 @@
         flex-shrink: 0;
     }
 
-    .lab-available .lab-dot-sm {
-        background: #22c55e;
-    }
-
-    .lab-occupied .lab-dot-sm {
-        background: #ef4444;
-    }
-
     .lab-status-text {
         font-size: 0.82rem;
         font-weight: 600;
     }
 
-    .lab-available .lab-status-text {
-        color: #15803d;
-    }
-
-    .lab-occupied .lab-status-text {
-        color: #b91c1c;
-    }
-
-    /* Announcements & history */
-    .announcement-item {
-        padding-bottom: 10px;
-        margin-bottom: 10px;
-        border-bottom: 1px solid #e5e7eb;
-    }
-
-    .announcement-meta {
-        font-weight: 600;
-        margin-bottom: 4px;
-    }
-
-    .empty-state {
-        border: 1px dashed #cbd5e1;
-        background: #f8fafc;
-        border-radius: 10px;
-        padding: 16px;
-        color: #475569;
-    }
-
-    @@media (max-width: 768px) {
-        .lab-grid {
-            grid-template-columns: repeat(3, 1fr);
-        }
-    }
-
-    @@media (max-width: 480px) {
-        .lab-grid {
-            grid-template-columns: repeat(2, 1fr);
-        }
+    .lab-remarks {
+        font-size: 0.72rem;
+        color: #64748b;
+        margin-top: 5px;
+        font-style: italic;
     }
 
     .lab-clickable {
@@ -475,7 +548,22 @@
         font-style: italic;
     }
 
-    /* PC Grid inside modal */
+    /* ── Modal status badge ── */
+    .lab-status-badge {
+        display: inline-block;
+        padding: 2px 10px;
+        border-radius: 999px;
+        font-size: .78rem;
+        font-weight: 700;
+        border: 1.5px solid;
+    }
+
+    .badge-available    { background: #f0fdf4; border-color: #bbf7d0; color: #15803d; }
+    .badge-class        { background: #eff6ff; border-color: #bfdbfe; color: #1d4ed8; }
+    .badge-maintenance  { background: #fffbeb; border-color: #fde68a; color: #b45309; }
+    .badge-unavailable  { background: #fef2f2; border-color: #fecaca; color: #b91c1c; }
+
+    /* ── PC Grid in modal ── */
     .pc-grid {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
@@ -518,13 +606,8 @@
         margin-top: 3px;
     }
 
-    .pc-free .pc-status-text {
-        color: #15803d;
-    }
-
-    .pc-used .pc-status-text {
-        color: #b91c1c;
-    }
+    .pc-free .pc-status-text { color: #15803d; }
+    .pc-used .pc-status-text { color: #b91c1c; }
 
     .pc-legend {
         display: inline-block;
@@ -535,12 +618,39 @@
         vertical-align: middle;
     }
 
-    .pc-legend-free {
-        background: #22c55e;
+    .pc-legend-free { background: #22c55e; }
+    .pc-legend-used { background: #ef4444; }
+
+    /* ── Announcements & history ── */
+    .announcement-item {
+        padding-bottom: 10px;
+        margin-bottom: 10px;
+        border-bottom: 1px solid #e5e7eb;
     }
 
-    .pc-legend-used {
-        background: #ef4444;
+    .announcement-meta {
+        font-weight: 600;
+        margin-bottom: 4px;
+    }
+
+    .empty-state {
+        border: 1px dashed #cbd5e1;
+        background: #f8fafc;
+        border-radius: 10px;
+        padding: 16px;
+        color: #475569;
+    }
+
+    @@media (max-width: 768px) {
+        .lab-grid {
+            grid-template-columns: repeat(3, 1fr);
+        }
+    }
+
+    @@media (max-width: 480px) {
+        .lab-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
     }
 
     footer {

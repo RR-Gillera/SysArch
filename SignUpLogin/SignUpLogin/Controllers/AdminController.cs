@@ -9,14 +9,16 @@ namespace SignUpLogin.Controllers
     public class AdminController : Controller
     {
         private readonly ApplicationDbContext _context;
-        private const int DefaultSessions = 30; // adjust as needed
+        private const int DefaultSessions = 30;
+
+        private static readonly string[] LabNames = { "Lab 524", "Lab 526", "Lab 528", "Lab 542", "Lab 544" };
 
         public AdminController(ApplicationDbContext context)
         {
             _context = context;
         }
 
-        // ?? Dashboard ??????????????????????????????????????????????????????????
+        // ── Dashboard ─────────────────────────────────────────────────────────
 
         public async Task<IActionResult> Home()
         {
@@ -34,20 +36,66 @@ namespace SignUpLogin.Controllers
                 .Take(5)
                 .ToListAsync();
 
+            // Ensure every lab has a row; create missing ones as "Available"
+            var labStatuses = await _context.LabStatuses.ToListAsync();
+            bool anyAdded = false;
+            foreach (var name in LabNames)
+            {
+                if (!labStatuses.Any(l => l.LabName == name))
+                {
+                    var newLab = new LabStatus { LabName = name, Status = "Available", UpdatedAt = DateTime.Now };
+                    _context.LabStatuses.Add(newLab);
+                    labStatuses.Add(newLab);
+                    anyAdded = true;
+                }
+            }
+            if (anyAdded) await _context.SaveChangesAsync();
+
+            // Keep them in the defined order
+            var orderedLabStatuses = LabNames
+                .Select(n => labStatuses.First(l => l.LabName == n))
+                .ToList();
+
             var vm = new AdminDashboardViewModel
             {
-                UserName = HttpContext.Session.GetString("UserName") ?? "Admin",
+                UserName        = HttpContext.Session.GetString("UserName") ?? "Admin",
                 StudentsRegistered = await _context.Signups.CountAsync(s => s.Role == "Student"),
-                CurrentlySitIn = currentSitIns.Count,
+                CurrentlySitIn  = currentSitIns.Count,
                 TotalSitInRecords = await _context.SitInRecords.CountAsync(),
-                CurrentSitIns = currentSitIns,
-                Announcements = announcements
+                CurrentSitIns   = currentSitIns,
+                Announcements   = announcements,
+                LabStatuses     = orderedLabStatuses
             };
 
             return View(vm);
         }
 
-        // ?? Students page ??????????????????????????????????????????????????????
+        // ── Lab Status ────────────────────────────────────────────────────────
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UpdateLabStatus(string LabName, string Status, string? Remarks)
+        {
+            if (!IsAdmin()) return RedirectToAction("Index", "Login");
+
+            var lab = await _context.LabStatuses.FirstOrDefaultAsync(l => l.LabName == LabName);
+            if (lab == null)
+            {
+                lab = new LabStatus { LabName = LabName };
+                _context.LabStatuses.Add(lab);
+            }
+
+            lab.Status    = Status?.Trim() ?? "Available";
+            lab.Remarks   = string.IsNullOrWhiteSpace(Remarks) ? null : Remarks.Trim();
+            lab.UpdatedAt = DateTime.Now;
+
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] = $"{LabName} status updated to \"{lab.Status}\".";
+            return RedirectToAction(nameof(Home));
+        }
+
+        // ── Students ──────────────────────────────────────────────────────────
 
         public async Task<IActionResult> Students()
         {
@@ -77,10 +125,10 @@ namespace SignUpLogin.Controllers
                 return RedirectToAction(nameof(Students));
             }
 
-            student.FirstName = FirstName?.Trim() ?? student.FirstName;
-            student.LastName = LastName?.Trim() ?? student.LastName;
-            student.CourseLevel = CourseLevel?.Trim() ?? student.CourseLevel;
-            student.Course = Course?.Trim() ?? student.Course;
+            student.FirstName         = FirstName?.Trim() ?? student.FirstName;
+            student.LastName          = LastName?.Trim() ?? student.LastName;
+            student.CourseLevel       = CourseLevel?.Trim() ?? student.CourseLevel;
+            student.Course            = Course?.Trim() ?? student.Course;
             student.RemainingSessions = RemainingSessions;
 
             await _context.SaveChangesAsync();
@@ -130,7 +178,7 @@ namespace SignUpLogin.Controllers
             return RedirectToAction(nameof(Students));
         }
 
-        // ?? Sit-in ?????????????????????????????????????????????????????????????
+        // ── Sit-in ────────────────────────────────────────────────────────────
 
         [HttpGet]
         public async Task<IActionResult> LookupStudent(string idNumber)
@@ -147,11 +195,27 @@ namespace SignUpLogin.Controllers
 
             return Json(new
             {
-                found = true,
-                idNumber = student.IdNumber,
-                name = $"{student.FirstName} {student.LastName}".Trim(),
+                found             = true,
+                idNumber          = student.IdNumber,
+                name              = $"{student.FirstName} {student.LastName}".Trim(),
                 remainingSessions = student.RemainingSessions
             });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetOccupiedPcs(string laboratory)
+        {
+            if (!IsAdmin()) return Unauthorized();
+
+            if (string.IsNullOrWhiteSpace(laboratory))
+                return Json(new { occupiedPcs = Array.Empty<string>() });
+
+            var occupiedPcs = await _context.SitInRecords
+                .Where(r => r.Laboratory == laboratory && r.TimeOut == null && r.PcNumber != null)
+                .Select(r => r.PcNumber)
+                .ToListAsync();
+
+            return Json(new { occupiedPcs });
         }
 
         [HttpPost]
@@ -186,28 +250,13 @@ namespace SignUpLogin.Controllers
                 return RedirectToAction(nameof(Home));
             }
 
-            // Block if chosen PC is already taken
-            if (!string.IsNullOrWhiteSpace(PcNumber))
-            {
-                var pcTaken = await _context.SitInRecords
-                    .AnyAsync(r => r.Laboratory == Laboratory
-                                && r.PcNumber == PcNumber
-                                && r.TimeOut == null);
-
-                if (pcTaken)
-                {
-                    TempData["Error"] = $"{PcNumber} in {Laboratory} is already occupied. Please choose another.";
-                    return RedirectToAction(nameof(Home));
-                }
-            }
-
             var record = new SitInRecord
             {
                 StudentIdNumber = StudentIdNumber,
-                Purpose = Purpose,
-                Laboratory = Laboratory,
-                PcNumber = string.IsNullOrWhiteSpace(PcNumber) ? null : PcNumber,
-                TimeIn = DateTime.Now
+                Purpose         = Purpose,
+                Laboratory      = Laboratory,
+                PcNumber        = PcNumber,
+                TimeIn          = DateTime.Now
             };
 
             _context.SitInRecords.Add(record);
@@ -243,7 +292,7 @@ namespace SignUpLogin.Controllers
             return RedirectToAction(nameof(Home));
         }
 
-        // ?? Sit-in Records page
+        // ── Sit-in Records ────────────────────────────────────────────────────
 
         public async Task<IActionResult> SitInRecords()
         {
@@ -257,7 +306,7 @@ namespace SignUpLogin.Controllers
             return View(records);
         }
 
-        // ?? Announcements page ?????????????????????????????????????????????????
+        // ── Announcements ─────────────────────────────────────────────────────
 
         public async Task<IActionResult> Announcements()
         {
@@ -284,8 +333,8 @@ namespace SignUpLogin.Controllers
 
             var announcement = new Announcement
             {
-                Title = Title.Trim(),
-                Message = Message.Trim(),
+                Title    = Title.Trim(),
+                Message  = Message.Trim(),
                 PostedBy = string.IsNullOrWhiteSpace(PostedBy) ? "CCS Admin" : PostedBy.Trim(),
                 PostedAt = DateTime.UtcNow
             };
@@ -317,12 +366,93 @@ namespace SignUpLogin.Controllers
             return RedirectToAction(nameof(Announcements));
         }
 
-        // ?? Other pages ????????????????????????????????????????????????????????
+        // ── Other pages ───────────────────────────────────────────────────────
 
-        public IActionResult Feedback()
+        public async Task<IActionResult> Feedback()
         {
             if (!IsAdmin()) return RedirectToAction("Index", "Login");
+
+            var feedbacks = await _context.Feedbacks
+                .Include(f => f.Student)
+                .Include(f => f.SitInRecord)
+                .OrderByDescending(f => f.SubmittedAt)
+                .ToListAsync();
+
+            return View(feedbacks);
+        }
+
+        public async Task<IActionResult> Analytics()
+        {
+            if (!IsAdmin()) return RedirectToAction("Index", "Login");
+
+            var totalSessions  = await _context.SitInRecords.CountAsync();
+            var activeSessions = await _context.SitInRecords.CountAsync(r => r.TimeOut == null);
+            var avgRating      = await _context.Feedbacks.AnyAsync()
+                                     ? await _context.Feedbacks.AverageAsync(f => (double)f.Rating) : 0;
+            var totalFeedbacks = await _context.Feedbacks.CountAsync();
+
+            var sessionsByLab = await _context.SitInRecords
+                .GroupBy(r => r.Laboratory)
+                .Select(g => new { Lab = g.Key, Count = g.Count() })
+                .OrderByDescending(g => g.Count)
+                .ToListAsync();
+
+            var sessionsByDay = await _context.SitInRecords
+                .Where(r => r.TimeIn >= DateTime.Now.AddDays(-7))
+                .GroupBy(r => r.TimeIn.Date)
+                .Select(g => new { Date = g.Key, Count = g.Count() })
+                .OrderBy(g => g.Date)
+                .ToListAsync();
+
+            var topStudents = await _context.StudentPoints
+                .Include(p => p.Student)
+                .OrderByDescending(p => p.Points)
+                .Take(10)
+                .ToListAsync();
+
+            ViewBag.TotalSessions  = totalSessions;
+            ViewBag.ActiveSessions = activeSessions;
+            ViewBag.AvgRating      = avgRating.ToString("0.0");
+            ViewBag.TotalFeedbacks = totalFeedbacks;
+            ViewBag.SessionsByLab  = sessionsByLab;
+            ViewBag.SessionsByDay  = sessionsByDay;
+            ViewBag.TopStudents    = topStudents;
+
             return View();
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AddPoints(string StudentIdNumber, int Points, string? Reason)
+        {
+            if (!IsAdmin()) return RedirectToAction("Index", "Login");
+
+            var student = await _context.Signups
+                .FirstOrDefaultAsync(s => s.IdNumber == StudentIdNumber && s.Role == "Student");
+
+            if (student == null)
+            {
+                TempData["Error"] = "Student not found.";
+                return RedirectToAction(nameof(Analytics));
+            }
+
+            var row = await _context.StudentPoints
+                .FirstOrDefaultAsync(p => p.StudentIdNumber == StudentIdNumber);
+
+            if (row == null)
+            {
+                row = new StudentPoints { StudentIdNumber = StudentIdNumber };
+                _context.StudentPoints.Add(row);
+            }
+
+            row.Points           += Points;
+            row.LastRewardReason  = string.IsNullOrWhiteSpace(Reason) ? row.LastRewardReason : Reason.Trim();
+            row.UpdatedAt         = DateTime.Now;
+
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] = $"Added {Points} point(s) to {student.FirstName} {student.LastName}. New total: {row.Points}.";
+            return RedirectToAction(nameof(Analytics));
         }
 
         public IActionResult Reservations()
@@ -337,7 +467,7 @@ namespace SignUpLogin.Controllers
             return RedirectToAction("Index", "Login");
         }
 
-        // ?? Helper ?????????????????????????????????????????????????????????????
+        // ── Helper ────────────────────────────────────────────────────────────
 
         private bool IsAdmin()
         {

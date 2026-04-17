@@ -64,18 +64,20 @@
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     @await Html.PartialAsync("_ValidationScriptsPartial")
-    @if (TempData["Success"] != null)
+    @if (TempData["LoggedOut"] != null)
     {
         <div class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,0.5)">
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content text-center p-4">
                     <div class="mb-3">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" fill="#28a745" viewBox="0 0 16 16">
-                            <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z" />
+                        <svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" fill="#6c757d" viewBox="0 0 16 16">
+                            <path d="M10 12.5a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v2a.5.5 0 0 0 1 0v-2A1.5 1.5 0 0 0 9.5 2h-8A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-2a.5.5 0 0 0-1 0v2z" />
+                            <path d="M15.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 0 0-.708.708L14.293 7.5H5.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3z" />
                         </svg>
                     </div>
-                    <h5 class="fw-bold">@TempData["Success"]</h5>
-                    <button class="btn btn-success mt-3 px-4" onclick="this.closest('.modal').remove()">OK</button>
+                    <h5 class="fw-bold">Logged Out</h5>
+                    <p class="text-muted small">@TempData["LoggedOut"]</p>
+                    <button class="btn btn-secondary mt-2 px-4" onclick="this.closest('.modal').remove()">OK</button>
                 </div>
             </div>
         </div>

@@ -178,8 +178,7 @@
 
                         <div class="mb-3">
                             <label class="form-label fw-semibold small">Laboratory</label>
-                            <select id="adminLabSelect" name="Laboratory" class="form-select form-select-sm" required
-                                    onchange="adminLoadPcs(this.value)">
+                            <select name="Laboratory" id="laboratorySelect" class="form-select form-select-sm" required>
                                 <option value="" disabled selected>Select lab</option>
                                 <option value="Lab 524">Lab 524</option>
                                 <option value="Lab 526">Lab 526</option>
@@ -189,15 +188,11 @@
                             </select>
                         </div>
 
-                        <div class="mb-3" id="adminPcWrapper" style="display:none;">
-                            <label class="form-label fw-semibold small">
-                                Assign PC
-                                <span id="adminPcAvailBadge" class="badge bg-secondary ms-1" style="font-size:.7rem;"></span>
-                            </label>
-                            <select id="adminPcSelect" name="PcNumber" class="form-select form-select-sm" required>
-                                <option value="">— Select PC —</option>
+                        <div class="mb-3 d-none" id="pcNumberGroup">
+                            <label class="form-label fw-semibold small">PC Number</label>
+                            <select name="PcNumber" id="pcNumberSelect" class="form-select form-select-sm">
+                                <option value="" disabled selected>Select PC</option>
                             </select>
-                            <div class="form-text text-muted small" id="adminPcHint"></div>
                         </div>
 
                         <button type="submit" id="sitInBtn" class="btn btn-success btn-sm w-100" disabled>
@@ -225,7 +220,7 @@
                                     <th>Name</th>
                                     <th>Purpose</th>
                                     <th>Lab</th>
-                                    <th>PC</th>
+                                    <th>PC No</th>
                                     <th>Time In</th>
                                     <th>Status</th>
                                     <th>Action</th>
@@ -271,14 +266,62 @@
             </div>
         </section>
 
+        <!-- ── Laboratory Availability ── -->
+        <section class="module-card mb-4">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <h5 class="section-title mb-0">
+                    <i class="bi bi-pc-display me-2 text-primary"></i>Laboratory Availability
+                </h5>
+                <span class="text-muted small">Click a lab to view PCs or update its status</span>
+            </div>
+
+            <!-- Status legend -->
+            <div class="d-flex flex-wrap gap-3 mb-3">
+                <span class="lab-legend lab-legend-available"><span class="lab-legend-dot"></span>Available</span>
+                <span class="lab-legend lab-legend-class"><span class="lab-legend-dot"></span>Class is in session</span>
+                <span class="lab-legend lab-legend-maintenance"><span class="lab-legend-dot"></span>Maintenance</span>
+                <span class="lab-legend lab-legend-unavailable"><span class="lab-legend-dot"></span>Unavailable</span>
+            </div>
+
+            <div class="admin-lab-grid">
+                @foreach (var lab in Model.LabStatuses)
+                {
+                    var cardClass = lab.Status.ToLower() switch
+                    {
+                        "class is in session" => "lab-class",
+                        "maintenance" => "lab-maintenance",
+                        "unavailable" => "lab-unavailable",
+                        _ => "lab-available"   // "Available" + any unknown = green
+                    };
+                    <div class="admin-lab-card @cardClass"
+                         onclick="openLabModal('@lab.LabName', '@lab.Status', '@Html.Raw((lab.Remarks ?? "").Replace("'", "\\'"))')">
+                        <div class="admin-lab-name">@lab.LabName</div>
+                        <div class="admin-lab-status-row">
+                            <span class="admin-lab-dot"></span>
+                            <span class="admin-lab-status-text">@lab.Status</span>
+                        </div>
+                        @if (!string.IsNullOrWhiteSpace(lab.Remarks))
+                        {
+                            <div class="admin-lab-remarks">@lab.Remarks</div>
+                        }
+                        <div class="admin-lab-updated">
+                            Updated @lab.UpdatedAt.ToString("MMM dd, hh:mm tt")
+                        </div>
+                        <div class="admin-lab-hint">
+                            <i class="bi bi-display me-1"></i>View / Edit
+                        </div>
+                    </div>
+                }
+            </div>
+        </section>
+
         <!-- ── Latest Announcements Preview ── -->
         <section class="module-card mb-4">
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <h5 class="section-title mb-0">
                     <i class="bi bi-megaphone me-2 text-warning"></i>Latest Announcements
                 </h5>
-                <a asp-controller="Admin" asp-action="Announcements"
-                   class="btn btn-outline-primary btn-sm">
+                <a asp-controller="Admin" asp-action="Announcements" class="btn btn-outline-primary btn-sm">
                     Manage <i class="bi bi-arrow-right ms-1"></i>
                 </a>
             </div>
@@ -307,6 +350,85 @@
         </section>
 
     </main>
+
+    <!-- ════════════════════════════════════════════════════════════════════════
+         ── Combined Lab Modal  (PC grid + status editor)
+         ════════════════════════════════════════════════════════════════════════ -->
+    <div class="modal fade" id="labModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+
+                <div class="modal-header pb-2">
+                    <div>
+                        <h6 class="modal-title fw-bold mb-0" id="labModalTitle">
+                            <i class="bi bi-pc-display text-primary me-2"></i>
+                        </h6>
+                        <p class="mb-0 mt-1" style="font-size:.78rem;color:#64748b;">
+                            <span class="pc-legend-dot pc-dot-free"></span>&nbsp;Free &nbsp;&nbsp;
+                            <span class="pc-legend-dot pc-dot-used"></span>&nbsp;In Use
+                        </p>
+                    </div>
+                    <button type="button" class="btn-close btn-sm" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="row g-4">
+
+                        <!-- Left: PC Grid -->
+                        <div class="col-lg-8">
+                            <p class="fw-semibold small text-muted mb-2">
+                                <i class="bi bi-grid me-1"></i>PC Availability
+                            </p>
+                            <div id="labPcGrid" class="lab-pc-grid"></div>
+                        </div>
+
+                        <!-- Right: Status Editor -->
+                        <div class="col-lg-4">
+                            <div class="status-editor-box">
+                                <p class="fw-semibold small mb-3">
+                                    <i class="bi bi-pencil-square me-1"></i>Change Lab Status
+                                </p>
+                                <form asp-controller="Admin" asp-action="UpdateLabStatus" method="post">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" id="labModalNameInput" name="LabName" />
+                                    <input type="hidden" id="labModalStatusInput" name="Status" />
+
+                                    <div class="d-grid gap-2 mb-3" id="statusPresetGroup">
+                                        <button type="button" class="lab-preset-btn lab-preset-available" data-val="Available">
+                                            <span class="preset-dot"></span>Available
+                                        </button>
+                                        <button type="button" class="lab-preset-btn lab-preset-class" data-val="Class is in session">
+                                            <span class="preset-dot"></span>Class is in session
+                                        </button>
+                                        <button type="button" class="lab-preset-btn lab-preset-maintenance" data-val="Maintenance">
+                                            <span class="preset-dot"></span>Maintenance
+                                        </button>
+                                        <button type="button" class="lab-preset-btn lab-preset-unavailable" data-val="Unavailable">
+                                            <span class="preset-dot"></span>Unavailable
+                                        </button>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label fw-semibold small">
+                                            Remarks <span class="text-muted fw-normal">(optional)</span>
+                                        </label>
+                                        <input type="text" id="labModalRemarksInput" name="Remarks"
+                                               class="form-control form-control-sm"
+                                               placeholder="e.g. Class until 5 PM" />
+                                    </div>
+
+                                    <button type="submit" class="btn btn-primary btn-sm w-100">
+                                        <i class="bi bi-check-circle me-1"></i>Save Status
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- ── Confirm End Sit-in Modal ── -->
     <div class="modal fade" id="closeSitInModal" tabindex="-1" aria-hidden="true">
@@ -338,14 +460,32 @@
 
     @await Html.PartialAsync("_Footer")
 
+    @if (TempData["LoginSuccess"] != null)
+    {
+        <div class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,0.5)" id="loginSuccessModal">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content text-center p-4">
+                    <div class="mb-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" fill="#28a745" viewBox="0 0 16 16">
+                            <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z" />
+                        </svg>
+                    </div>
+                    <h5 class="fw-bold">Login Successful!</h5>
+                    <p class="text-muted small">@TempData["LoginSuccess"]</p>
+                    <button class="btn btn-success mt-2 px-4" onclick="this.closest('.modal').remove()">Continue</button>
+                </div>
+            </div>
+        </div>
+    }
+
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // ── PC-per-lab occupied map (built from active sit-ins) ──
-        const occupiedPcs = @Html.Raw(
+        // ── Occupied PCs map (built from active sit-ins on page load) ──────────
+        const occupiedPcsMap = @Html.Raw(
                         System.Text.Json.JsonSerializer.Serialize(
                                 Model.CurrentSitIns
-                                        .Where(r => !string.IsNullOrWhiteSpace(r.PcNumber))
+                                        .Where(r => r.PcNumber != null)
                                         .GroupBy(r => r.Laboratory)
                                         .ToDictionary(
                                                 g => g.Key,
@@ -354,36 +494,53 @@
                         )
                 );
 
-        function adminLoadPcs(labName) {
-            const wrapper = document.getElementById('adminPcWrapper');
-            const select  = document.getElementById('adminPcSelect');
-            const hint    = document.getElementById('adminPcHint');
-            const badge   = document.getElementById('adminPcAvailBadge');
+        // ── Combined Lab Modal ────────────────────────────────────────────────
+        const labModal = new bootstrap.Modal(document.getElementById('labModal'));
 
-            select.innerHTML = '<option value="">— Select PC —</option>';
+        function openLabModal(labName, currentStatus, currentRemarks) {
+            // Header title
+            document.getElementById('labModalTitle').innerHTML =
+                '<i class="bi bi-pc-display text-primary me-2"></i>' + labName + ' — PC Availability';
 
-            if (!labName) { wrapper.style.display = 'none'; return; }
+            // Feed hidden fields
+            document.getElementById('labModalNameInput').value    = labName;
+            document.getElementById('labModalStatusInput').value  = currentStatus;
+            document.getElementById('labModalRemarksInput').value = currentRemarks;
 
-            const used  = occupiedPcs[labName] || [];
-            let   avail = 0;
+            // Highlight matching preset
+            document.querySelectorAll('.lab-preset-btn').forEach(btn => {
+                btn.classList.toggle('lab-preset-active', btn.dataset.val === currentStatus);
+            });
 
+            // Build PC grid
+            const used = occupiedPcsMap[labName] || [];
+            const grid = document.getElementById('labPcGrid');
+            grid.innerHTML = '';
             for (let i = 1; i <= 49; i++) {
-                const pcId = 'PC ' + String(i).padStart(2, '0');
-                if (!used.includes(pcId)) {
-                    const opt = document.createElement('option');
-                    opt.value = opt.textContent = pcId;
-                    select.appendChild(opt);
-                    avail++;
-                }
+                const pcId   = 'PC-' + i;
+                const isUsed = used.includes(pcId);
+                const card   = document.createElement('div');
+                card.className = 'lab-pc-card ' + (isUsed ? 'lab-pc-used' : 'lab-pc-free');
+                card.innerHTML =
+                    '<div class="lab-pc-icon">&#128187;</div>' +
+                    '<div class="lab-pc-label">' + pcId + '</div>' +
+                    '<div class="lab-pc-status">' + (isUsed ? 'In Use' : 'Free') + '</div>';
+                grid.appendChild(card);
             }
 
-            badge.textContent = avail + ' available';
-            badge.className   = avail > 0 ? 'badge bg-success ms-1' : 'badge bg-danger ms-1';
-            hint.textContent  = avail + ' of 49 PCs free in ' + labName + '. Occupied PCs are hidden.';
-            wrapper.style.display = 'block';
+            labModal.show();
         }
 
-        // ── Sit-in lookup ──
+        // Preset buttons — update hidden input + active highlight
+        document.querySelectorAll('.lab-preset-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.getElementById('labModalStatusInput').value = btn.dataset.val;
+                document.querySelectorAll('.lab-preset-btn').forEach(b => b.classList.remove('lab-preset-active'));
+                btn.classList.add('lab-preset-active');
+            });
+        });
+
+        // ── Sit-in lookup ─────────────────────────────────────────────────────
         const lookupBtn = document.getElementById('lookupBtn');
         const idInput   = document.getElementById('idNumberInput');
         const nameField = document.getElementById('studentName');
@@ -391,11 +548,18 @@
         const hiddenId  = document.getElementById('studentIdHidden');
         const sitInBtn  = document.getElementById('sitInBtn');
         const fbk       = document.getElementById('lookupFeedback');
+        const labSelect = document.getElementById('laboratorySelect');
+        const pcGroup   = document.getElementById('pcNumberGroup');
+        const pcSelect  = document.getElementById('pcNumberSelect');
 
         function resetFields() {
             nameField.value = sessField.value = hiddenId.value = '';
             sitInBtn.disabled = true;
             fbk.classList.add('d-none');
+            labSelect.value = '';
+            pcGroup.classList.add('d-none');
+            pcSelect.innerHTML = '<option value="" disabled selected>Select PC</option>';
+            pcSelect.removeAttribute('required');
         }
 
         async function lookupStudent() {
@@ -403,7 +567,7 @@
             if (!id) return;
             resetFields();
             try {
-                const res = await fetch('/Admin/LookupStudent?idNumber=' + encodeURIComponent(id));
+                const res  = await fetch(`/Admin/LookupStudent?idNumber=${encodeURIComponent(id)}`);
                 const data = await res.json();
                 if (data.found) {
                     nameField.value   = data.name;
@@ -420,7 +584,43 @@
         idInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); lookupStudent(); } });
         idInput.addEventListener('input', resetFields);
 
-        // ── End Sit-in modal ──
+        // ── Lab → PC dropdown (skip occupied) ────────────────────────────────
+        labSelect.addEventListener('change', async () => {
+            pcSelect.innerHTML = '<option value="" disabled selected>Loading…</option>';
+            pcGroup.classList.remove('d-none');
+            pcSelect.setAttribute('required', 'required');
+
+            if (!labSelect.value) {
+                pcGroup.classList.add('d-none');
+                pcSelect.removeAttribute('required');
+                pcSelect.innerHTML = '<option value="" disabled selected>Select PC</option>';
+                return;
+            }
+
+            let occupiedPcs = [];
+            try {
+                const res  = await fetch(`/Admin/GetOccupiedPcs?laboratory=${encodeURIComponent(labSelect.value)}`);
+                const data = await res.json();
+                occupiedPcs = data.occupiedPcs ?? [];
+            } catch { console.warn('Could not fetch occupied PCs; showing all.'); }
+
+            pcSelect.innerHTML = '<option value="" disabled selected>Select PC</option>';
+            for (let i = 1; i <= 49; i++) {
+                const pcName = `PC-${i}`;
+                if (occupiedPcs.includes(pcName)) continue;
+                const opt = document.createElement('option');
+                opt.value = opt.textContent = pcName;
+                pcSelect.appendChild(opt);
+            }
+            if (pcSelect.options.length === 1) {
+                const opt = document.createElement('option');
+                opt.disabled = true;
+                opt.textContent = 'No PCs available';
+                pcSelect.appendChild(opt);
+            }
+        });
+
+        // ── End Sit-in confirmation ───────────────────────────────────────────
         const closeSitInModal = new bootstrap.Modal(document.getElementById('closeSitInModal'));
         document.querySelectorAll('.close-sitin-btn').forEach(btn => {
             btn.addEventListener('click', () => {
@@ -434,6 +634,7 @@
 </html>
 
 <style>
+    /* ── Page shell ── */
     .admin-page {
         min-height: 100vh;
         display: flex;
@@ -448,7 +649,7 @@
         width: 100%;
     }
 
-    /* Navbar */
+    /* ── Navbar ── */
     .admin-nav {
         background: #0a2a6e;
         box-shadow: 0 2px 8px rgba(0,0,0,.18);
@@ -473,7 +674,7 @@
                 background: rgba(255,255,255,.13);
             }
 
-    /* Stat cards */
+    /* ── Stat cards ── */
     .stat-card {
         background: #fff;
         border: 1px solid #e2e8f0;
@@ -519,7 +720,7 @@
         line-height: 1.1;
     }
 
-    /* Module card */
+    /* ── Module card ── */
     .module-card {
         background: #fff;
         border: 1px solid #e2e8f0;
@@ -534,7 +735,7 @@
         color: #1e293b;
     }
 
-    /* Table */
+    /* ── Table ── */
     .table th {
         font-size: .75rem;
         text-transform: uppercase;
@@ -548,7 +749,7 @@
         font-size: .85rem;
     }
 
-    /* Announcements */
+    /* ── Announcements ── */
     .announcement-row {
         border-top: 1px solid #f1f5f9;
         padding: 10px 0;
@@ -563,5 +764,343 @@
         font-size: .75rem;
         color: #94a3b8;
         margin-bottom: 2px;
+    }
+
+    /* ══════════════════════════════════════════════════════════════════════════
+           ── Lab Availability Cards ──
+           ══════════════════════════════════════════════════════════════════════════ */
+    .admin-lab-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+        gap: 14px;
+    }
+
+    .admin-lab-card {
+        border-radius: 10px;
+        padding: 16px 14px 12px;
+        border: 1.5px solid;
+        cursor: pointer;
+        transition: transform .15s, box-shadow .15s;
+        position: relative;
+    }
+
+        .admin-lab-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+        }
+
+            .admin-lab-card:hover .admin-lab-hint {
+                opacity: 1;
+            }
+
+    /* Status themes */
+    .lab-available {
+        background: #f0fdf4;
+        border-color: #bbf7d0;
+    }
+
+    .lab-class {
+        background: #eff6ff;
+        border-color: #bfdbfe;
+    }
+
+    .lab-maintenance {
+        background: #fffbeb;
+        border-color: #fde68a;
+    }
+
+    .lab-unavailable {
+        background: #fef2f2;
+        border-color: #fecaca;
+    }
+
+    .admin-lab-name {
+        font-size: .92rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 8px;
+    }
+
+    .admin-lab-status-row {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 4px;
+    }
+
+    .admin-lab-dot {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        flex-shrink: 0;
+    }
+
+    .lab-available .admin-lab-dot {
+        background: #22c55e;
+    }
+
+    .lab-class .admin-lab-dot {
+        background: #3b82f6;
+    }
+
+    .lab-maintenance .admin-lab-dot {
+        background: #f59e0b;
+    }
+
+    .lab-unavailable .admin-lab-dot {
+        background: #ef4444;
+    }
+
+    .admin-lab-status-text {
+        font-size: .8rem;
+        font-weight: 600;
+    }
+
+    .lab-available .admin-lab-status-text {
+        color: #15803d;
+    }
+
+    .lab-class .admin-lab-status-text {
+        color: #1d4ed8;
+    }
+
+    .lab-maintenance .admin-lab-status-text {
+        color: #b45309;
+    }
+
+    .lab-unavailable .admin-lab-status-text {
+        color: #b91c1c;
+    }
+
+    .admin-lab-remarks {
+        font-size: .75rem;
+        color: #64748b;
+        margin-top: 4px;
+        font-style: italic;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .admin-lab-updated {
+        font-size: .7rem;
+        color: #94a3b8;
+        margin-top: 6px;
+    }
+
+    .admin-lab-hint {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        font-size: .72rem;
+        color: #0b4a94;
+        font-weight: 600;
+        opacity: 0;
+        transition: opacity .15s;
+    }
+
+    /* Legend row above cards */
+    .lab-legend {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: .78rem;
+        font-weight: 600;
+    }
+
+    .lab-legend-dot {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        flex-shrink: 0;
+    }
+
+    .lab-legend-available .lab-legend-dot {
+        background: #22c55e;
+    }
+
+    .lab-legend-available {
+        color: #15803d;
+    }
+
+    .lab-legend-class .lab-legend-dot {
+        background: #3b82f6;
+    }
+
+    .lab-legend-class {
+        color: #1d4ed8;
+    }
+
+    .lab-legend-maintenance .lab-legend-dot {
+        background: #f59e0b;
+    }
+
+    .lab-legend-maintenance {
+        color: #b45309;
+    }
+
+    .lab-legend-unavailable .lab-legend-dot {
+        background: #ef4444;
+    }
+
+    .lab-legend-unavailable {
+        color: #b91c1c;
+    }
+
+    /* ══════════════════════════════════════════════════════════════════════════
+           ── Lab Modal — PC Grid ──
+           ══════════════════════════════════════════════════════════════════════════ */
+    .lab-pc-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(82px, 1fr));
+        gap: 8px;
+    }
+
+    .lab-pc-card {
+        border-radius: 8px;
+        padding: 10px 4px 8px;
+        text-align: center;
+        border: 1.5px solid;
+        user-select: none;
+    }
+
+    .lab-pc-free {
+        background: #f0fdf4;
+        border-color: #bbf7d0;
+    }
+
+    .lab-pc-used {
+        background: #fef2f2;
+        border-color: #fecaca;
+        opacity: .82;
+    }
+
+    .lab-pc-icon {
+        font-size: 1.3rem;
+        margin-bottom: 3px;
+    }
+
+    .lab-pc-label {
+        font-size: .75rem;
+        font-weight: 700;
+        color: #1e293b;
+    }
+
+    .lab-pc-status {
+        font-size: .67rem;
+        font-weight: 600;
+        margin-top: 2px;
+    }
+
+    .lab-pc-free .lab-pc-status {
+        color: #15803d;
+    }
+
+    .lab-pc-used .lab-pc-status {
+        color: #b91c1c;
+    }
+
+    /* PC legend dots in modal header */
+    .pc-legend-dot {
+        display: inline-block;
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        margin-right: 2px;
+        vertical-align: middle;
+    }
+
+    .pc-dot-free {
+        background: #22c55e;
+    }
+
+    .pc-dot-used {
+        background: #ef4444;
+    }
+
+    /* ══════════════════════════════════════════════════════════════════════════
+           ── Lab Modal — Status Editor ──
+           ══════════════════════════════════════════════════════════════════════════ */
+    .status-editor-box {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 18px 16px;
+        height: 100%;
+    }
+
+    .lab-preset-btn {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 9px 14px;
+        border-radius: 8px;
+        font-size: .84rem;
+        font-weight: 600;
+        border: 1.5px solid;
+        cursor: pointer;
+        background: #fff;
+        transition: opacity .12s, box-shadow .12s;
+        text-align: left;
+    }
+
+        .lab-preset-btn:hover {
+            opacity: .88;
+        }
+
+    /* Dot inside preset button */
+    .preset-dot {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        flex-shrink: 0;
+        display: inline-block;
+    }
+
+    /* Available — green */
+    .lab-preset-available {
+        border-color: #bbf7d0;
+        color: #15803d;
+    }
+
+        .lab-preset-available .preset-dot {
+            background: #22c55e;
+        }
+
+    /* Class is in session — blue */
+    .lab-preset-class {
+        border-color: #bfdbfe;
+        color: #1d4ed8;
+    }
+
+        .lab-preset-class .preset-dot {
+            background: #3b82f6;
+        }
+
+    /* Maintenance — amber */
+    .lab-preset-maintenance {
+        border-color: #fde68a;
+        color: #b45309;
+    }
+
+        .lab-preset-maintenance .preset-dot {
+            background: #f59e0b;
+        }
+
+    /* Unavailable — red */
+    .lab-preset-unavailable {
+        border-color: #fecaca;
+        color: #b91c1c;
+    }
+
+        .lab-preset-unavailable .preset-dot {
+            background: #ef4444;
+        }
+
+    /* Active (selected) state */
+    .lab-preset-active {
+        outline: 2px solid #0b4a94;
+        outline-offset: 1px;
+        box-shadow: 0 0 0 3px rgba(11,74,148,.12);
     }
 </style>

@@ -14,5 +14,11 @@ namespace SignUpLogin.Models.ViewModels
         public List<SitInRecord> RecentSitInHistory { get; set; } = new();
         public bool IsCurrentlyActive { get; set; }
         public SitInRecord? ActiveSitIn { get; set; }
+        public int Points { get; set; }
+        public string? LastRewardReason { get; set; }
+        public List<Feedback> SubmittedFeedbacks { get; set; } = new();
+
+        // Lab statuses set by admin (Available, Class is in session, Maintenance, Unavailable)
+        public List<LabStatus> LabStatuses { get; set; } = new();
     }
 }

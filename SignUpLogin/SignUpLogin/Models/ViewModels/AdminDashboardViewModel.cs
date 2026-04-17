@@ -10,6 +10,6 @@ namespace SignUpLogin.Models.ViewModels
         public int TotalSitInRecords { get; set; }
         public List<SitInRecord> CurrentSitIns { get; set; } = new();
         public List<Announcement> Announcements { get; set; } = new();
-
+        public List<LabStatus> LabStatuses { get; set; } = new();
     }
 }
