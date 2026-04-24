@@ -26,6 +26,12 @@ namespace SignUpLogin.Models
 
         public DateTime? TimeOut { get; set; }
 
+        /// <summary>
+        /// Tracks whether sit-in time points have already been awarded for this
+        /// session so the controller never double-credits the same record.
+        /// </summary>
+        public bool PointsAwarded { get; set; } = false;
+
         [ForeignKey(nameof(StudentIdNumber))]
         public Signup? Student { get; set; }
     }

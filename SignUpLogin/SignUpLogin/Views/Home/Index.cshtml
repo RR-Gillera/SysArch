@@ -92,9 +92,9 @@
                         var cardClass = statusLower switch
                         {
                             "class is in session" => "lab-class",
-                            "maintenance"         => "lab-maintenance",
-                            "unavailable"         => "lab-unavailable",
-                            _                     => "lab-available"
+                            "maintenance" => "lab-maintenance",
+                            "unavailable" => "lab-unavailable",
+                            _ => "lab-available"
                         };
                         <div class="lab-card @cardClass lab-clickable"
                              onclick="openLabModal('@lab.LabName', '@lab.Status', '@Html.Raw((lab.Remarks ?? "").Replace("'", "\\'"))')">
@@ -110,6 +110,105 @@
                             <div class="lab-click-hint"><i class="bi bi-display me-1"></i>View PCs</div>
                         </div>
                     }
+                </div>
+            </div>
+
+            <!-- ── Rules & Regulations ── -->
+            <div class="panel-card mb-4">
+                <h5 class="panel-title mb-3"><i class="bi bi-journal-text me-2"></i>Rules &amp; Regulations</h5>
+                <ul class="nav nav-tabs mb-3" id="rulesTab" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="sitin-tab" data-bs-toggle="tab" data-bs-target="#sitin-rules" type="button" role="tab" aria-controls="sitin-rules" aria-selected="true">
+                            <i class="bi bi-person-check me-1"></i>Sit-in Rules
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="lab-tab" data-bs-toggle="tab" data-bs-target="#lab-rules" type="button" role="tab" aria-controls="lab-rules" aria-selected="false">
+                            <i class="bi bi-pc-display me-1"></i>Laboratory Rules
+                        </button>
+                    </li>
+                </ul>
+                <div class="tab-content" id="rulesTabContent">
+
+                    <!-- Sit-in Rules -->
+                    <div class="tab-pane fade show active" id="sitin-rules" role="tabpanel" aria-labelledby="sitin-tab">
+                        <div class="rules-header">
+                            <p class="rules-institution">University of Cebu &mdash; College of Information &amp; Computer Studies</p>
+                            <h6 class="rules-section-title">SIT-IN RULES AND REGULATIONS</h6>
+                            <p class="rules-intro">To ensure a conducive and respectful learning environment for all, please adhere to the following Sit-In rules:</p>
+                        </div>
+                        <ol class="rules-list">
+                            <li>Only authorized sit-in students with prior approval from the instructor are allowed.</li>
+                            <li>Sit-in students must not disrupt the class or engage in side conversations.</li>
+                            <li>Mobile phones and other electronic devices must be set to silent mode during the session.</li>
+                            <li>Sit-in students must not use laboratory computers unless explicitly permitted by the instructor.</li>
+                            <li>Seats are prioritized for officially enrolled students. Sit-in students should occupy vacant seats only.</li>
+                            <li>Participation in discussions or activities is allowed only if the instructor permits.</li>
+                            <li>Eating, drinking, or any form of littering is strictly prohibited inside the classroom.</li>
+                            <li>Sit-in students must follow the instructor&rsquo;s guidelines and classroom rules at all times.</li>
+                            <li>Disruptive behavior, including excessive talking, arguing, or any form of distraction, will not be tolerated.</li>
+                            <li>Failure to follow these rules may result in the immediate removal from the class and possible restrictions on future sit-in requests.</li>
+                        </ol>
+                        <div class="rules-disciplinary">
+                            <h6 class="rules-disciplinary-title"><i class="bi bi-exclamation-triangle-fill me-1 text-warning"></i>Disciplinary Action</h6>
+                            <div class="d-flex flex-column gap-2">
+                                <div class="disciplinary-item offense-1">
+                                    <span class="offense-badge">1st Offense</span>
+                                    A verbal warning will be issued by the instructor.
+                                </div>
+                                <div class="disciplinary-item offense-2">
+                                    <span class="offense-badge">2nd Offense</span>
+                                    The student will be asked to leave and reported to the administration.
+                                </div>
+                                <div class="disciplinary-item offense-3">
+                                    <span class="offense-badge">3rd Offense</span>
+                                    A formal complaint may be filed, leading to further disciplinary actions.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Laboratory Rules -->
+                    <div class="tab-pane fade" id="lab-rules" role="tabpanel" aria-labelledby="lab-tab">
+                        <div class="rules-header">
+                            <p class="rules-institution">University of Cebu &mdash; College of Information &amp; Computer Studies</p>
+                            <h6 class="rules-section-title">LABORATORY RULES AND REGULATIONS</h6>
+                            <p class="rules-intro">To avoid embarrassment and maintain camaraderie with your friends and superiors at our laboratories, please observe the following:</p>
+                        </div>
+                        <ol class="rules-list">
+                            <li>Maintain silence, proper decorum, and discipline inside the laboratory.</li>
+                            <li>Mobile phones, walkmans and other personal pieces of equipment must be switched off.</li>
+                            <li>Games are not allowed inside the lab. This includes computer-related games, card games and other games that may disturb the operation of the lab.</li>
+                            <li>Surfing the Internet is allowed only with the permission of the instructor.</li>
+                            <li>Downloading and installing of software are strictly prohibited.</li>
+                            <li>Getting access to other websites not related to the course (especially pornographic and illicit sites) is strictly prohibited.</li>
+                            <li>Deleting computer files and changing the set-up of the computer is a major offense.</li>
+                            <li>Observe computer time usage carefully. A fifteen-minute allowance is given for each use. Otherwise, the unit will be given to those who wish to &ldquo;sit-in&rdquo;.</li>
+                            <li>Observe proper decorum while inside the laboratory. Do not get inside the lab unless the instructor is present.</li>
+                            <li>All bags, knapsacks, and the likes must be deposited at the counter.</li>
+                            <li>Follow the seating arrangement of your instructor.</li>
+                            <li>At the end of class, all software programs must be closed. Return all chairs to their proper places after using.</li>
+                            <li>Chewing gum, eating, drinking, smoking, and other forms of vandalism are prohibited inside the lab.</li>
+                            <li>Anyone causing a continual disturbance will be asked to leave the lab.</li>
+                            <li>Acts or gestures offensive to the members of the community, including public display of physical intimacy, are not tolerated.</li>
+                            <li>Persons exhibiting hostile or threatening behavior such as yelling, swearing, or disregarding requests made by lab personnel will be asked to leave the lab. For serious offense, the lab personnel may call the Civil Security Office (CSU) for assistance.</li>
+                            <li>Any technical problem or difficulty must be addressed to the laboratory supervisor, student assistant or instructor immediately.</li>
+                        </ol>
+                        <div class="rules-disciplinary">
+                            <h6 class="rules-disciplinary-title"><i class="bi bi-exclamation-triangle-fill me-1 text-warning"></i>Disciplinary Action</h6>
+                            <div class="d-flex flex-column gap-2">
+                                <div class="disciplinary-item offense-1">
+                                    <span class="offense-badge">1st Offense</span>
+                                    The Head or the Dean or OIC recommends to the Guidance Center for a suspension from classes for each offender.
+                                </div>
+                                <div class="disciplinary-item offense-2">
+                                    <span class="offense-badge">2nd &amp; Subsequent Offenses</span>
+                                    A recommendation for a heavier sanction will be endorsed to the Guidance Center.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
             </div>
 
@@ -186,10 +285,212 @@
                 </div>
             </div>
 
+            <!-- ── Rewards & Points ── -->
+            @{
+                var pts = Model.Points;
+                string tierName, tierIcon, tierColor, tierBg, tierBorder;
+                int tierMin, tierMax;
+
+                if (pts >= 100)
+                {
+                    tierName = "Gold"; tierIcon = "bi-trophy-fill"; tierColor = "#b45309"; tierBg = "#fffbeb"; tierBorder = "#fde68a";
+                    tierMin = 100; tierMax = 100;
+                }
+                else if (pts >= 60)
+                {
+                    tierName = "Silver"; tierIcon = "bi-award-fill"; tierColor = "#475569"; tierBg = "#f8fafc"; tierBorder = "#cbd5e1";
+                    tierMin = 60; tierMax = 99;
+                }
+                else if (pts >= 30)
+                {
+                    tierName = "Bronze"; tierIcon = "bi-award-fill"; tierColor = "#92400e"; tierBg = "#fff7ed"; tierBorder = "#fed7aa";
+                    tierMin = 30; tierMax = 59;
+                }
+                else
+                {
+                    tierName = "Starter"; tierIcon = "bi-star-fill"; tierColor = "#1d4ed8"; tierBg = "#eff6ff"; tierBorder = "#bfdbfe";
+                    tierMin = 0; tierMax = 29;
+                }
+
+                int progressRange = tierName == "Gold" ? 1 : (tierMax - tierMin + 1);
+                int progressVal = pts - tierMin;
+                int progressPct = tierName == "Gold" ? 100 : (int)Math.Round((double)progressVal / progressRange * 100);
+                int ptsToNext = tierName == "Gold" ? 0 : (tierMax + 1 - pts);
+
+                // Redeem helpers: 2 pts = 1 session
+                int maxRedeemableSessions = pts / 2;
+                int maxRedeemablePoints = maxRedeemableSessions * 2;
+            }
+
+            <div class="panel-card mb-4" style="border-color:@tierBorder; background:@tierBg;">
+                <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+                    <h5 class="panel-title mb-0"><i class="bi bi-gift-fill me-2"></i>Rewards &amp; Points</h5>
+                    <span class="tier-badge" style="background:@tierBg; border-color:@tierBorder; color:@tierColor;">
+                        <i class="bi @tierIcon me-1"></i>@tierName Tier
+                    </span>
+                </div>
+
+                <!-- Tier progression track -->
+                <div class="tier-track mb-3">
+                    <div class="tier-step @(pts >= 0 ? "tier-active" : "")">
+                        <div class="tier-dot"><i class="bi bi-star-fill"></i></div>
+                        <div class="tier-label">Starter<br /><span>0 pts</span></div>
+                    </div>
+                    <div class="tier-line @(pts >= 30 ? "tier-line-done" : "")"></div>
+                    <div class="tier-step @(pts >= 30 ? "tier-active" : "")">
+                        <div class="tier-dot"><i class="bi bi-award-fill"></i></div>
+                        <div class="tier-label">Bronze<br /><span>30 pts</span></div>
+                    </div>
+                    <div class="tier-line @(pts >= 60 ? "tier-line-done" : "")"></div>
+                    <div class="tier-step @(pts >= 60 ? "tier-active" : "")">
+                        <div class="tier-dot"><i class="bi bi-award-fill"></i></div>
+                        <div class="tier-label">Silver<br /><span>60 pts</span></div>
+                    </div>
+                    <div class="tier-line @(pts >= 100 ? "tier-line-done" : "")"></div>
+                    <div class="tier-step @(pts >= 100 ? "tier-active" : "")">
+                        <div class="tier-dot"><i class="bi bi-trophy-fill"></i></div>
+                        <div class="tier-label">Gold<br /><span>100 pts</span></div>
+                    </div>
+                </div>
+
+                <div class="row g-4 align-items-start">
+
+                    <!-- Left: points circle + progress -->
+                    <div class="col-md-4 text-center">
+                        <div class="points-circle mx-auto" style="border-color:@tierBorder; color:@tierColor;">
+                            <div class="points-number">@pts</div>
+                            <div class="points-label">Total Points</div>
+                        </div>
+                        <div class="mt-2" style="font-size:0.78rem; color:#64748b;">
+                            <i class="bi bi-clock me-1"></i>1 pt per 2 hrs of sit-in
+                        </div>
+                    </div>
+
+                    <!-- Right: progress + last reason + redeem -->
+                    <div class="col-md-8">
+                        @if (tierName != "Gold")
+                        {
+                            <p class="mb-1 small text-muted fw-semibold">Progress to next tier</p>
+                            <div class="progress mb-1" style="height:12px; border-radius:999px;">
+                                <div class="progress-bar" role="progressbar"
+                                     style="width:@progressPct%; background:@tierColor; border-radius:999px; transition:width .6s ease;"
+                                     aria-valuenow="@progressPct" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                            <p class="mb-3 small" style="color:@tierColor;">
+                                <strong>@progressVal / @progressRange pts</strong>
+                                &mdash; <strong>@ptsToNext</strong> more to advance
+                            </p>
+                        }
+                        else
+                        {
+                            <div class="d-flex align-items-center gap-2 mb-3">
+                                <i class="bi bi-trophy-fill fs-4" style="color:#f59e0b;"></i>
+                                <span class="fw-bold" style="color:#b45309;">You've reached the highest tier — Gold!</span>
+                            </div>
+                        }
+
+                        <!-- Last reward reason -->
+                        @if (!string.IsNullOrWhiteSpace(Model.LastRewardReason))
+                        {
+                            <div class="reward-reason-box mb-3" style="border-color:@tierBorder;">
+                                <i class="bi bi-chat-quote-fill me-2" style="color:@tierColor;"></i>
+                                <span><strong>Last activity:</strong> @Model.LastRewardReason</span>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="reward-reason-box mb-3" style="border-color:@tierBorder; color:#94a3b8;">
+                                <i class="bi bi-info-circle me-2"></i>No rewards yet. Sit-in for 2+ hours to earn your first point!
+                            </div>
+                        }
+
+                        <!-- Redeem panel -->
+                        <div class="redeem-box" style="border-color:@tierBorder;">
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                                <i class="bi bi-arrow-repeat fw-bold" style="color:@tierColor;"></i>
+                                <span class="fw-bold" style="font-size:0.88rem; color:#1e293b;">Redeem Points for Sessions</span>
+                                <span class="ms-auto redeem-rate-chip">2 pts = 1 session</span>
+                            </div>
+
+                            @if (maxRedeemableSessions > 0)
+                            {
+                                <form asp-controller="Home" asp-action="RedeemPoints" method="post" class="d-flex align-items-center gap-2 flex-wrap">
+                                    @Html.AntiForgeryToken()
+                                    <div class="d-flex align-items-center gap-2 flex-grow-1">
+                                        <label class="small text-muted mb-0 text-nowrap">Sessions to redeem:</label>
+                                        <input type="number" name="redeemAmount" id="redeemInput"
+                                               class="form-control form-control-sm redeem-input"
+                                               min="2" max="@maxRedeemablePoints" step="2"
+                                               value="2"
+                                               oninput="updateRedeemPreview(this.value)" />
+                                    </div>
+                                    <div class="redeem-preview small text-muted" id="redeemPreview">
+                                        = <strong>1</strong> session
+                                    </div>
+                                    <button type="submit" class="btn btn-sm redeem-btn"
+                                            style="background:@tierColor; color:#fff; border:none;">
+                                        <i class="bi bi-lightning-charge-fill me-1"></i>Redeem
+                                    </button>
+                                </form>
+                                <p class="mb-0 mt-2" style="font-size:0.75rem; color:#64748b;">
+                                    You can redeem up to <strong>@maxRedeemablePoints pts</strong>
+                                    for <strong>@maxRedeemableSessions session(s)</strong> right now.
+                                </p>
+                            }
+                            else
+                            {
+                                <p class="mb-0 small text-muted">
+                                    <i class="bi bi-lock me-1"></i>You need at least <strong>2 points</strong> to redeem a session.
+                                    Keep sitting in to earn more!
+                                </p>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
 
     @await Html.PartialAsync("_Footer")
+
+    <!-- ── Toast container ── -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index:9999;">
+        @if (TempData["PointsEarned"] != null)
+        {
+            <div class="toast align-items-center text-bg-success border-0 show" role="alert" data-bs-autohide="true" data-bs-delay="5000">
+                <div class="d-flex">
+                    <div class="toast-body">
+                        <i class="bi bi-star-fill me-2"></i>
+                        <strong>+@TempData["PointsEarned"] point(s) earned</strong> for your sit-in session!
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                </div>
+            </div>
+        }
+        @if (TempData["RedeemSuccess"] != null)
+        {
+            <div class="toast align-items-center text-bg-primary border-0 show" role="alert" data-bs-autohide="true" data-bs-delay="5000">
+                <div class="d-flex">
+                    <div class="toast-body">
+                        <i class="bi bi-lightning-charge-fill me-2"></i>@TempData["RedeemSuccess"]
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                </div>
+            </div>
+        }
+        @if (TempData["RedeemError"] != null)
+        {
+            <div class="toast align-items-center text-bg-danger border-0 show" role="alert" data-bs-autohide="true" data-bs-delay="6000">
+                <div class="d-flex">
+                    <div class="toast-body">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>@TempData["RedeemError"]
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                </div>
+            </div>
+        }
+    </div>
 
     @if (TempData["LoginSuccess"] != null)
     {
@@ -294,8 +595,19 @@
                 grid.appendChild(card);
             }
         }
+        function updateRedeemPreview(value) {
+            const pts      = parseInt(value) || 0;
+            const valid    = Math.floor(pts / 2) * 2;
+            const sessions = valid / 2;
+            const preview  = document.getElementById('redeemPreview');
+            if (preview) {
+                preview.innerHTML = valid >= 2
+                    ? `= <strong>${sessions}</strong> session${sessions !== 1 ? 's' : ''}`
+                    : '<span class="text-danger">min 2 pts</span>';
+            }
+        }
     </script>
-    </body>
+</body>
 </html>
 
 <style>
@@ -439,17 +751,37 @@
         flex-shrink: 0;
     }
 
-    .lab-legend-available .lab-legend-dot { background: #22c55e; }
-    .lab-legend-available { color: #15803d; }
+    .lab-legend-available .lab-legend-dot {
+        background: #22c55e;
+    }
 
-    .lab-legend-class .lab-legend-dot { background: #3b82f6; }
-    .lab-legend-class { color: #1d4ed8; }
+    .lab-legend-available {
+        color: #15803d;
+    }
 
-    .lab-legend-maintenance .lab-legend-dot { background: #f59e0b; }
-    .lab-legend-maintenance { color: #b45309; }
+    .lab-legend-class .lab-legend-dot {
+        background: #3b82f6;
+    }
 
-    .lab-legend-unavailable .lab-legend-dot { background: #ef4444; }
-    .lab-legend-unavailable { color: #b91c1c; }
+    .lab-legend-class {
+        color: #1d4ed8;
+    }
+
+    .lab-legend-maintenance .lab-legend-dot {
+        background: #f59e0b;
+    }
+
+    .lab-legend-maintenance {
+        color: #b45309;
+    }
+
+    .lab-legend-unavailable .lab-legend-dot {
+        background: #ef4444;
+    }
+
+    .lab-legend-unavailable {
+        color: #b91c1c;
+    }
 
     /* ── Lab grid ── */
     .lab-grid {
@@ -471,32 +803,56 @@
         background: #f0fdf4;
         border-color: #bbf7d0;
     }
-    .lab-available .lab-dot-sm { background: #22c55e; }
-    .lab-available .lab-status-text { color: #15803d; }
+
+        .lab-available .lab-dot-sm {
+            background: #22c55e;
+        }
+
+        .lab-available .lab-status-text {
+            color: #15803d;
+        }
 
     /* Class is in session — blue */
     .lab-class {
         background: #eff6ff;
         border-color: #bfdbfe;
     }
-    .lab-class .lab-dot-sm { background: #3b82f6; }
-    .lab-class .lab-status-text { color: #1d4ed8; }
+
+        .lab-class .lab-dot-sm {
+            background: #3b82f6;
+        }
+
+        .lab-class .lab-status-text {
+            color: #1d4ed8;
+        }
 
     /* Maintenance — amber */
     .lab-maintenance {
         background: #fffbeb;
         border-color: #fde68a;
     }
-    .lab-maintenance .lab-dot-sm { background: #f59e0b; }
-    .lab-maintenance .lab-status-text { color: #b45309; }
+
+        .lab-maintenance .lab-dot-sm {
+            background: #f59e0b;
+        }
+
+        .lab-maintenance .lab-status-text {
+            color: #b45309;
+        }
 
     /* Unavailable — red */
     .lab-unavailable {
         background: #fef2f2;
         border-color: #fecaca;
     }
-    .lab-unavailable .lab-dot-sm { background: #ef4444; }
-    .lab-unavailable .lab-status-text { color: #b91c1c; }
+
+        .lab-unavailable .lab-dot-sm {
+            background: #ef4444;
+        }
+
+        .lab-unavailable .lab-status-text {
+            color: #b91c1c;
+        }
 
     .lab-number {
         font-size: 1rem;
@@ -558,10 +914,29 @@
         border: 1.5px solid;
     }
 
-    .badge-available    { background: #f0fdf4; border-color: #bbf7d0; color: #15803d; }
-    .badge-class        { background: #eff6ff; border-color: #bfdbfe; color: #1d4ed8; }
-    .badge-maintenance  { background: #fffbeb; border-color: #fde68a; color: #b45309; }
-    .badge-unavailable  { background: #fef2f2; border-color: #fecaca; color: #b91c1c; }
+    .badge-available {
+        background: #f0fdf4;
+        border-color: #bbf7d0;
+        color: #15803d;
+    }
+
+    .badge-class {
+        background: #eff6ff;
+        border-color: #bfdbfe;
+        color: #1d4ed8;
+    }
+
+    .badge-maintenance {
+        background: #fffbeb;
+        border-color: #fde68a;
+        color: #b45309;
+    }
+
+    .badge-unavailable {
+        background: #fef2f2;
+        border-color: #fecaca;
+        color: #b91c1c;
+    }
 
     /* ── PC Grid in modal ── */
     .pc-grid {
@@ -606,8 +981,13 @@
         margin-top: 3px;
     }
 
-    .pc-free .pc-status-text { color: #15803d; }
-    .pc-used .pc-status-text { color: #b91c1c; }
+    .pc-free .pc-status-text {
+        color: #15803d;
+    }
+
+    .pc-used .pc-status-text {
+        color: #b91c1c;
+    }
 
     .pc-legend {
         display: inline-block;
@@ -618,8 +998,146 @@
         vertical-align: middle;
     }
 
-    .pc-legend-free { background: #22c55e; }
-    .pc-legend-used { background: #ef4444; }
+    .pc-legend-free {
+        background: #22c55e;
+    }
+
+    .pc-legend-used {
+        background: #ef4444;
+    }
+
+    .redeem-box {
+        background: #fff;
+        border: 1.5px solid;
+        border-radius: 10px;
+        padding: 14px 16px;
+    }
+
+    .redeem-rate-chip {
+        font-size: 0.72rem;
+        font-weight: 700;
+        background: #f1f5f9;
+        color: #475569;
+        border: 1px solid #e2e8f0;
+        border-radius: 999px;
+        padding: 2px 9px;
+    }
+
+    .redeem-input {
+        width: 80px !important;
+        text-align: center;
+        border-radius: 7px !important;
+    }
+
+    .redeem-preview {
+        white-space: nowrap;
+        min-width: 80px;
+    }
+
+    .redeem-btn {
+        border-radius: 7px !important;
+        font-weight: 600;
+        padding: 4px 14px;
+    }
+
+    /* ── Rules & Regulations ── */
+    #rulesTab .nav-link {
+        color: #475569;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+
+        #rulesTab .nav-link.active {
+            color: #0b4a94;
+            border-bottom-color: #0b4a94;
+        }
+
+    .rules-header {
+        margin-bottom: 14px;
+    }
+
+    .rules-institution {
+        font-size: 0.78rem;
+        color: #64748b;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        margin-bottom: 2px;
+    }
+
+    .rules-section-title {
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 6px;
+    }
+
+    .rules-intro {
+        font-size: 0.875rem;
+        color: #475569;
+        margin-bottom: 0;
+    }
+
+    .rules-list {
+        font-size: 0.875rem;
+        color: #374151;
+        padding-left: 1.4rem;
+        margin-bottom: 18px;
+        line-height: 1.8;
+    }
+
+        .rules-list li {
+            margin-bottom: 4px;
+        }
+
+    .rules-disciplinary {
+        background: #fffbeb;
+        border: 1px solid #fde68a;
+        border-radius: 10px;
+        padding: 14px 16px;
+    }
+
+    .rules-disciplinary-title {
+        font-size: 0.88rem;
+        font-weight: 700;
+        color: #92400e;
+        margin-bottom: 10px;
+    }
+
+    .disciplinary-item {
+        font-size: 0.85rem;
+        color: #374151;
+        padding: 8px 12px;
+        border-radius: 7px;
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        line-height: 1.6;
+    }
+
+    .offense-1 {
+        background: #fef9c3;
+    }
+
+    .offense-2 {
+        background: #ffedd5;
+    }
+
+    .offense-3 {
+        background: #fee2e2;
+    }
+
+    .offense-badge {
+        flex-shrink: 0;
+        font-size: 0.75rem;
+        font-weight: 700;
+        background: #fff;
+        border: 1px solid #e5e7eb;
+        border-radius: 999px;
+        padding: 2px 9px;
+        color: #374151;
+        white-space: nowrap;
+    }
 
     /* ── Announcements & history ── */
     .announcement-item {
@@ -655,5 +1173,126 @@
 
     footer {
         margin-top: 0 !important;
+    }
+
+    /* ── Rewards & Points ── */
+    .tier-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 4px 14px;
+        border-radius: 999px;
+        font-size: 0.85rem;
+        font-weight: 700;
+        border: 1.5px solid;
+    }
+
+    /* Tier track */
+    .tier-track {
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+    }
+
+    .tier-step {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+        opacity: 0.35;
+        transition: opacity .2s;
+        min-width: 64px;
+    }
+
+        .tier-step.tier-active {
+            opacity: 1;
+        }
+
+    .tier-dot {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: #e2e8f0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+        color: #94a3b8;
+        border: 2px solid #cbd5e1;
+    }
+
+    .tier-active .tier-dot {
+        background: #0b4a94;
+        color: #fff;
+        border-color: #0b4a94;
+        box-shadow: 0 0 0 4px rgba(11,74,148,0.15);
+    }
+
+    .tier-label {
+        font-size: 0.72rem;
+        font-weight: 600;
+        text-align: center;
+        color: #374151;
+        line-height: 1.4;
+    }
+
+        .tier-label span {
+            font-size: 0.68rem;
+            color: #94a3b8;
+            font-weight: 400;
+        }
+
+    .tier-line {
+        flex: 1;
+        height: 3px;
+        background: #e2e8f0;
+        border-radius: 999px;
+        margin-top: 16px;
+        transition: background .2s;
+    }
+
+    .tier-line-done {
+        background: #0b4a94;
+    }
+
+    /* Points circle */
+    .points-circle {
+        width: 110px;
+        height: 110px;
+        border-radius: 50%;
+        border: 4px solid;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto;
+        background: #fff;
+    }
+
+    .points-number {
+        font-size: 2rem;
+        font-weight: 800;
+        line-height: 1;
+    }
+
+    .points-label {
+        font-size: 0.68rem;
+        font-weight: 600;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        margin-top: 2px;
+    }
+
+    .reward-reason-box {
+        font-size: 0.85rem;
+        color: #374151;
+        background: #fff;
+        border: 1px solid;
+        border-radius: 8px;
+        padding: 10px 14px;
+        display: flex;
+        align-items: flex-start;
+        gap: 4px;
+        line-height: 1.6;
     }
 </style>

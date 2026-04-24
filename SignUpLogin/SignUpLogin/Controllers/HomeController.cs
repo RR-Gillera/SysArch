@@ -13,6 +13,12 @@ namespace SignUpLogin.Controllers
 
         private static readonly string[] LabNames = { "Lab 524", "Lab 526", "Lab 528", "Lab 542", "Lab 544" };
 
+        // Award 1 point per every 2 hours (120 minutes) of sit-in time
+        private const int MinutesPerPoint = 120;
+
+        // Cost to redeem: 2 points = 1 session
+        private const int PointsPerSession = 2;
+
         public HomeController(ApplicationDbContext context)
         {
             _context = context;
@@ -51,7 +57,8 @@ namespace SignUpLogin.Controllers
                 .ToListAsync();
 
             var unreadCount = await _context.Announcements
-                .CountAsync(a => !student.LastAnnouncementsReadAt.HasValue || a.PostedAt > student.LastAnnouncementsReadAt.Value);
+                .CountAsync(a => !student.LastAnnouncementsReadAt.HasValue
+                              || a.PostedAt > student.LastAnnouncementsReadAt.Value);
 
             HttpContext.Session.SetInt32("UnreadAnnouncements", unreadCount);
 
@@ -61,7 +68,49 @@ namespace SignUpLogin.Controllers
             var pointsRow = await _context.StudentPoints
                 .FirstOrDefaultAsync(p => p.StudentIdNumber == idNumber);
 
-            // Load lab statuses set by admin; seed any missing labs as Available
+            // ── Auto-award points for completed sit-in sessions ──────────────────
+            // Only look at records that have a TimeOut and haven't been credited yet.
+            var unawarded = await _context.SitInRecords
+                .Where(r => r.StudentIdNumber == idNumber
+                         && r.TimeOut != null
+                         && !r.PointsAwarded)
+                .ToListAsync();
+
+            int newPoints = 0;
+            foreach (var record in unawarded)
+            {
+                int earned = (int)((record.TimeOut!.Value - record.TimeIn).TotalMinutes / MinutesPerPoint);
+                newPoints += earned;
+                record.PointsAwarded = true; // always mark so we never recheck
+            }
+
+            if (unawarded.Any())
+            {
+                if (newPoints > 0)
+                {
+                    if (pointsRow == null)
+                    {
+                        pointsRow = new StudentPoints
+                        {
+                            StudentIdNumber = idNumber,
+                            Points = newPoints,
+                            LastRewardReason = $"Earned {newPoints} pt(s) for sit-in time",
+                            UpdatedAt = DateTime.Now
+                        };
+                        _context.StudentPoints.Add(pointsRow);
+                    }
+                    else
+                    {
+                        pointsRow.Points += newPoints;
+                        pointsRow.LastRewardReason = $"Earned {newPoints} pt(s) for sit-in time";
+                        pointsRow.UpdatedAt = DateTime.Now;
+                    }
+                    TempData["PointsEarned"] = newPoints;
+                }
+                await _context.SaveChangesAsync();
+            }
+
+            // ── Lab statuses ─────────────────────────────────────────────────────
             var labStatuses = await _context.LabStatuses.ToListAsync();
             bool anyAdded = false;
             foreach (var name in LabNames)
@@ -108,17 +157,57 @@ namespace SignUpLogin.Controllers
             return View(vm);
         }
 
-        public Task<IActionResult> Home()
+        public Task<IActionResult> Home() => Index();
+        public Task<IActionResult> Dashboard() => Index();
+
+        // ── Redeem points for extra sessions ─────────────────────────────────────
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> RedeemPoints(int redeemAmount)
         {
-            return Index();
+            var guardResult = EnsureStudentAccess();
+            if (guardResult != null) return guardResult;
+
+            var idNumber = HttpContext.Session.GetString("IdNumber")!;
+
+            if (redeemAmount < PointsPerSession)
+            {
+                TempData["RedeemError"] = $"Minimum redemption is {PointsPerSession} points (1 session).";
+                return RedirectToAction(nameof(Index));
+            }
+
+            // Floor to valid multiple (e.g. 5 pts → 4 pts used = 2 sessions)
+            int validPoints = (redeemAmount / PointsPerSession) * PointsPerSession;
+            int sessionsGained = validPoints / PointsPerSession;
+
+            var pointsRow = await _context.StudentPoints
+                .FirstOrDefaultAsync(p => p.StudentIdNumber == idNumber);
+
+            if (pointsRow == null || pointsRow.Points < validPoints)
+            {
+                TempData["RedeemError"] = "You don't have enough points to redeem.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            var student = await _context.Signups.FirstOrDefaultAsync(s => s.IdNumber == idNumber);
+            if (student == null)
+            {
+                HttpContext.Session.Clear();
+                return RedirectToAction("Index", "Login");
+            }
+
+            pointsRow.Points -= validPoints;
+            pointsRow.LastRewardReason = $"Redeemed {validPoints} pt(s) for {sessionsGained} session(s)";
+            pointsRow.UpdatedAt = DateTime.Now;
+            student.RemainingSessions += sessionsGained;
+
+            await _context.SaveChangesAsync();
+
+            TempData["RedeemSuccess"] = $"Redeemed {validPoints} points for {sessionsGained} extra session(s)!";
+            return RedirectToAction(nameof(Index));
         }
 
-        public Task<IActionResult> Dashboard()
-        {
-            return Index();
-        }
-
-        // ── Get occupied PCs for a lab (student-facing, read-only) ──────────────
+        // ── Get occupied PCs for a lab (student-facing, read-only) ───────────────
         [HttpGet]
         public async Task<IActionResult> GetOccupiedPcs(string laboratory)
         {
@@ -141,8 +230,7 @@ namespace SignUpLogin.Controllers
         public async Task<IActionResult> MarkAnnouncementsRead()
         {
             var guardResult = EnsureStudentAccess();
-            if (guardResult != null)
-                return guardResult;
+            if (guardResult != null) return guardResult;
 
             var idNumber = HttpContext.Session.GetString("IdNumber")!;
             var student = await _context.Signups.FirstOrDefaultAsync(s => s.IdNumber == idNumber);
@@ -185,16 +273,11 @@ namespace SignUpLogin.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        public IActionResult Privacy()
-        {
-            return View();
-        }
+        public IActionResult Privacy() => View();
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult Error()
-        {
-            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
-        }
+        public IActionResult Error() =>
+            View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
 
         private IActionResult? EnsureStudentAccess()
         {
