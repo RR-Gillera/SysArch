@@ -10,13 +10,8 @@ namespace SignUpLogin.Controllers
     public class HomeController : Controller
     {
         private readonly ApplicationDbContext _context;
-
         private static readonly string[] LabNames = { "Lab 524", "Lab 526", "Lab 528", "Lab 542", "Lab 544" };
-
-        // Award 1 point per every 2 hours (120 minutes) of sit-in time
         private const int MinutesPerPoint = 120;
-
-        // Cost to redeem: 2 points = 1 session
         private const int PointsPerSession = 2;
 
         public HomeController(ApplicationDbContext context)
@@ -27,11 +22,9 @@ namespace SignUpLogin.Controllers
         public async Task<IActionResult> Index()
         {
             var guardResult = EnsureStudentAccess();
-            if (guardResult != null)
-                return guardResult;
+            if (guardResult != null) return guardResult;
 
             var idNumber = HttpContext.Session.GetString("IdNumber")!;
-
             var student = await _context.Signups.FirstOrDefaultAsync(s => s.IdNumber == idNumber);
             if (student == null)
             {
@@ -51,37 +44,21 @@ namespace SignUpLogin.Controllers
                 .Take(5)
                 .ToListAsync();
 
-            var announcements = await _context.Announcements
-                .OrderByDescending(a => a.PostedAt)
-                .Take(5)
-                .ToListAsync();
-
-            var unreadCount = await _context.Announcements
-                .CountAsync(a => !student.LastAnnouncementsReadAt.HasValue
-                              || a.PostedAt > student.LastAnnouncementsReadAt.Value);
-
+            var announcements = await _context.Announcements.OrderByDescending(a => a.PostedAt).Take(5).ToListAsync();
+            var unreadCount = await _context.Announcements.CountAsync(a => !student.LastAnnouncementsReadAt.HasValue || a.PostedAt > student.LastAnnouncementsReadAt.Value);
             HttpContext.Session.SetInt32("UnreadAnnouncements", unreadCount);
 
-            var activeSitIn = await _context.SitInRecords
-                .FirstOrDefaultAsync(r => r.StudentIdNumber == idNumber && r.TimeOut == null);
+            var activeSitIn = await _context.SitInRecords.FirstOrDefaultAsync(r => r.StudentIdNumber == idNumber && r.TimeOut == null);
+            var pointsRow = await _context.StudentPoints.FirstOrDefaultAsync(p => p.StudentIdNumber == idNumber);
 
-            var pointsRow = await _context.StudentPoints
-                .FirstOrDefaultAsync(p => p.StudentIdNumber == idNumber);
-
-            // ── Auto-award points for completed sit-in sessions ──────────────────
-            // Only look at records that have a TimeOut and haven't been credited yet.
-            var unawarded = await _context.SitInRecords
-                .Where(r => r.StudentIdNumber == idNumber
-                         && r.TimeOut != null
-                         && !r.PointsAwarded)
-                .ToListAsync();
-
+            // Auto-award points
+            var unawarded = await _context.SitInRecords.Where(r => r.StudentIdNumber == idNumber && r.TimeOut != null && !r.PointsAwarded).ToListAsync();
             int newPoints = 0;
             foreach (var record in unawarded)
             {
                 int earned = (int)((record.TimeOut!.Value - record.TimeIn).TotalMinutes / MinutesPerPoint);
                 newPoints += earned;
-                record.PointsAwarded = true; // always mark so we never recheck
+                record.PointsAwarded = true;
             }
 
             if (unawarded.Any())
@@ -110,24 +87,19 @@ namespace SignUpLogin.Controllers
                 await _context.SaveChangesAsync();
             }
 
-            // ── Lab statuses ─────────────────────────────────────────────────────
+            // Lab statuses
             var labStatuses = await _context.LabStatuses.ToListAsync();
             bool anyAdded = false;
             foreach (var name in LabNames)
             {
                 if (!labStatuses.Any(l => l.LabName == name))
                 {
-                    var newLab = new LabStatus { LabName = name, Status = "Available", UpdatedAt = DateTime.Now };
-                    _context.LabStatuses.Add(newLab);
-                    labStatuses.Add(newLab);
+                    _context.LabStatuses.Add(new LabStatus { LabName = name, Status = "Available", UpdatedAt = DateTime.Now });
                     anyAdded = true;
                 }
             }
             if (anyAdded) await _context.SaveChangesAsync();
-
-            var orderedLabStatuses = LabNames
-                .Select(n => labStatuses.First(l => l.LabName == n))
-                .ToList();
+            var orderedLabStatuses = LabNames.Select(n => labStatuses.First(l => l.LabName == n)).ToList();
 
             var vm = new StudentHomeViewModel
             {
@@ -145,22 +117,38 @@ namespace SignUpLogin.Controllers
                 ActiveSitIn = activeSitIn,
                 Points = pointsRow?.Points ?? 0,
                 LastRewardReason = pointsRow?.LastRewardReason,
-                LabStatuses = orderedLabStatuses,
-                SubmittedFeedbacks = await _context.Feedbacks
-                    .Where(f => f.StudentIdNumber == idNumber)
-                    .Select(f => new Feedback { SitInRecordId = f.SitInRecordId })
-                    .ToListAsync()
+                LabStatuses = orderedLabStatuses
             };
 
             HttpContext.Session.SetString("ProfileImagePath", student.ProfileImagePath ?? string.Empty);
-
             return View(vm);
+        }
+
+        // ── NEW: Sit-in History Page ──────────────────────────────────────
+        public async Task<IActionResult> SitInHistory()
+        {
+            var guardResult = EnsureStudentAccess();
+            if (guardResult != null) return guardResult;
+
+            var idNumber = HttpContext.Session.GetString("IdNumber")!;
+            var records = await _context.SitInRecords
+                .Where(r => r.StudentIdNumber == idNumber)
+                .OrderByDescending(r => r.TimeIn)
+                .ToListAsync();
+
+            // Track which records already have feedback
+            var submittedIds = await _context.Feedbacks
+                .Where(f => f.StudentIdNumber == idNumber)
+                .Select(f => f.SitInRecordId)
+                .ToHashSetAsync();
+
+            ViewBag.SubmittedFeedbackIds = submittedIds;
+            return View(records);
         }
 
         public Task<IActionResult> Home() => Index();
         public Task<IActionResult> Dashboard() => Index();
 
-        // ── Redeem points for extra sessions ─────────────────────────────────────
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> RedeemPoints(int redeemAmount)
@@ -169,19 +157,15 @@ namespace SignUpLogin.Controllers
             if (guardResult != null) return guardResult;
 
             var idNumber = HttpContext.Session.GetString("IdNumber")!;
-
             if (redeemAmount < PointsPerSession)
             {
                 TempData["RedeemError"] = $"Minimum redemption is {PointsPerSession} points (1 session).";
                 return RedirectToAction(nameof(Index));
             }
 
-            // Floor to valid multiple (e.g. 5 pts → 4 pts used = 2 sessions)
             int validPoints = (redeemAmount / PointsPerSession) * PointsPerSession;
             int sessionsGained = validPoints / PointsPerSession;
-
-            var pointsRow = await _context.StudentPoints
-                .FirstOrDefaultAsync(p => p.StudentIdNumber == idNumber);
+            var pointsRow = await _context.StudentPoints.FirstOrDefaultAsync(p => p.StudentIdNumber == idNumber);
 
             if (pointsRow == null || pointsRow.Points < validPoints)
             {
@@ -202,12 +186,10 @@ namespace SignUpLogin.Controllers
             student.RemainingSessions += sessionsGained;
 
             await _context.SaveChangesAsync();
-
             TempData["RedeemSuccess"] = $"Redeemed {validPoints} points for {sessionsGained} extra session(s)!";
             return RedirectToAction(nameof(Index));
         }
 
-        // ── Get occupied PCs for a lab (student-facing, read-only) ───────────────
         [HttpGet]
         public async Task<IActionResult> GetOccupiedPcs(string laboratory)
         {
@@ -240,7 +222,6 @@ namespace SignUpLogin.Controllers
                 await _context.SaveChangesAsync();
                 HttpContext.Session.SetInt32("UnreadAnnouncements", 0);
             }
-
             return RedirectToAction(nameof(Index));
         }
 
@@ -252,9 +233,7 @@ namespace SignUpLogin.Controllers
             if (guardResult != null) return guardResult;
 
             var idNumber = HttpContext.Session.GetString("IdNumber")!;
-
-            var alreadySubmitted = await _context.Feedbacks
-                .AnyAsync(f => f.StudentIdNumber == idNumber && f.SitInRecordId == SitInRecordId);
+            var alreadySubmitted = await _context.Feedbacks.AnyAsync(f => f.StudentIdNumber == idNumber && f.SitInRecordId == SitInRecordId);
 
             if (!alreadySubmitted && Rating >= 1 && Rating <= 5)
             {
@@ -270,26 +249,21 @@ namespace SignUpLogin.Controllers
                 TempData["Success"] = "Thank you for your feedback!";
             }
 
-            return RedirectToAction(nameof(Index));
+            // Redirect back to history page instead of Index
+            return RedirectToAction(nameof(SitInHistory));
         }
 
         public IActionResult Privacy() => View();
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult Error() =>
-            View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+        public IActionResult Error() => View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
 
         private IActionResult? EnsureStudentAccess()
         {
             var idNumber = HttpContext.Session.GetString("IdNumber");
             var role = HttpContext.Session.GetString("Role");
-
-            if (string.IsNullOrEmpty(idNumber))
-                return RedirectToAction("Index", "Login");
-
-            if (!string.Equals(role, "Student", StringComparison.OrdinalIgnoreCase))
-                return RedirectToAction("Home", "Admin");
-
+            if (string.IsNullOrEmpty(idNumber)) return RedirectToAction("Index", "Login");
+            if (!string.Equals(role, "Student", StringComparison.OrdinalIgnoreCase)) return RedirectToAction("Home", "Admin");
             return null;
         }
     }

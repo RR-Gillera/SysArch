@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Collections.Generic;
 
 namespace SignUpLogin.Models
 {
@@ -62,6 +63,11 @@ namespace SignUpLogin.Models
 
         public string? ProfileImagePath { get; set; }
 
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        // ── ADD THESE NAVIGATION PROPERTIES ─────────────────────────────
+        public ICollection<SitInRecord> SitInRecords { get; set; } = new List<SitInRecord>();
+        public ICollection<Feedback> Feedbacks { get; set; } = new List<Feedback>();
+        public StudentPoints? StudentPoints { get; set; }
     }
 }

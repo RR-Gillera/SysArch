@@ -43,6 +43,7 @@ namespace SignUpLogin.Controllers
                 ModelState.AddModelError(string.Empty, "Invalid ID Number/Username or Password.");
                 return View("Login", model);
             }
+            HttpContext.Session.Clear();
 
             if (model.RememberMe)
             {

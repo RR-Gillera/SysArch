@@ -206,6 +206,9 @@ namespace SignUpLogin.Migrations
                         .HasMaxLength(120)
                         .HasColumnType("varchar(120)");
 
+                    b.Property<string>("SignupIdNumber")
+                        .HasColumnType("varchar(255)");
+
                     b.Property<string>("StudentIdNumber")
                         .IsRequired()
                         .HasColumnType("varchar(255)");
@@ -217,6 +220,8 @@ namespace SignUpLogin.Migrations
                         .HasColumnType("datetime(6)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("SignupIdNumber");
 
                     b.HasIndex("StudentIdNumber");
 
@@ -247,7 +252,8 @@ namespace SignUpLogin.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("StudentIdNumber");
+                    b.HasIndex("StudentIdNumber")
+                        .IsUnique();
 
                     b.ToTable("StudentPoints");
                 });
@@ -261,7 +267,7 @@ namespace SignUpLogin.Migrations
                         .IsRequired();
 
                     b.HasOne("SignUpLogin.Models.Signup", "Student")
-                        .WithMany()
+                        .WithMany("Feedbacks")
                         .HasForeignKey("StudentIdNumber")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -273,6 +279,10 @@ namespace SignUpLogin.Migrations
 
             modelBuilder.Entity("SignUpLogin.Models.SitInRecord", b =>
                 {
+                    b.HasOne("SignUpLogin.Models.Signup", null)
+                        .WithMany("SitInRecords")
+                        .HasForeignKey("SignupIdNumber");
+
                     b.HasOne("SignUpLogin.Models.Signup", "Student")
                         .WithMany()
                         .HasForeignKey("StudentIdNumber")
@@ -285,12 +295,21 @@ namespace SignUpLogin.Migrations
             modelBuilder.Entity("SignUpLogin.Models.StudentPoints", b =>
                 {
                     b.HasOne("SignUpLogin.Models.Signup", "Student")
-                        .WithMany()
-                        .HasForeignKey("StudentIdNumber")
+                        .WithOne("StudentPoints")
+                        .HasForeignKey("SignUpLogin.Models.StudentPoints", "StudentIdNumber")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Student");
+                });
+
+            modelBuilder.Entity("SignUpLogin.Models.Signup", b =>
+                {
+                    b.Navigation("Feedbacks");
+
+                    b.Navigation("SitInRecords");
+
+                    b.Navigation("StudentPoints");
                 });
 #pragma warning restore 612, 618
         }
