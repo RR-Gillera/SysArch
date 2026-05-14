@@ -15,14 +15,33 @@ namespace SignUpLogin.Controllers
             _context = context;
         }
 
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
             var model = new Login();
+
+            // Handle Remember Me Cookie
             if (Request.Cookies.TryGetValue(RememberedIdCookie, out var rememberedIdNumber) && !string.IsNullOrWhiteSpace(rememberedIdNumber))
             {
                 model.IdNumber = rememberedIdNumber;
                 model.RememberMe = true;
             }
+
+            // Fetch Top 5 Students for Leaderboard
+            var topStudents = await _context.StudentPoints
+                .AsNoTracking()
+                .Include(p => p.Student)
+                .OrderByDescending(p => p.Points)
+                .Take(5)
+                .Select(p => new
+                {
+                    StudentIdNumber = p.StudentIdNumber,
+                    StudentName = p.Student != null ? $"{p.Student.FirstName} {p.Student.LastName}" : p.StudentIdNumber,
+                    Points = p.Points
+                })
+                .ToListAsync();
+
+            ViewBag.LeaderboardData = topStudents;
+
             return View("Login", model);
         }
 
@@ -30,7 +49,11 @@ namespace SignUpLogin.Controllers
         public async Task<IActionResult> Index(Login model)
         {
             if (!ModelState.IsValid)
+            {
+                // Re-fetch leaderboard if validation fails so it still shows
+                ViewBag.LeaderboardData = await GetLeaderboardData();
                 return View("Login", model);
+            }
 
             // Try by IdNumber first (students), then by FirstName for admins
             var user = await _context.Signups
@@ -41,8 +64,11 @@ namespace SignUpLogin.Controllers
             if (user == null || !BCrypt.Net.BCrypt.Verify(model.Password, user.Password))
             {
                 ModelState.AddModelError(string.Empty, "Invalid ID Number/Username or Password.");
+                // Re-fetch leaderboard if login fails
+                ViewBag.LeaderboardData = await GetLeaderboardData();
                 return View("Login", model);
             }
+
             HttpContext.Session.Clear();
 
             if (model.RememberMe)
@@ -86,6 +112,23 @@ namespace SignUpLogin.Controllers
             HttpContext.Session.Clear();
             TempData["LoggedOut"] = "You have been logged out successfully.";
             return RedirectToAction("Index");
+        }
+
+        // Helper method to avoid code duplication
+        private async Task<List<object>> GetLeaderboardData()
+        {
+            return await _context.StudentPoints
+                .AsNoTracking()
+                .Include(p => p.Student)
+                .OrderByDescending(p => p.Points)
+                .Take(5)
+                .Select(p => new
+                {
+                    StudentIdNumber = p.StudentIdNumber,
+                    StudentName = p.Student != null ? $"{p.Student.FirstName} {p.Student.LastName}" : p.StudentIdNumber,
+                    Points = p.Points
+                })
+                .ToListAsync<object>();
         }
     }
 }

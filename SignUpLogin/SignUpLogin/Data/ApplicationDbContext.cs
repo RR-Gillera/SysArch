@@ -15,6 +15,7 @@ namespace SignUpLogin.Data
         public DbSet<LabStatus> LabStatuses { get; set; }
         public DbSet<Feedback> Feedbacks { get; set; }
         public DbSet<StudentPoints> StudentPoints { get; set; }
+        public DbSet<Reservation> Reservations { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -33,6 +34,12 @@ namespace SignUpLogin.Data
 
             modelBuilder.Entity<SitInRecord>()
                 .HasIndex(r => r.StudentIdNumber);
+
+            modelBuilder.Entity<Reservation>()
+                .HasOne(r => r.Student)
+                .WithMany()
+                .HasForeignKey(r => r.StudentIdNumber)
+                .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<SitInRecord>()
                 .HasOne(r => r.Student)

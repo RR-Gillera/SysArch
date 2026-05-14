@@ -3,6 +3,9 @@ using Microsoft.EntityFrameworkCore;
 using SignUpLogin.Data;
 using SignUpLogin.Models;
 using SignUpLogin.Models.ViewModels;
+using QuestPDF.Fluent;
+using QuestPDF.Helpers;
+using QuestPDF.Infrastructure;
 
 namespace SignUpLogin.Controllers
 {
@@ -251,6 +254,12 @@ namespace SignUpLogin.Controllers
                 return RedirectToAction(nameof(Home));
             }
 
+            if (student.RemainingSessions <= 0)
+            {
+                TempData["Error"] = $"{student.FirstName} {student.LastName} has no remaining sessions.";
+                return RedirectToAction(nameof(Home));
+            }
+
             var record = new SitInRecord
             {
                 StudentIdNumber = StudentIdNumber,
@@ -382,15 +391,19 @@ namespace SignUpLogin.Controllers
             return View(feedbacks);
         }
 
-        // ── Analytics ──────────────────────────────────────────────────────
+        // ── Analytics ─────────────────────────────────────────────────────
         public async Task<IActionResult> Analytics()
         {
             if (!IsAdmin()) return RedirectToAction("Index", "Login");
 
             var totalSessions = await _context.SitInRecords.CountAsync();
             var activeSessions = await _context.SitInRecords.CountAsync(r => r.TimeOut == null);
-            var avgRating = await _context.Feedbacks.AnyAsync()
-                                ? await _context.Feedbacks.AverageAsync(f => (double)f.Rating) : 0;
+
+            bool hasFeedbacks = await _context.Feedbacks.AnyAsync();
+            double avgRating = hasFeedbacks
+                ? await _context.Feedbacks.AverageAsync(f => (double)f.Rating)
+                : 0.0;
+
             var totalFeedbacks = await _context.Feedbacks.CountAsync();
 
             var sessionsByLab = await _context.SitInRecords
@@ -399,24 +412,64 @@ namespace SignUpLogin.Controllers
                 .OrderByDescending(g => g.Count)
                 .ToListAsync();
 
-            var topStudents = await _context.StudentPoints
+            // ── Leaderboard ────────────────────────────────────────────────────────
+
+            // 1. All students
+            var allStudents = await _context.Signups
                 .AsNoTracking()
-                .Include(p => p.Student)
-                .OrderByDescending(p => p.Points)
-                .Take(10)
+                .Where(s => s.Role == "Student")
                 .ToListAsync();
+
+            // 2. Sit-in time per student (completed sessions only, summed in memory)
+            var completedRecords = await _context.SitInRecords
+                .Where(r => r.TimeOut != null)
+                .Select(r => new { r.StudentIdNumber, r.TimeIn, r.TimeOut })
+                .ToListAsync();
+
+            var sitInTimes = completedRecords
+                .GroupBy(r => r.StudentIdNumber)
+                .ToDictionary(
+                    g => g.Key,
+                    g => (int)g.Sum(r => (r.TimeOut!.Value - r.TimeIn).TotalMinutes)
+                );
+
+            // 3. Points data
+            var pointsData = await _context.StudentPoints
+                .AsNoTracking()
+                .ToListAsync();
+
+            var pointsDict = pointsData.ToDictionary(p => p.StudentIdNumber);
+
+            // 4. Merge: every student gets an entry (0 points if no row yet)
+            var leaderboardData = allStudents.Select(s =>
+            {
+                pointsDict.TryGetValue(s.IdNumber, out var sp);
+                sitInTimes.TryGetValue(s.IdNumber, out int minutes);
+
+                return new LeaderboardEntry
+                {
+                    StudentIdNumber = s.IdNumber,
+                    StudentName = $"{s.FirstName} {s.LastName}".Trim(),
+                    Points = sp?.Points ?? 0,
+                    TotalMinutes = minutes,
+                    LastRewardReason = sp?.LastRewardReason
+                };
+            })
+            .OrderByDescending(e => e.Points)
+            .ThenByDescending(e => e.TotalMinutes)
+            .ToList();
 
             ViewBag.TotalSessions = totalSessions;
             ViewBag.ActiveSessions = activeSessions;
             ViewBag.AvgRating = avgRating.ToString("0.0");
             ViewBag.TotalFeedbacks = totalFeedbacks;
             ViewBag.SessionsByLab = sessionsByLab;
-            ViewBag.TopStudents = topStudents;
+            ViewBag.LeaderboardData = leaderboardData;
 
             return View();
         }
 
-        // ── ADD POINTS (NOW DASHBOARD-READY) ───────────────────────────────
+        //  ── ADD POINTS ───────────────────────────────
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> AddPoints(string StudentIdNumber, int Points, string? Reason)
@@ -429,7 +482,7 @@ namespace SignUpLogin.Controllers
             if (student == null)
             {
                 TempData["Error"] = "Student not found.";
-                return RedirectToAction(nameof(Home));
+                return RedirectToAction(nameof(Students)); // Redirect to Students list
             }
 
             var row = await _context.StudentPoints
@@ -448,18 +501,221 @@ namespace SignUpLogin.Controllers
             await _context.SaveChangesAsync();
 
             TempData["Success"] = $"Added {Points} point(s) to {student.FirstName} {student.LastName}. New total: {row.Points}.";
-            return RedirectToAction(nameof(Home));
+
+            // Redirect back to Students list instead of Home/Dashboard
+            return RedirectToAction(nameof(Students));
         }
 
-        public IActionResult Reservations()
+        // ── Reservations ───────────────────────────────────────────────────
+        public async Task<IActionResult> Reservations()
         {
             if (!IsAdmin()) return RedirectToAction("Index", "Login");
-            return View();
+
+            var reservations = await _context.Reservations
+                .AsNoTracking()
+                .Include(r => r.Student)
+                .OrderByDescending(r => r.CreatedAt)
+                .ToListAsync();
+
+            return View(reservations);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ApproveReservation(int id, string? AdminRemarks)
+        {
+            if (!IsAdmin()) return RedirectToAction("Index", "Login");
+
+            var reservation = await _context.Reservations.FindAsync(id);
+            if (reservation == null)
+            {
+                TempData["Error"] = "Reservation not found.";
+                return RedirectToAction(nameof(Reservations));
+            }
+
+            reservation.Status = "Approved";
+            reservation.AdminRemarks = string.IsNullOrWhiteSpace(AdminRemarks) ? null : AdminRemarks.Trim();
+            reservation.ReviewedAt = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] = "Reservation approved successfully.";
+            return RedirectToAction(nameof(Reservations));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DenyReservation(int id, string? AdminRemarks)
+        {
+            if (!IsAdmin()) return RedirectToAction("Index", "Login");
+
+            var reservation = await _context.Reservations.FindAsync(id);
+            if (reservation == null)
+            {
+                TempData["Error"] = "Reservation not found.";
+                return RedirectToAction(nameof(Reservations));
+            }
+
+            reservation.Status = "Denied";
+            reservation.AdminRemarks = string.IsNullOrWhiteSpace(AdminRemarks) ? null : AdminRemarks.Trim();
+            reservation.ReviewedAt = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+
+            TempData["Error"] = "Reservation denied.";
+            return RedirectToAction(nameof(Reservations));
+        }
+
+        // ── Export CSV ─────────────────────────────────────────────────────
+        [HttpGet]
+        public async Task<IActionResult> ExportSitInCsv()
+        {
+            if (!IsAdmin()) return RedirectToAction("Index", "Login");
+
+            var records = await _context.SitInRecords
+                .AsNoTracking()
+                .Include(r => r.Student)
+                .OrderByDescending(r => r.TimeIn)
+                .ToListAsync();
+
+            var sb = new System.Text.StringBuilder();
+            sb.AppendLine("ID,Student ID,Student Name,Purpose,Laboratory,PC Number,Time In,Time Out,Duration (mins),Status");
+
+            foreach (var r in records)
+            {
+                var name     = r.Student != null ? $"{r.Student.FirstName} {r.Student.LastName}".Trim() : r.StudentIdNumber;
+                var timeIn   = r.TimeIn.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss");
+                var timeOut  = r.TimeOut?.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss") ?? "Active";
+                var duration = r.TimeOut.HasValue ? (int)(r.TimeOut.Value - r.TimeIn).TotalMinutes : 0;
+                var status   = r.TimeOut == null ? "Active" : "Completed";
+                var pc       = r.PcNumber ?? "";
+                sb.AppendLine($"{r.Id},{r.StudentIdNumber},\"{name}\",\"{r.Purpose}\",\"{r.Laboratory}\",\"{pc}\",\"{timeIn}\",\"{timeOut}\",{duration},{status}");
+            }
+
+            var bytes = System.Text.Encoding.UTF8.GetBytes(sb.ToString());
+            return File(bytes, "text/csv", $"SitInRecords_{DateTime.Now:yyyyMMdd_HHmmss}.csv");
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ExportSitInDocx()
+        {
+            if (!IsAdmin()) return RedirectToAction("Index", "Login");
+
+            var records = await _context.SitInRecords
+                .AsNoTracking()
+                .Include(r => r.Student)
+                .OrderByDescending(r => r.TimeIn)
+                .ToListAsync();
+
+            using var memoryStream = new System.IO.MemoryStream();
+            using (var wordDocument = DocumentFormat.OpenXml.Packaging.WordprocessingDocument.Create(memoryStream, DocumentFormat.OpenXml.WordprocessingDocumentType.Document))
+            {
+                var mainPart = wordDocument.AddMainDocumentPart();
+                mainPart.Document = new DocumentFormat.OpenXml.Wordprocessing.Document();
+                var body = mainPart.Document.AppendChild(new DocumentFormat.OpenXml.Wordprocessing.Body());
+
+                // Add Title
+                var para = body.AppendChild(new DocumentFormat.OpenXml.Wordprocessing.Paragraph());
+                var run = para.AppendChild(new DocumentFormat.OpenXml.Wordprocessing.Run());
+                run.AppendChild(new DocumentFormat.OpenXml.Wordprocessing.Text("Sit-in Records Report"));
+                
+                // Note: Building a full table in OpenXML is very verbose. For simplicity in this demo, 
+                // we'll output formatted paragraphs. A full implementation would use DocumentFormat.OpenXml.Wordprocessing.Table
+                foreach (var r in records)
+                {
+                    var name = r.Student != null ? $"{r.Student.FirstName} {r.Student.LastName}".Trim() : r.StudentIdNumber;
+                    var timeIn = r.TimeIn.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss");
+                    var timeOut = r.TimeOut?.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss") ?? "Active";
+                    var status = r.TimeOut == null ? "Active" : "Completed";
+
+                    var p = body.AppendChild(new DocumentFormat.OpenXml.Wordprocessing.Paragraph());
+                    var r1 = p.AppendChild(new DocumentFormat.OpenXml.Wordprocessing.Run());
+                    r1.AppendChild(new DocumentFormat.OpenXml.Wordprocessing.Text($"Student: {name} ({r.StudentIdNumber}) - Lab: {r.Laboratory} - Status: {status}"));
+                    r1.AppendChild(new DocumentFormat.OpenXml.Wordprocessing.Break());
+                    r1.AppendChild(new DocumentFormat.OpenXml.Wordprocessing.Text($"Time In: {timeIn} - Time Out: {timeOut}"));
+                    
+                    body.AppendChild(new DocumentFormat.OpenXml.Wordprocessing.Paragraph()); // spacer
+                }
+            }
+
+            memoryStream.Position = 0;
+            return File(memoryStream.ToArray(), "application/vnd.openxmlformats-officedocument.wordprocessingml.document", $"SitInRecords_{DateTime.Now:yyyyMMdd_HHmmss}.docx");
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ExportSitInPdf()
+        {
+            if (!IsAdmin()) return RedirectToAction("Index", "Login");
+
+            var records = await _context.SitInRecords
+                .AsNoTracking()
+                .Include(r => r.Student)
+                .OrderByDescending(r => r.TimeIn)
+                .ToListAsync();
+
+            var document = QuestPDF.Fluent.Document.Create(container =>
+            {
+                container.Page(page =>
+                {
+                    page.Size(QuestPDF.Helpers.PageSizes.A4.Landscape());
+                    page.Margin(1, QuestPDF.Infrastructure.Unit.Centimetre);
+                    page.PageColor(QuestPDF.Helpers.Colors.White);
+                    page.DefaultTextStyle(x => x.FontSize(10));
+
+                    page.Header().Text("Sit-in Records Report").SemiBold().FontSize(16).FontColor(QuestPDF.Helpers.Colors.Blue.Darken2);
+
+                    page.Content().PaddingVertical(1, QuestPDF.Infrastructure.Unit.Centimetre).Table(table =>
+                    {
+                        table.ColumnsDefinition(columns =>
+                        {
+                            columns.RelativeColumn(2); // ID/Name
+                            columns.RelativeColumn(1); // Lab
+                            columns.RelativeColumn(1); // PC
+                            columns.RelativeColumn(2); // Time In
+                            columns.RelativeColumn(2); // Time Out
+                            columns.RelativeColumn(1); // Status
+                        });
+
+                        table.Header(header =>
+                        {
+                            header.Cell().Text("Student");
+                            header.Cell().Text("Lab");
+                            header.Cell().Text("PC");
+                            header.Cell().Text("Time In");
+                            header.Cell().Text("Time Out");
+                            header.Cell().Text("Status");
+                        });
+
+                        foreach (var r in records)
+                        {
+                            var name = r.Student != null ? $"{r.Student.FirstName} {r.Student.LastName}".Trim() : r.StudentIdNumber;
+                            var timeIn = r.TimeIn.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss");
+                            var timeOut = r.TimeOut?.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss") ?? "Active";
+                            var status = r.TimeOut == null ? "Active" : "Completed";
+
+                            table.Cell().Text($"{name}\n({r.StudentIdNumber})");
+                            table.Cell().Text(r.Laboratory);
+                            table.Cell().Text(r.PcNumber ?? "-");
+                            table.Cell().Text(timeIn);
+                            table.Cell().Text(timeOut);
+                            table.Cell().Text(status);
+                        }
+                    });
+
+                    page.Footer().AlignCenter().Text(x =>
+                    {
+                        x.Span("Page ");
+                        x.CurrentPageNumber();
+                    });
+                });
+            });
+
+            var pdfBytes = document.GeneratePdf();
+            return File(pdfBytes, "application/pdf", $"SitInRecords_{DateTime.Now:yyyyMMdd_HHmmss}.pdf");
         }
 
         public IActionResult Logout()
         {
             HttpContext.Session.Clear();
+            TempData["LoggedOut"] = "You have been logged out successfully.";
             return RedirectToAction("Index", "Login");
         }
 
@@ -468,5 +724,15 @@ namespace SignUpLogin.Controllers
             return !string.IsNullOrEmpty(HttpContext.Session.GetString("IdNumber"))
                 && string.Equals(HttpContext.Session.GetString("Role"), "Admin", StringComparison.OrdinalIgnoreCase);
         }
+    }
+
+    // Put this outside the AdminController class, in the same file or a separate file
+    public class LeaderboardEntry
+    {
+        public string StudentIdNumber { get; set; } = string.Empty;
+        public string StudentName { get; set; } = string.Empty;
+        public int Points { get; set; }
+        public int TotalMinutes { get; set; }
+        public string? LastRewardReason { get; set; }
     }
 }

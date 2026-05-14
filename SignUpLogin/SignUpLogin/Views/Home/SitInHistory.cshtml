@@ -2,6 +2,7 @@
 @{
     ViewData["Title"] = "Sit-in History";
     Layout = null;
+    // ViewBag.SubmittedFeedbackIds is populated by the Controller
     var submittedIds = ViewBag.SubmittedFeedbackIds as HashSet<int> ?? new HashSet<int>();
 }
 
@@ -58,14 +59,14 @@
                                 @foreach (var record in Model)
                                 {
                                     var isActive = record.TimeOut == null;
-                                    var duration = isActive ? "-" : $"{(int)((record.TimeOut.Value - record.TimeIn).TotalHours)}h {(record.TimeOut.Value - record.TimeIn).Minutes}m";
+                                    var duration = isActive ? "-" : $"{(int)((record.TimeOut!.Value - record.TimeIn).TotalHours)}h {(record.TimeOut!.Value - record.TimeIn).Minutes}m";
                                     <tr>
                                         <td>@record.TimeIn.ToString("MMM dd, yyyy")</td>
                                         <td>@record.Laboratory</td>
                                         <td>@(string.IsNullOrWhiteSpace(record.PcNumber) ? "-" : record.PcNumber)</td>
                                         <td>@(string.IsNullOrWhiteSpace(record.Purpose) ? "-" : record.Purpose)</td>
                                         <td class="text-nowrap">@record.TimeIn.ToString("hh:mm tt")</td>
-                                        <td class="text-nowrap">@(isActive ? "In Progress" : record.TimeOut.Value.ToString("hh:mm tt"))</td>
+                                        <td class="text-nowrap">@(isActive ? "In Progress" : record.TimeOut!.Value.ToString("hh:mm tt"))</td>
                                         <td>@duration</td>
                                         <td><span class="badge @(isActive ? "text-bg-success" : "text-bg-secondary")">@(isActive ? "Active" : "Completed")</span></td>
                                         <td class="text-center">
@@ -166,11 +167,43 @@
 </html>
 
 <style>
-    .dash-wrapper { flex: 1; }
-    .student-home { max-width: 1100px; }
-    .panel-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 18px; }
-    .table th { font-size: .75rem; text-transform: uppercase; letter-spacing: .04em; color: #64748b; font-weight: 600; white-space: nowrap; }
-    .table td { font-size: .85rem; }
-    .empty-state { border: 1px dashed #cbd5e1; background: #f8fafc; border-radius: 10px; padding: 16px; color: #475569; }
-    footer { margin-top: 0 !important; }
+    .dash-wrapper {
+        flex: 1;
+    }
+
+    .student-home {
+        max-width: 1100px;
+    }
+
+    .panel-card {
+        background: #fff;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 18px;
+    }
+
+    .table th {
+        font-size: .75rem;
+        text-transform: uppercase;
+        letter-spacing: .04em;
+        color: #64748b;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .table td {
+        font-size: .85rem;
+    }
+
+    .empty-state {
+        border: 1px dashed #cbd5e1;
+        background: #f8fafc;
+        border-radius: 10px;
+        padding: 16px;
+        color: #475569;
+    }
+
+    footer {
+        margin-top: 0 !important;
+    }
 </style>

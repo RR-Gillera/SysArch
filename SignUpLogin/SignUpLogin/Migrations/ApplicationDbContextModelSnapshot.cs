@@ -117,6 +117,57 @@ namespace SignUpLogin.Migrations
                     b.ToTable("LabStatuses");
                 });
 
+            modelBuilder.Entity("SignUpLogin.Models.Reservation", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AdminRemarks")
+                        .HasMaxLength(250)
+                        .HasColumnType("varchar(250)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Laboratory")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<string>("PcNumber")
+                        .HasMaxLength(10)
+                        .HasColumnType("varchar(10)");
+
+                    b.Property<string>("Purpose")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("varchar(120)");
+
+                    b.Property<DateTime>("ReservationDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("ReviewedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)");
+
+                    b.Property<string>("StudentIdNumber")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("StudentIdNumber");
+
+                    b.ToTable("Reservations");
+                });
+
             modelBuilder.Entity("SignUpLogin.Models.Signup", b =>
                 {
                     b.Property<string>("IdNumber")
@@ -240,6 +291,9 @@ namespace SignUpLogin.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("varchar(200)");
 
+                    b.Property<int>("LifetimePoints")
+                        .HasColumnType("int");
+
                     b.Property<int>("Points")
                         .HasColumnType("int");
 
@@ -273,6 +327,17 @@ namespace SignUpLogin.Migrations
                         .IsRequired();
 
                     b.Navigation("SitInRecord");
+
+                    b.Navigation("Student");
+                });
+
+            modelBuilder.Entity("SignUpLogin.Models.Reservation", b =>
+                {
+                    b.HasOne("SignUpLogin.Models.Signup", "Student")
+                        .WithMany()
+                        .HasForeignKey("StudentIdNumber")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Student");
                 });

@@ -12,6 +12,7 @@ namespace SignUpLogin.Models
         public string StudentIdNumber { get; set; } = string.Empty;
 
         public int Points { get; set; } = 0;
+        public int LifetimePoints { get; set; } = 0;
 
         [StringLength(200)]
         public string? LastRewardReason { get; set; }

@@ -1,6 +1,7 @@
 @model IEnumerable<SignUpLogin.Models.Signup>
 @{
     ViewData["Title"] = "Students";
+    ViewData["ActivePage"] = "Students";
     Layout = null;
 }
 
@@ -16,30 +17,7 @@
 </head>
 <body class="admin-page">
 
-    <!-- ── Navbar ── -->
-    <nav class="navbar navbar-expand-lg navbar-dark admin-nav sticky-top">
-        <div class="container-fluid px-4">
-            <a class="navbar-brand fw-semibold" asp-controller="Admin" asp-action="Home">CCS Admin</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
-                    data-bs-target="#adminNav" aria-controls="adminNav"
-                    aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="adminNav">
-                <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-1">
-                    <li class="nav-item"><a class="nav-link" asp-controller="Admin" asp-action="Home"><i class="bi bi-house-door me-1"></i>Home</a></li>
-                    <li class="nav-item"><a class="nav-link active" asp-controller="Admin" asp-action="Students"><i class="bi bi-people me-1"></i>Students</a></li>
-                    <li class="nav-item"><a class="nav-link" asp-controller="Admin" asp-action="SitInRecords"><i class="bi bi-journal-text me-1"></i>Sit-in Records</a></li>
-                    <li class="nav-item"><a class="nav-link" asp-controller="Admin" asp-action="Announcements"><i class="bi bi-megaphone me-1"></i>Announcements</a></li>
-                    <li class="nav-item"><a class="nav-link" asp-controller="Admin" asp-action="Feedback"><i class="bi bi-chat-left-text me-1"></i>Feedback</a></li>
-                    <li class="nav-item"><a class="nav-link" asp-controller="Admin" asp-action="Reservations"><i class="bi bi-calendar-check me-1"></i>Reservations</a></li>
-                    <li class="nav-item ms-lg-2">
-                        <a class="btn btn-warning btn-sm px-3" asp-controller="Admin" asp-action="Logout">Log out</a>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </nav>
+    @await Html.PartialAsync("_AdminNavBar")
 
     <main class="admin-main px-4 py-4">
 
@@ -133,6 +111,13 @@
                                         </span>
                                     </td>
                                     <td class="text-center">
+                                        <!-- Reward Points Button -->
+                                        <button type="button" class="btn btn-warning btn-sm me-1 reward-points-btn"
+                                                data-id="@s.IdNumber"
+                                                data-name="@s.FirstName @s.LastName">
+                                            <i class="bi bi-award me-1"></i>Reward
+                                        </button>
+
                                         <button type="button" class="btn btn-primary btn-sm me-1 edit-student-btn"
                                                 data-id="@s.IdNumber"
                                                 data-firstname="@s.FirstName"
@@ -153,9 +138,11 @@
                         }
                         else
                         {
-                            <tr><td colspan="7" class="text-center text-muted py-4">
-                                <i class="bi bi-inbox fs-5 d-block mb-1"></i>No students found.
-                            </td></tr>
+                            <tr>
+                                <td colspan="7" class="text-center text-muted py-4">
+                                    <i class="bi bi-inbox fs-5 d-block mb-1"></i>No students found.
+                                </td>
+                            </tr>
                         }
                     </tbody>
                 </table>
@@ -275,12 +262,51 @@
         </div>
     </div>
 
+    <!-- ── NEW: Reward Points Modal ── -->
+    <div class="modal fade" id="rewardPointsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <form asp-controller="Admin" asp-action="AddPoints" method="post">
+                    @Html.AntiForgeryToken()
+                    <div class="modal-header">
+                        <h6 class="modal-title fw-bold">
+                            <i class="bi bi-award text-warning me-2"></i>Award Points
+                        </h6>
+                        <button type="button" class="btn-close btn-sm" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="small text-muted mb-3">Awarding points to: <strong id="rewardStudentName"></strong></p>
+
+                        <input type="hidden" name="StudentIdNumber" id="reward_StudentIdNumber" />
+
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">Points to Add</label>
+                            <input type="number" name="Points" class="form-control form-control-sm"
+                                   min="1" max="1000" placeholder="e.g. 10" required />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">Reason <span class="text-muted">(optional)</span></label>
+                            <input type="text" name="Reason" class="form-control form-control-sm"
+                                   placeholder="e.g. Perfect attendance this week" />
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-warning btn-sm">
+                            <i class="bi bi-award me-1"></i>Award Points
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     @await Html.PartialAsync("_Footer")
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // ── Filtering ──
+        // ── Filtering ─
         const searchInput  = document.getElementById('searchInput');
         const courseFilter = document.getElementById('courseFilter');
         const clearBtn     = document.getElementById('clearBtn');
@@ -336,19 +362,77 @@
         // ── Reset sessions modal ──
         const resetModal = new bootstrap.Modal(document.getElementById('resetSessionsModal'));
         document.getElementById('resetAllSessionsBtn').addEventListener('click', () => resetModal.show());
+
+        // ── NEW: Reward Points Modal Logic ──
+        const rewardModal = new bootstrap.Modal(document.getElementById('rewardPointsModal'));
+        document.querySelectorAll('.reward-points-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.getElementById('reward_StudentIdNumber').value = btn.dataset.id;
+                document.getElementById('rewardStudentName').textContent = btn.dataset.name;
+                rewardModal.show();
+            });
+        });
     </script>
 </body>
 </html>
 
 <style>
-    .admin-page  { min-height: 100vh; display: flex; flex-direction: column; background: #f0f4f8; }
-    .admin-main  { flex: 1; max-width: 1300px; margin: 0 auto; width: 100%; }
-    .admin-nav   { background: #0a2a6e; box-shadow: 0 2px 8px rgba(0,0,0,.18); }
-    .admin-nav .navbar-brand { font-size: .95rem; color: #fff; }
-    .admin-nav .nav-link { color: rgba(255,255,255,.78); font-size: .82rem; padding: .4rem .65rem; border-radius: 6px; transition: background .15s; }
-    .admin-nav .nav-link:hover,
-    .admin-nav .nav-link.active { color: #fff; background: rgba(255,255,255,.13); }
-    .module-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 22px; box-shadow: 0 1px 4px rgba(0,0,0,.05); }
-    .table th { font-size: .75rem; text-transform: uppercase; letter-spacing: .04em; color: #64748b; font-weight: 600; white-space: nowrap; }
-    .table td { font-size: .85rem; }
+    .admin-page {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        background: #f0f4f8;
+    }
+
+    .admin-main {
+        flex: 1;
+        max-width: 1300px;
+        margin: 0 auto;
+        width: 100%;
+    }
+
+    .admin-nav {
+        background: #0a2a6e;
+        box-shadow: 0 2px 8px rgba(0,0,0,.18);
+    }
+
+        .admin-nav .navbar-brand {
+            font-size: .95rem;
+            color: #fff;
+        }
+
+        .admin-nav .nav-link {
+            color: rgba(255,255,255,.78);
+            font-size: .82rem;
+            padding: .4rem .65rem;
+            border-radius: 6px;
+            transition: background .15s;
+        }
+
+            .admin-nav .nav-link:hover,
+            .admin-nav .nav-link.active {
+                color: #fff;
+                background: rgba(255,255,255,.13);
+            }
+
+    .module-card {
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 22px;
+        box-shadow: 0 1px 4px rgba(0,0,0,.05);
+    }
+
+    .table th {
+        font-size: .75rem;
+        text-transform: uppercase;
+        letter-spacing: .04em;
+        color: #64748b;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .table td {
+        font-size: .85rem;
+    }
 </style>

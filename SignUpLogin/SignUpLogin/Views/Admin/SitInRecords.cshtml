@@ -1,6 +1,7 @@
 @model IEnumerable<SignUpLogin.Models.SitInRecord>
 @{
     ViewData["Title"] = "Sit-in Records";
+    ViewData["ActivePage"] = "SitInRecords";
     Layout = null;
 }
 
@@ -15,30 +16,26 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
 </head>
 <body class="admin-page">
-    <nav class="navbar navbar-expand-lg navbar-dark admin-nav sticky-top">
-        <div class="container-fluid px-4">
-            <a class="navbar-brand fw-semibold" asp-controller="Admin" asp-action="Home">CCS Admin</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#adminNav" aria-controls="adminNav" aria-expanded="false" aria-label="Toggle navigation"><span class="navbar-toggler-icon"></span></button>
-            <div class="collapse navbar-collapse" id="adminNav">
-                <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-1">
-                    <li class="nav-item"><a class="nav-link" asp-controller="Admin" asp-action="Home"><i class="bi bi-house-door me-1"></i>Home</a></li>
-                    <li class="nav-item"><a class="nav-link" asp-controller="Admin" asp-action="Students"><i class="bi bi-people me-1"></i>Students</a></li>
-                    <li class="nav-item"><a class="nav-link active" asp-controller="Admin" asp-action="SitInRecords"><i class="bi bi-journal-text me-1"></i>Sit-in Records</a></li>
-                    <li class="nav-item"><a class="nav-link" asp-controller="Admin" asp-action="Announcements"><i class="bi bi-megaphone me-1"></i>Announcements</a></li>
-                    <li class="nav-item"><a class="nav-link" asp-controller="Admin" asp-action="Feedback"><i class="bi bi-chat-left-text me-1"></i>Feedback</a></li>
-                    <li class="nav-item"><a class="nav-link" asp-controller="Admin" asp-action="Reservations"><i class="bi bi-calendar-check me-1"></i>Reservations</a></li>
-                    <li class="nav-item ms-lg-2"><a class="btn btn-warning btn-sm px-3" asp-controller="Admin" asp-action="Logout">Log out</a></li>
-                </ul>
-            </div>
-        </div>
-    </nav>
+    @await Html.PartialAsync("_AdminNavBar")
     <main class="admin-main px-4 py-4">
         <div class="d-flex align-items-center justify-content-between mb-4">
             <div>
                 <h4 class="mb-0 fw-bold"><i class="bi bi-journal-text me-2 text-primary"></i>Sit-in Records</h4>
                 <p class="text-muted small mb-0">Complete history of all sit-in sessions</p>
             </div>
-            <span class="badge bg-primary rounded-pill fs-6 px-3">@Model.Count() records</span>
+            <div class="d-flex align-items-center gap-2">
+                <span class="badge bg-primary rounded-pill fs-6 px-3">@Model.Count() records</span>
+                <div class="btn-group">
+                    <button type="button" class="btn btn-sm btn-outline-success dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-download me-1"></i>Export
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+                        <li><a class="dropdown-item" asp-controller="Admin" asp-action="ExportSitInCsv"><i class="bi bi-filetype-csv me-2 text-success"></i>Export to CSV</a></li>
+                        <li><a class="dropdown-item" asp-controller="Admin" asp-action="ExportSitInDocx"><i class="bi bi-filetype-docx me-2 text-primary"></i>Export to DOCX</a></li>
+                        <li><a class="dropdown-item" asp-controller="Admin" asp-action="ExportSitInPdf"><i class="bi bi-filetype-pdf me-2 text-danger"></i>Export to PDF</a></li>
+                    </ul>
+                </div>
+            </div>
         </div>
         <div class="module-card mb-4">
             <div class="row g-2 align-items-end">
@@ -101,8 +98,8 @@
                                     <td>@(string.IsNullOrWhiteSpace(record.Purpose) ? "-" : record.Purpose)</td>
                                     <td>@record.Laboratory</td>
                                     <td>@(string.IsNullOrWhiteSpace(record.PcNumber) ? "-" : record.PcNumber)</td>
-                                    <td class="text-nowrap">@record.TimeIn.ToString("MMM dd, yyyy hh:mm tt")</td>
-                                    <td class="text-nowrap">@(record.TimeOut.HasValue? record.TimeOut.Value.ToString("MMM dd, yyyy hh:mm tt") : "-")</td>
+                                    <td class="text-nowrap">@record.TimeIn.ToLocalTime().ToString("MMM dd, yyyy hh:mm tt")</td>
+                                    <td class="text-nowrap">@(record.TimeOut.HasValue ? record.TimeOut.Value.ToLocalTime().ToString("MMM dd, yyyy hh:mm tt") : "-")</td>
                                     <td>@if (isActive) {
                                     <span class="badge text-bg-success">Active</span>
                                 } else

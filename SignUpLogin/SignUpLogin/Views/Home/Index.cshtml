@@ -213,9 +213,10 @@
             </div>
 
             <div class="row g-4 mb-4">
+                <!-- Announcements Panel -->
                 <div class="col-lg-6" id="announcements">
-                    <div class="panel-card h-100">
-                        <div class="d-flex align-items-center justify-content-between mb-2">
+                    <div class="panel-card h-100 d-flex flex-column">
+                        <div class="d-flex align-items-center justify-content-between mb-2 flex-shrink-0">
                             <h5 class="panel-title mb-0">Announcements</h5>
                             @if (Model.UnreadAnnouncementsCount > 0)
                             {
@@ -223,85 +224,101 @@
                             }
                         </div>
 
+                        <!-- Scrollable Content Area -->
+                        <div class="flex-grow-1 overflow-auto custom-scroll" style="max-height: 300px; min-height: 150px;">
+                            @if (Model.Announcements.Any())
+                            {
+                                @foreach (var announcement in Model.Announcements)
+                                {
+                                    <div class="announcement-item">
+                                        <div class="announcement-meta">@announcement.PostedBy | @announcement.PostedAt.ToLocalTime().ToString("yyyy-MMM-dd")</div>
+                                        <div><strong>@announcement.Title</strong></div>
+                                        <div>@announcement.Message</div>
+                                    </div>
+                                }
+                            }
+                            else
+                            {
+                                <div class="empty-state">No announcements yet. New updates from admin will appear here.</div>
+                            }
+                        </div>
+
+                        <!-- Fixed Footer Button -->
                         @if (Model.Announcements.Any())
                         {
-                            @foreach (var announcement in Model.Announcements)
-                            {
-                                <div class="announcement-item">
-                                    <div class="announcement-meta">@announcement.PostedBy | @announcement.PostedAt.ToLocalTime().ToString("yyyy-MMM-dd")</div>
-                                    <div><strong>@announcement.Title</strong></div>
-                                    <div>@announcement.Message</div>
-                                </div>
-                            }
-
-                            <form asp-controller="Home" asp-action="MarkAnnouncementsRead" method="post">
-                                @Html.AntiForgeryToken()
-                                <button type="submit" class="btn btn-sm btn-outline-primary">Mark all as read</button>
-                            </form>
-                        }
-                        else
-                        {
-                            <div class="empty-state">No announcements yet. New updates from admin will appear here.</div>
+                            <div class="mt-2 flex-shrink-0">
+                                <form asp-controller="Home" asp-action="MarkAnnouncementsRead" method="post">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn btn-sm btn-outline-primary w-100">Mark all as read</button>
+                                </form>
+                            </div>
                         }
                     </div>
                 </div>
+
+                <!-- Recent Sit-in History Panel -->
                 <div class="col-lg-6">
-                    <div class="panel-card h-100">
-                        <h5 class="panel-title">Recent Sit-in History</h5>
-                        @if (Model.RecentSitInHistory.Any())
-                        {
-                            <div class="table-responsive">
-                                <table class="table table-sm align-middle mb-0">
-                                    <thead>
-                                        <tr>
-                                            <th>Date</th>
-                                            <th>Lab</th>
-                                            <th>Time In</th>
-                                            <th>Time Out</th>
-                                            <th>Duration</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach (var item in Model.RecentSitInHistory)
-                                        {
-                                            var duration = item.TimeOut.HasValue ? item.TimeOut.Value - item.TimeIn : (TimeSpan?)null;
+                    <div class="panel-card h-100 d-flex flex-column">
+                        <h5 class="panel-title flex-shrink-0">Recent Sit-in History</h5>
+
+                        <!-- Scrollable Content Area -->
+                        <div class="flex-grow-1 overflow-auto custom-scroll" style="max-height: 300px; min-height: 150px;">
+                            @if (Model.RecentSitInHistory.Any())
+                            {
+                                <div class="table-responsive">
+                                    <table class="table table-sm align-middle mb-0">
+                                        <thead class="sticky-top bg-white">
                                             <tr>
-                                                <td>@item.TimeIn.ToString("yyyy-MM-dd")</td>
-                                                <td>@item.Laboratory</td>
-                                                <td>@item.TimeIn.ToString("hh:mm tt")</td>
-                                                <td>@(item.TimeOut?.ToString("hh:mm tt") ?? "In Progress")</td>
-                                                <td>@(duration.HasValue ? $"{(int)duration.Value.TotalHours}h {duration.Value.Minutes}m" : "-")</td>
+                                                <th>Date</th>
+                                                <th>Lab</th>
+                                                <th>Time In</th>
+                                                <th>Time Out</th>
+                                                <th>Duration</th>
                                             </tr>
-                                        }
-                                    </tbody>
-                                </table>
-                            </div>
-                        }
-                        else
-                        {
-                            <div class="empty-state">No sit-in history yet. Your latest 5 sessions will show here.</div>
-                        }
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var item in Model.RecentSitInHistory)
+                                            {
+                                                var duration = item.TimeOut.HasValue ? item.TimeOut.Value - item.TimeIn : (TimeSpan?)null;
+                                                <tr>
+                                                    <td>@item.TimeIn.ToString("yyyy-MM-dd")</td>
+                                                    <td>@item.Laboratory</td>
+                                                    <td>@item.TimeIn.ToString("hh:mm tt")</td>
+                                                    <td>@(item.TimeOut?.ToString("hh:mm tt") ?? "In Progress")</td>
+                                                    <td>@(duration.HasValue ? $"{(int)duration.Value.TotalHours}h {duration.Value.Minutes}m" : "-")</td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="empty-state">No sit-in history yet. Your latest 5 sessions will show here.</div>
+                            }
+                        </div>
                     </div>
                 </div>
             </div>
 
             <!-- ── Rewards & Points ── -->
             @{
-                var pts = Model.Points;
+                var lifetimePts = Model.LifetimePoints;
+                var spendablePts = Model.Points;
                 string tierName, tierIcon, tierColor, tierBg, tierBorder;
                 int tierMin, tierMax;
 
-                if (pts >= 100)
+                if (lifetimePts >= 90)
                 {
                     tierName = "Gold"; tierIcon = "bi-trophy-fill"; tierColor = "#b45309"; tierBg = "#fffbeb"; tierBorder = "#fde68a";
-                    tierMin = 100; tierMax = 100;
+                    tierMin = 90; tierMax = 999;
                 }
-                else if (pts >= 60)
+                else if (lifetimePts >= 60)
                 {
                     tierName = "Silver"; tierIcon = "bi-award-fill"; tierColor = "#475569"; tierBg = "#f8fafc"; tierBorder = "#cbd5e1";
-                    tierMin = 60; tierMax = 99;
+                    tierMin = 60; tierMax = 89;
                 }
-                else if (pts >= 30)
+                else if (lifetimePts >= 30)
                 {
                     tierName = "Bronze"; tierIcon = "bi-award-fill"; tierColor = "#92400e"; tierBg = "#fff7ed"; tierBorder = "#fed7aa";
                     tierMin = 30; tierMax = 59;
@@ -313,12 +330,12 @@
                 }
 
                 int progressRange = tierName == "Gold" ? 1 : (tierMax - tierMin + 1);
-                int progressVal = pts - tierMin;
+                int progressVal = lifetimePts - tierMin;
                 int progressPct = tierName == "Gold" ? 100 : (int)Math.Round((double)progressVal / progressRange * 100);
-                int ptsToNext = tierName == "Gold" ? 0 : (tierMax + 1 - pts);
+                int ptsToNext = tierName == "Gold" ? 0 : (tierMax + 1 - lifetimePts);
 
                 // Redeem helpers: 2 pts = 1 session
-                int maxRedeemableSessions = pts / 2;
+                int maxRedeemableSessions = spendablePts / 2;
                 int maxRedeemablePoints = maxRedeemableSessions * 2;
             }
 
@@ -332,24 +349,24 @@
 
                 <!-- Tier progression track -->
                 <div class="tier-track mb-3">
-                    <div class="tier-step @(pts >= 0 ? "tier-active" : "")">
+                    <div class="tier-step @(lifetimePts >= 0 ? "tier-active" : "")">
                         <div class="tier-dot"><i class="bi bi-star-fill"></i></div>
                         <div class="tier-label">Starter<br /><span>0 pts</span></div>
                     </div>
-                    <div class="tier-line @(pts >= 30 ? "tier-line-done" : "")"></div>
-                    <div class="tier-step @(pts >= 30 ? "tier-active" : "")">
+                    <div class="tier-line @(lifetimePts >= 30 ? "tier-line-done" : "")"></div>
+                    <div class="tier-step @(lifetimePts >= 30 ? "tier-active" : "")">
                         <div class="tier-dot"><i class="bi bi-award-fill"></i></div>
                         <div class="tier-label">Bronze<br /><span>30 pts</span></div>
                     </div>
-                    <div class="tier-line @(pts >= 60 ? "tier-line-done" : "")"></div>
-                    <div class="tier-step @(pts >= 60 ? "tier-active" : "")">
+                    <div class="tier-line @(lifetimePts >= 60 ? "tier-line-done" : "")"></div>
+                    <div class="tier-step @(lifetimePts >= 60 ? "tier-active" : "")">
                         <div class="tier-dot"><i class="bi bi-award-fill"></i></div>
                         <div class="tier-label">Silver<br /><span>60 pts</span></div>
                     </div>
-                    <div class="tier-line @(pts >= 100 ? "tier-line-done" : "")"></div>
-                    <div class="tier-step @(pts >= 100 ? "tier-active" : "")">
+                    <div class="tier-line @(lifetimePts >= 90 ? "tier-line-done" : "")"></div>
+                    <div class="tier-step @(lifetimePts >= 90 ? "tier-active" : "")">
                         <div class="tier-dot"><i class="bi bi-trophy-fill"></i></div>
-                        <div class="tier-label">Gold<br /><span>100 pts</span></div>
+                        <div class="tier-label">Gold<br /><span>90 pts</span></div>
                     </div>
                 </div>
 
@@ -358,8 +375,8 @@
                     <!-- Left: points circle + progress -->
                     <div class="col-md-4 text-center">
                         <div class="points-circle mx-auto" style="border-color:@tierBorder; color:@tierColor;">
-                            <div class="points-number">@pts</div>
-                            <div class="points-label">Total Points</div>
+                            <div class="points-number">@spendablePts</div>
+                            <div class="points-label">Available Points</div>
                         </div>
                         <div class="mt-2" style="font-size:0.78rem; color:#64748b;">
                             <i class="bi bi-clock me-1"></i>1 pt per 2 hrs of sit-in
@@ -447,6 +464,15 @@
                         </div>
                     </div>
                 </div>
+            </div>
+            <!-- ── LEADERBOARD SECTION ── -->
+            <div class="panel-card mb-4">
+                <h5 class="panel-title"><i class="bi bi-trophy-fill me-2 text-warning"></i>Student Leaderboard</h5>
+                @{
+                    var leaderboard = ViewBag.LeaderboardData as List<SignUpLogin.Models.ViewModels.LeaderboardEntryViewModel>
+                    ?? new List<SignUpLogin.Models.ViewModels.LeaderboardEntryViewModel>();
+                }
+                @await Html.PartialAsync("_LeaderboardPartial", leaderboard)
             </div>
 
         </div>
@@ -1295,4 +1321,37 @@
         gap: 4px;
         line-height: 1.6;
     }
+
+        /* Custom Scrollbar for Dashboard Panels */
+    .custom-scroll::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .custom-scroll::-webkit-scrollbar-track {
+        background: #f1f5f9; 
+        border-radius: 4px;
+    }
+
+    .custom-scroll::-webkit-scrollbar-thumb {
+        background: #cbd5e1; 
+        border-radius: 4px;
+    }
+
+    .custom-scroll::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8; 
+    }
+
+    /* Ensure empty state looks good in fixed height */
+    .empty-state {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        min-height: 100px;
+        text-align: center;
+        color: #64748b;
+        font-style: italic;
+    }
 </style>
+
+

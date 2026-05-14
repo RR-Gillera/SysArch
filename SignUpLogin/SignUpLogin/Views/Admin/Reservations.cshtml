@@ -1,6 +1,11 @@
+@model IEnumerable<SignUpLogin.Models.Reservation>
 @{
     ViewData["Title"] = "Reservations";
+    ViewData["ActivePage"] = "Reservations";
     Layout = null;
+    var pending  = Model.Count(r => r.Status == "Pending");
+    var approved = Model.Count(r => r.Status == "Approved");
+    var denied   = Model.Count(r => r.Status == "Denied");
 }
 
 <!DOCTYPE html>
@@ -15,53 +20,239 @@
 </head>
 <body class="admin-page">
 
-    <nav class="navbar navbar-expand-lg navbar-dark admin-nav sticky-top">
-        <div class="container-fluid px-4">
-            <a class="navbar-brand fw-semibold" asp-controller="Admin" asp-action="Home">CCS Admin</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
-                    data-bs-target="#adminNav" aria-controls="adminNav"
-                    aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="adminNav">
-                <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-1">
-                    <li class="nav-item"><a class="nav-link" asp-controller="Admin" asp-action="Home"><i class="bi bi-house-door me-1"></i>Home</a></li>
-                    <li class="nav-item"><a class="nav-link" asp-controller="Admin" asp-action="Students"><i class="bi bi-people me-1"></i>Students</a></li>
-                    <li class="nav-item"><a class="nav-link" asp-controller="Admin" asp-action="SitInRecords"><i class="bi bi-journal-text me-1"></i>Sit-in Records</a></li>
-                    <li class="nav-item"><a class="nav-link" asp-controller="Admin" asp-action="Announcements"><i class="bi bi-megaphone me-1"></i>Announcements</a></li>
-                    <li class="nav-item"><a class="nav-link" asp-controller="Admin" asp-action="Feedback"><i class="bi bi-chat-left-text me-1"></i>Feedback</a></li>
-                    <li class="nav-item"><a class="nav-link active" asp-controller="Admin" asp-action="Reservations"><i class="bi bi-calendar-check me-1"></i>Reservations</a></li>
-                    <li class="nav-item ms-lg-2">
-                        <a class="btn btn-warning btn-sm px-3" asp-controller="Admin" asp-action="Logout">Log out</a>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </nav>
+    @await Html.PartialAsync("_AdminNavBar")
 
     <main class="admin-main px-4 py-4">
-        <div class="mb-4">
-            <h4 class="mb-0 fw-bold"><i class="bi bi-calendar-check me-2 text-primary"></i>Reservations</h4>
-            <p class="text-muted small mb-0">Lab reservation management</p>
+
+        <div class="d-flex align-items-center justify-content-between mb-4">
+            <div>
+                <h4 class="mb-0 fw-bold"><i class="bi bi-calendar-check me-2 text-primary"></i>Lab Reservations</h4>
+                <p class="text-muted small mb-0">Manage student reservation requests</p>
+            </div>
+            <div class="d-flex gap-2">
+                <span class="badge bg-warning text-dark rounded-pill px-3">@pending pending</span>
+                <span class="badge bg-success rounded-pill px-3">@approved approved</span>
+                <span class="badge bg-danger rounded-pill px-3">@denied denied</span>
+            </div>
         </div>
-        <div class="module-card text-muted text-center py-5">
-            <i class="bi bi-calendar-check fs-2 d-block mb-2 opacity-50"></i>
-            Reservations module coming soon.
+
+        @if (TempData["Success"] != null)
+        {
+            <div class="alert alert-success alert-dismissible py-2 small fade show mb-3" role="alert">
+                <i class="bi bi-check-circle me-1"></i>@TempData["Success"]
+                <button type="button" class="btn-close btn-close-sm" data-bs-dismiss="alert"></button>
+            </div>
+        }
+        @if (TempData["Error"] != null)
+        {
+            <div class="alert alert-danger alert-dismissible py-2 small fade show mb-3" role="alert">
+                <i class="bi bi-exclamation-circle me-1"></i>@TempData["Error"]
+                <button type="button" class="btn-close btn-close-sm" data-bs-dismiss="alert"></button>
+            </div>
+        }
+
+        <!-- Filter bar -->
+        <div class="module-card mb-4">
+            <div class="row g-2 align-items-end">
+                <div class="col-md-4">
+                    <label class="form-label small fw-semibold mb-1">Search</label>
+                    <input type="text" id="searchInput" class="form-control form-control-sm" placeholder="Name or ID…" />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small fw-semibold mb-1">Status</label>
+                    <select id="statusFilter" class="form-select form-select-sm">
+                        <option value="">All</option>
+                        <option value="Pending">Pending</option>
+                        <option value="Approved">Approved</option>
+                        <option value="Denied">Denied</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button class="btn btn-outline-secondary btn-sm w-100" id="clearBtn">
+                        <i class="bi bi-x-circle me-1"></i>Clear
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Table -->
+        <div class="module-card">
+            <div class="table-responsive">
+                <table class="table table-sm table-hover align-middle mb-0" id="resTable">
+                    <thead class="table-light">
+                        <tr>
+                            <th>#</th>
+                            <th>Student</th>
+                            <th>ID Number</th>
+                            <th>Laboratory</th>
+                            <th>PC</th>
+                            <th>Purpose</th>
+                            <th>Date Requested</th>
+                            <th>Submitted</th>
+                            <th>Status</th>
+                            <th class="text-center">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Any())
+                        {
+                            int row = 1;
+                            @foreach (var r in Model)
+                            {
+                                var studentName = r.Student is null ? r.StudentIdNumber
+                                    : $"{r.Student.FirstName} {r.Student.LastName}".Trim();
+                                var badgeClass = r.Status switch
+                                {
+                                    "Approved" => "text-bg-success",
+                                    "Denied"   => "text-bg-danger",
+                                    _          => "text-bg-warning"
+                                };
+                                <tr data-name="@studentName.ToLower()" data-id="@r.StudentIdNumber.ToLower()" data-status="@r.Status">
+                                    <td class="text-muted small">@(row++)</td>
+                                    <td>@studentName</td>
+                                    <td>@r.StudentIdNumber</td>
+                                    <td>@r.Laboratory</td>
+                                    <td>@(r.PcNumber ?? "—")</td>
+                                    <td>@r.Purpose</td>
+                                    <td class="text-nowrap">@r.ReservationDate.ToString("MMM dd, yyyy")</td>
+                                    <td class="text-nowrap small">@r.CreatedAt.ToLocalTime().ToString("MMM dd hh:mm tt")</td>
+                                    <td><span class="badge @badgeClass">@r.Status</span></td>
+                                    <td class="text-center text-nowrap">
+                                        @if (r.Status == "Pending")
+                                        {
+                                            <button type="button" class="btn btn-success btn-sm me-1 action-btn"
+                                                    data-id="@r.Id"
+                                                    data-action="approve"
+                                                    data-name="@studentName">
+                                                <i class="bi bi-check-lg me-1"></i>Approve
+                                            </button>
+                                            <button type="button" class="btn btn-danger btn-sm action-btn"
+                                                    data-id="@r.Id"
+                                                    data-action="deny"
+                                                    data-name="@studentName">
+                                                <i class="bi bi-x-lg me-1"></i>Deny
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted small">@(r.AdminRemarks ?? "—")</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr><td colspan="10" class="text-center text-muted py-4">
+                                <i class="bi bi-calendar-x fs-5 d-block mb-1"></i>No reservations yet.
+                            </td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
         </div>
     </main>
 
+    <!-- Approve Modal -->
+    <div class="modal fade" id="approveModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <form asp-controller="Admin" asp-action="ApproveReservation" method="post">
+                    @Html.AntiForgeryToken()
+                    <div class="modal-header">
+                        <h6 class="modal-title fw-bold"><i class="bi bi-check-circle text-success me-2"></i>Approve Reservation</h6>
+                        <button type="button" class="btn-close btn-sm" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body small">
+                        <p>Approving reservation for <strong id="approveStudentName"></strong>.</p>
+                        <input type="hidden" name="id" id="approveId" />
+                        <label class="form-label fw-semibold small">Remarks <span class="text-muted">(optional)</span></label>
+                        <input type="text" name="AdminRemarks" class="form-control form-control-sm" placeholder="e.g. Approved — PC-12 reserved for you" />
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-success btn-sm"><i class="bi bi-check-lg me-1"></i>Approve</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Deny Modal -->
+    <div class="modal fade" id="denyModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <form asp-controller="Admin" asp-action="DenyReservation" method="post">
+                    @Html.AntiForgeryToken()
+                    <div class="modal-header">
+                        <h6 class="modal-title fw-bold"><i class="bi bi-x-circle text-danger me-2"></i>Deny Reservation</h6>
+                        <button type="button" class="btn-close btn-sm" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body small">
+                        <p>Denying reservation for <strong id="denyStudentName"></strong>.</p>
+                        <input type="hidden" name="id" id="denyId" />
+                        <label class="form-label fw-semibold small">Reason <span class="text-muted">(optional)</span></label>
+                        <input type="text" name="AdminRemarks" class="form-control form-control-sm" placeholder="e.g. Lab is fully booked that day" />
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-danger btn-sm"><i class="bi bi-x-lg me-1"></i>Deny</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     @await Html.PartialAsync("_Footer")
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Filtering
+        const s = document.getElementById('searchInput');
+        const sf = document.getElementById('statusFilter');
+        const cb = document.getElementById('clearBtn');
+        const tb = document.querySelector('#resTable tbody');
+        function filter() {
+            const q = s.value.toLowerCase().trim();
+            const st = sf.value;
+            tb.querySelectorAll('tr[data-name]').forEach(r => {
+                const m = (!q || r.dataset.name.includes(q) || r.dataset.id.includes(q))
+                       && (!st || r.dataset.status === st);
+                r.style.display = m ? '' : 'none';
+            });
+        }
+        s.addEventListener('input', filter);
+        sf.addEventListener('change', filter);
+        cb.addEventListener('click', () => { s.value = ''; sf.value = ''; filter(); });
+
+        // Modals
+        const approveModal = new bootstrap.Modal(document.getElementById('approveModal'));
+        const denyModal    = new bootstrap.Modal(document.getElementById('denyModal'));
+        document.querySelectorAll('.action-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (btn.dataset.action === 'approve') {
+                    document.getElementById('approveId').value = btn.dataset.id;
+                    document.getElementById('approveStudentName').textContent = btn.dataset.name;
+                    approveModal.show();
+                } else {
+                    document.getElementById('denyId').value = btn.dataset.id;
+                    document.getElementById('denyStudentName').textContent = btn.dataset.name;
+                    denyModal.show();
+                }
+            });
+        });
+    </script>
 </body>
 </html>
 
 <style>
-    .admin-page  { min-height: 100vh; display: flex; flex-direction: column; background: #f0f4f8; }
-    .admin-main  { flex: 1; max-width: 1300px; margin: 0 auto; width: 100%; }
-    .admin-nav   { background: #0a2a6e; box-shadow: 0 2px 8px rgba(0,0,0,.18); }
-    .admin-nav .navbar-brand { font-size: .95rem; color: #fff; }
-    .admin-nav .nav-link { color: rgba(255,255,255,.78); font-size: .82rem; padding: .4rem .65rem; border-radius: 6px; transition: background .15s; }
-    .admin-nav .nav-link:hover,
-    .admin-nav .nav-link.active { color: #fff; background: rgba(255,255,255,.13); }
-    .module-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 22px; box-shadow: 0 1px 4px rgba(0,0,0,.05); }
+    .admin-page { min-height:100vh; display:flex; flex-direction:column; background:#f0f4f8; }
+    .admin-main { flex:1; max-width:1300px; margin:0 auto; width:100%; }
+    .admin-nav  { background:#0a2a6e; box-shadow:0 2px 8px rgba(0,0,0,.18); }
+    .admin-nav .navbar-brand { font-size:.95rem; color:#fff; }
+    .admin-nav .nav-link { color:rgba(255,255,255,.78); font-size:.82rem; padding:.4rem .65rem; border-radius:6px; transition:background .15s; }
+    .admin-nav .nav-link:hover, .admin-nav .nav-link.active { color:#fff; background:rgba(255,255,255,.13); }
+    .module-card { background:#fff; border:1px solid #e2e8f0; border-radius:12px; padding:22px; box-shadow:0 1px 4px rgba(0,0,0,.05); }
+    .table th { font-size:.75rem; text-transform:uppercase; letter-spacing:.04em; color:#64748b; font-weight:600; white-space:nowrap; }
+    .table td { font-size:.85rem; }
 </style>

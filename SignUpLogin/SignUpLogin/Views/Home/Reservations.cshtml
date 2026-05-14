@@ -1,0 +1,228 @@
+@model IEnumerable<SignUpLogin.Models.Reservation>
+@{
+    ViewData["Title"] = "My Reservations";
+    Layout = null;
+    var pending  = Model.Count(r => r.Status == "Pending");
+    var approved = Model.Count(r => r.Status == "Approved");
+    var denied   = Model.Count(r => r.Status == "Denied");
+    var tomorrow = DateTime.Now.AddDays(1).ToString("yyyy-MM-dd");
+    var labNames = new[] { "Lab 524", "Lab 526", "Lab 528", "Lab 542", "Lab 544" };
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+</head>
+<body>
+    @await Html.PartialAsync("_UserNavBar")
+
+    <div class="dash-wrapper">
+        <div class="container py-4 py-md-5" style="max-width:1100px;">
+
+            <div class="d-flex align-items-center justify-content-between mb-4">
+                <div>
+                    <h4 class="fw-bold mb-0" style="color:#0b4a94;"><i class="bi bi-calendar-check me-2"></i>Lab Reservations</h4>
+                    <p class="text-muted small mb-0">Request a lab slot in advance. Requires admin approval.</p>
+                </div>
+                <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#newReservationModal">
+                    <i class="bi bi-plus-circle me-1"></i>New Reservation
+                </button>
+            </div>
+
+            @if (TempData["Success"] != null)
+            {
+                <div class="alert alert-success alert-dismissible py-2 small fade show mb-3" role="alert">
+                    <i class="bi bi-check-circle me-1"></i>@TempData["Success"]
+                    <button type="button" class="btn-close btn-close-sm" data-bs-dismiss="alert"></button>
+                </div>
+            }
+            @if (TempData["Error"] != null)
+            {
+                <div class="alert alert-danger alert-dismissible py-2 small fade show mb-3" role="alert">
+                    <i class="bi bi-exclamation-circle me-1"></i>@TempData["Error"]
+                    <button type="button" class="btn-close btn-close-sm" data-bs-dismiss="alert"></button>
+                </div>
+            }
+
+            <!-- Summary chips -->
+            <div class="d-flex gap-3 mb-4 flex-wrap">
+                <div class="res-chip res-chip-pending"><i class="bi bi-hourglass-split me-1"></i>@pending Pending</div>
+                <div class="res-chip res-chip-approved"><i class="bi bi-check-circle me-1"></i>@approved Approved</div>
+                <div class="res-chip res-chip-denied"><i class="bi bi-x-circle me-1"></i>@denied Denied</div>
+            </div>
+
+            <!-- Reservations list -->
+            <div class="panel-card">
+                @if (Model.Any())
+                {
+                    <div class="d-flex flex-column gap-3">
+                        @foreach (var r in Model)
+                        {
+                            var (badgeCls, iconCls) = r.Status switch
+                            {
+                                "Approved" => ("badge-approved", "bi-check-circle-fill text-success"),
+                                "Denied"   => ("badge-denied",   "bi-x-circle-fill text-danger"),
+                                _          => ("badge-pending",  "bi-hourglass-split text-warning")
+                            };
+                            <div class="res-card @badgeCls">
+                                <div class="d-flex align-items-start justify-content-between gap-3">
+                                    <div>
+                                        <div class="d-flex align-items-center gap-2 mb-1">
+                                            <i class="bi @iconCls"></i>
+                                            <span class="fw-bold" style="color:#1e293b;">@r.Laboratory</span>
+                                            @if (!string.IsNullOrWhiteSpace(r.PcNumber))
+                                            {
+                                                <span class="badge bg-light text-dark border">@r.PcNumber</span>
+                                            }
+                                        </div>
+                                        <div class="small text-muted mb-1">
+                                            <i class="bi bi-calendar3 me-1"></i>@r.ReservationDate.ToString("MMMM dd, yyyy")
+                                            &nbsp;·&nbsp;
+                                            <i class="bi bi-journal-text me-1"></i>@r.Purpose
+                                        </div>
+                                        @if (!string.IsNullOrWhiteSpace(r.AdminRemarks))
+                                        {
+                                            <div class="small" style="color:#475569;">
+                                                <i class="bi bi-chat-quote me-1"></i><em>Admin note: @r.AdminRemarks</em>
+                                            </div>
+                                        }
+                                    </div>
+                                    <div class="text-end flex-shrink-0">
+                                        <span class="res-status-badge @badgeCls">@r.Status</span>
+                                        <div class="text-muted" style="font-size:.7rem; margin-top:4px;">
+                                            Submitted @r.CreatedAt.ToLocalTime().ToString("MMM dd, hh:mm tt")
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center text-muted py-5">
+                        <i class="bi bi-calendar-x fs-2 d-block mb-2 opacity-50"></i>
+                        No reservations yet. Click <strong>New Reservation</strong> to get started.
+                    </div>
+                }
+            </div>
+
+        </div>
+    </div>
+
+    @await Html.PartialAsync("_Footer")
+
+    <!-- New Reservation Modal -->
+    <div class="modal fade" id="newReservationModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <form asp-controller="Home" asp-action="MakeReservation" method="post">
+                    @Html.AntiForgeryToken()
+                    <div class="modal-header" style="border-bottom:1px solid #e5e7eb;">
+                        <h6 class="modal-title fw-bold" style="color:#0b4a94;">
+                            <i class="bi bi-calendar-plus me-2"></i>New Lab Reservation
+                        </h6>
+                        <button type="button" class="btn-close btn-sm" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">Laboratory</label>
+                            <select name="Laboratory" class="form-select form-select-sm" required>
+                                <option value="" disabled selected>Select lab…</option>
+                                @foreach (var lab in labNames)
+                                {
+                                    <option value="@lab">@lab</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">Preferred PC <span class="text-muted fw-normal">(optional)</span></label>
+                            <select name="PcNumber" class="form-select form-select-sm">
+                                <option value="">No preference</option>
+                                @for (int i = 1; i <= 49; i++)
+                                {
+                                    <option value="PC-@i">PC-@i</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">Purpose</label>
+                            <input type="text" name="Purpose" class="form-control form-control-sm"
+                                   placeholder="e.g. C Programming practice" maxlength="120" required />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">Date Requested</label>
+                            <input type="date" name="ReservationDate" class="form-control form-control-sm"
+                                   min="@tomorrow" required />
+                        </div>
+                    </div>
+                    <div class="modal-footer" style="border-top:1px solid #e5e7eb;">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary btn-sm">
+                            <i class="bi bi-send me-1"></i>Submit Request
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
+
+<style>
+    html, body { margin: 0; padding: 0; background: #f3f4f6; }
+    body { display: flex; flex-direction: column; min-height: 100vh; }
+    .dash-wrapper { flex: 1; }
+
+    .panel-card {
+        background: #fff;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 2px 8px rgba(15,23,42,.05);
+    }
+
+    .res-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 14px;
+        border-radius: 999px;
+        font-size: .82rem;
+        font-weight: 600;
+        border: 1.5px solid;
+    }
+    .res-chip-pending  { background:#fffbeb; color:#b45309; border-color:#fde68a; }
+    .res-chip-approved { background:#f0fdf4; color:#15803d; border-color:#bbf7d0; }
+    .res-chip-denied   { background:#fef2f2; color:#b91c1c; border-color:#fecaca; }
+
+    .res-card {
+        border-radius: 10px;
+        padding: 14px 18px;
+        border: 1.5px solid;
+    }
+    .res-card.badge-pending  { background:#fffbeb; border-color:#fde68a; }
+    .res-card.badge-approved { background:#f0fdf4; border-color:#bbf7d0; }
+    .res-card.badge-denied   { background:#fef2f2; border-color:#fecaca; }
+
+    .res-status-badge {
+        display: inline-block;
+        padding: 2px 12px;
+        border-radius: 999px;
+        font-size: .75rem;
+        font-weight: 700;
+        border: 1.5px solid;
+    }
+    .res-status-badge.badge-pending  { background:#fef9c3; color:#92400e; border-color:#fde68a; }
+    .res-status-badge.badge-approved { background:#dcfce7; color:#15803d; border-color:#bbf7d0; }
+    .res-status-badge.badge-denied   { background:#fee2e2; color:#b91c1c; border-color:#fecaca; }
+</style>

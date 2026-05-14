@@ -32,14 +32,9 @@ namespace SignUpLogin.Controllers
                 return RedirectToAction("Index", "Login");
             }
 
-            if (student.RemainingSessions <= 0)
-            {
-                student.RemainingSessions = 30;
-                await _context.SaveChangesAsync();
-            }
 
             var recentHistory = await _context.SitInRecords
-                .Where(r => r.StudentIdNumber == idNumber)
+                 .Where(r => r.StudentIdNumber == idNumber)
                 .OrderByDescending(r => r.TimeIn)
                 .Take(5)
                 .ToListAsync();
@@ -71,19 +66,28 @@ namespace SignUpLogin.Controllers
                         {
                             StudentIdNumber = idNumber,
                             Points = newPoints,
+                            LifetimePoints = newPoints,
                             LastRewardReason = $"Earned {newPoints} pt(s) for sit-in time",
-                            UpdatedAt = DateTime.Now
+                            UpdatedAt = DateTime.UtcNow
                         };
                         _context.StudentPoints.Add(pointsRow);
                     }
                     else
                     {
                         pointsRow.Points += newPoints;
+                        pointsRow.LifetimePoints += newPoints;
                         pointsRow.LastRewardReason = $"Earned {newPoints} pt(s) for sit-in time";
-                        pointsRow.UpdatedAt = DateTime.Now;
+                        pointsRow.UpdatedAt = DateTime.UtcNow;
                     }
                     TempData["PointsEarned"] = newPoints;
                 }
+                await _context.SaveChangesAsync();
+            }
+
+            if (pointsRow != null && pointsRow.LifetimePoints < pointsRow.Points)
+            {
+                pointsRow.LifetimePoints = pointsRow.Points;
+                pointsRow.UpdatedAt = DateTime.UtcNow;
                 await _context.SaveChangesAsync();
             }
 
@@ -94,7 +98,7 @@ namespace SignUpLogin.Controllers
             {
                 if (!labStatuses.Any(l => l.LabName == name))
                 {
-                    _context.LabStatuses.Add(new LabStatus { LabName = name, Status = "Available", UpdatedAt = DateTime.Now });
+                    _context.LabStatuses.Add(new LabStatus { LabName = name, Status = "Available", UpdatedAt = DateTime.UtcNow });
                     anyAdded = true;
                 }
             }
@@ -116,15 +120,34 @@ namespace SignUpLogin.Controllers
                 IsCurrentlyActive = activeSitIn != null,
                 ActiveSitIn = activeSitIn,
                 Points = pointsRow?.Points ?? 0,
+                LifetimePoints = pointsRow?.LifetimePoints ?? 0,
                 LastRewardReason = pointsRow?.LastRewardReason,
                 LabStatuses = orderedLabStatuses
             };
+
+            // Add Leaderboard Data for Student Dashboard
+            var topStudents = await _context.StudentPoints
+                .AsNoTracking()
+                .Include(p => p.Student)
+                .OrderByDescending(p => p.Points)
+                .Take(5)
+                .ToListAsync();
+
+            ViewBag.LeaderboardData = topStudents.Select(p => new LeaderboardEntryViewModel
+            {
+                StudentIdNumber = p.StudentIdNumber,
+                StudentName = p.Student != null
+                                    ? $"{p.Student.FirstName} {p.Student.LastName}".Trim()
+                                    : p.StudentIdNumber,
+                Points = p.Points,
+                LifetimePoints = p.LifetimePoints
+            }).ToList();
 
             HttpContext.Session.SetString("ProfileImagePath", student.ProfileImagePath ?? string.Empty);
             return View(vm);
         }
 
-        // ── NEW: Sit-in History Page ──────────────────────────────────────
+        // ── Sit-in History Page ──────────────────────────────────────
         public async Task<IActionResult> SitInHistory()
         {
             var guardResult = EnsureStudentAccess();
@@ -182,7 +205,7 @@ namespace SignUpLogin.Controllers
 
             pointsRow.Points -= validPoints;
             pointsRow.LastRewardReason = $"Redeemed {validPoints} pt(s) for {sessionsGained} session(s)";
-            pointsRow.UpdatedAt = DateTime.Now;
+            pointsRow.UpdatedAt = DateTime.UtcNow;
             student.RemainingSessions += sessionsGained;
 
             await _context.SaveChangesAsync();
@@ -243,7 +266,7 @@ namespace SignUpLogin.Controllers
                     SitInRecordId = SitInRecordId,
                     Rating = Rating,
                     Comment = string.IsNullOrWhiteSpace(Comment) ? null : Comment.Trim(),
-                    SubmittedAt = DateTime.Now
+                    SubmittedAt = DateTime.UtcNow
                 });
                 await _context.SaveChangesAsync();
                 TempData["Success"] = "Thank you for your feedback!";
@@ -251,6 +274,62 @@ namespace SignUpLogin.Controllers
 
             // Redirect back to history page instead of Index
             return RedirectToAction(nameof(SitInHistory));
+        }
+
+        // ── Reservations ──────────────────────────────────────────────────
+        public async Task<IActionResult> Reservations()
+        {
+            var guardResult = EnsureStudentAccess();
+            if (guardResult != null) return guardResult;
+
+            var idNumber = HttpContext.Session.GetString("IdNumber")!;
+            var reservations = await _context.Reservations
+                .Where(r => r.StudentIdNumber == idNumber)
+                .OrderByDescending(r => r.CreatedAt)
+                .ToListAsync();
+
+            return View(reservations);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> MakeReservation(
+            string Laboratory, string? PcNumber, string Purpose, DateTime ReservationDate)
+        {
+            var guardResult = EnsureStudentAccess();
+            if (guardResult != null) return guardResult;
+
+            var idNumber = HttpContext.Session.GetString("IdNumber")!;
+            if (string.IsNullOrWhiteSpace(Laboratory) || string.IsNullOrWhiteSpace(Purpose))
+            {
+                TempData["Error"] = "All fields are required.";
+                return RedirectToAction(nameof(Reservations));
+            }
+
+            var hasPending = await _context.Reservations.AnyAsync(r =>
+                r.StudentIdNumber == idNumber &&
+                r.Status == "Pending" &&
+                r.ReservationDate.Date == ReservationDate.Date);
+
+            if (hasPending)
+            {
+                TempData["Error"] = "You already have a pending reservation on that date.";
+                return RedirectToAction(nameof(Reservations));
+            }
+
+            _context.Reservations.Add(new Reservation
+            {
+                StudentIdNumber = idNumber,
+                Laboratory      = Laboratory,
+                PcNumber        = string.IsNullOrWhiteSpace(PcNumber) ? null : PcNumber.Trim(),
+                Purpose         = Purpose.Trim(),
+                ReservationDate = ReservationDate.Date,
+                CreatedAt       = DateTime.UtcNow
+            });
+
+            await _context.SaveChangesAsync();
+            TempData["Success"] = "Reservation submitted! Please wait for admin approval.";
+            return RedirectToAction(nameof(Reservations));
         }
 
         public IActionResult Privacy() => View();
