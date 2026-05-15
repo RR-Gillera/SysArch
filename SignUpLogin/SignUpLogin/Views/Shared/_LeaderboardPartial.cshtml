@@ -25,16 +25,17 @@
                             ? item.StudentIdNumber : item.StudentName;
                             int pts = item.Points;
 
-                            string tier = pts >= 90 ? "Gold" :
-                            pts >= 60 ? "Silver" :
-                            pts >= 30 ? "Bronze" : "Starter";
+                            int totalAccumulated = item.LifetimePoints > 0 ? item.LifetimePoints : item.Points;
+
+                            string tier = totalAccumulated >= 90 ? "Gold" :
+                            totalAccumulated >= 60 ? "Silver" :
+                            totalAccumulated >= 30 ? "Bronze" : "Starter";
 
                             string tc = tier == "Gold" ? "#b45309" :
                             tier == "Silver" ? "#475569" :
                             tier == "Bronze" ? "#92400e" : "#6366f1";
 
                             string rankLabel = rank <= 3 ? rank.ToString() : $"#{rank}";
-                            int totalAccumulated = item.LifetimePoints > 0 ? item.LifetimePoints : item.Points;
 
                             <tr>
                                 <td class="fw-bold">@rankLabel</td>

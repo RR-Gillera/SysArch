@@ -334,9 +334,9 @@
                 int progressPct = tierName == "Gold" ? 100 : (int)Math.Round((double)progressVal / progressRange * 100);
                 int ptsToNext = tierName == "Gold" ? 0 : (tierMax + 1 - lifetimePts);
 
-                // Redeem helpers: 2 pts = 1 session
-                int maxRedeemableSessions = spendablePts / 2;
-                int maxRedeemablePoints = maxRedeemableSessions * 2;
+                // Redeem helpers: 3 pts = 1 session
+                int maxRedeemableSessions = spendablePts / 3;
+                int maxRedeemablePoints = maxRedeemableSessions * 3;
             }
 
             <div class="panel-card mb-4" style="border-color:@tierBorder; background:@tierBg;">
@@ -426,7 +426,7 @@
                             <div class="d-flex align-items-center gap-2 mb-2">
                                 <i class="bi bi-arrow-repeat fw-bold" style="color:@tierColor;"></i>
                                 <span class="fw-bold" style="font-size:0.88rem; color:#1e293b;">Redeem Points for Sessions</span>
-                                <span class="ms-auto redeem-rate-chip">2 pts = 1 session</span>
+                                <span class="ms-auto redeem-rate-chip">3 pts = 1 session</span>
                             </div>
 
                             @if (maxRedeemableSessions > 0)
@@ -437,8 +437,8 @@
                                         <label class="small text-muted mb-0 text-nowrap">Sessions to redeem:</label>
                                         <input type="number" name="redeemAmount" id="redeemInput"
                                                class="form-control form-control-sm redeem-input"
-                                               min="2" max="@maxRedeemablePoints" step="2"
-                                               value="2"
+                                               min="3" max="@maxRedeemablePoints" step="3"
+                                               value="3"
                                                oninput="updateRedeemPreview(this.value)" />
                                     </div>
                                     <div class="redeem-preview small text-muted" id="redeemPreview">
@@ -457,7 +457,7 @@
                             else
                             {
                                 <p class="mb-0 small text-muted">
-                                    <i class="bi bi-lock me-1"></i>You need at least <strong>2 points</strong> to redeem a session.
+                                    <i class="bi bi-lock me-1"></i>You need at least <strong>3 points</strong> to redeem a session.
                                     Keep sitting in to earn more!
                                 </p>
                             }
@@ -623,13 +623,13 @@
         }
         function updateRedeemPreview(value) {
             const pts      = parseInt(value) || 0;
-            const valid    = Math.floor(pts / 2) * 2;
-            const sessions = valid / 2;
+            const valid    = Math.floor(pts / 3) * 3;
+            const sessions = valid / 3;
             const preview  = document.getElementById('redeemPreview');
             if (preview) {
-                preview.innerHTML = valid >= 2
+                preview.innerHTML = valid >= 3
                     ? `= <strong>${sessions}</strong> session${sessions !== 1 ? 's' : ''}`
-                    : '<span class="text-danger">min 2 pts</span>';
+                    : '<span class="text-danger">min 3 pts</span>';
             }
         }
     </script>
