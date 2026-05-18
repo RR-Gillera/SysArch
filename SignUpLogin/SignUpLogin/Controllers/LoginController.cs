@@ -1,7 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SignUpLogin.Data;
 using SignUpLogin.Models;
+using SignUpLogin.Models.ViewModels;
 
 namespace SignUpLogin.Controllers
 {
@@ -32,11 +33,12 @@ namespace SignUpLogin.Controllers
                 .Include(p => p.Student)
                 .OrderByDescending(p => p.Points)
                 .Take(5)
-                .Select(p => new
+                .Select(p => new LeaderboardEntryViewModel
                 {
                     StudentIdNumber = p.StudentIdNumber,
-                    StudentName = p.Student != null ? $"{p.Student.FirstName} {p.Student.LastName}" : p.StudentIdNumber,
-                    Points = p.Points
+                    StudentName = p.Student != null ? $"{p.Student.FirstName} {p.Student.LastName}".Trim() : p.StudentIdNumber,
+                    Points = p.Points,
+                    LifetimePoints = p.LifetimePoints
                 })
                 .ToListAsync();
 
@@ -115,20 +117,21 @@ namespace SignUpLogin.Controllers
         }
 
         // Helper method to avoid code duplication
-        private async Task<List<object>> GetLeaderboardData()
+        private async Task<List<LeaderboardEntryViewModel>> GetLeaderboardData()
         {
             return await _context.StudentPoints
                 .AsNoTracking()
                 .Include(p => p.Student)
                 .OrderByDescending(p => p.Points)
                 .Take(5)
-                .Select(p => new
+                .Select(p => new LeaderboardEntryViewModel
                 {
                     StudentIdNumber = p.StudentIdNumber,
-                    StudentName = p.Student != null ? $"{p.Student.FirstName} {p.Student.LastName}" : p.StudentIdNumber,
-                    Points = p.Points
+                    StudentName = p.Student != null ? $"{p.Student.FirstName} {p.Student.LastName}".Trim() : p.StudentIdNumber,
+                    Points = p.Points,
+                    LifetimePoints = p.LifetimePoints
                 })
-                .ToListAsync<object>();
+                .ToListAsync();
         }
     }
 }

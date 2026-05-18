@@ -1,4 +1,4 @@
-﻿@model SignUpLogin.Models.Login
+@model SignUpLogin.Models.Login
 
 @{
     ViewData["Title"] = "Login - College of Computer Studies";
@@ -17,10 +17,10 @@
 <body>
     @await Html.PartialAsync("_LoginNavBar")
 
-    <div class="container login-container">
-        <div class="row justify-content-center align-items-center h-100">
-            <div class="col-md-5 text-center">
-                <img src="~/images/CCS Logo.png" alt="CCS Logo" class="ccs-logo">
+    <div class="container login-container py-5">
+        <div class="row justify-content-center align-items-center min-vh-80 mb-5">
+            <div class="col-md-5 text-center mb-4 mb-md-0">
+                <img src="/images/CCS Logo.png" alt="CCS Logo" class="ccs-logo">
             </div>
             <div class="col-md-6">
                 <div class="login-form-container">
@@ -45,7 +45,6 @@
                                 <input type="checkbox" class="form-check-input" asp-for="RememberMe" id="rememberMe">
                                 <label class="form-check-label" for="rememberMe">Remember me</label>
                             </div>
-                            <a href="#" class="text-primary text-decoration-none forgot-link">Forgot password?</a>
                         </div>
 
                         <button type="submit" class="btn btn-primary w-100 login-btn">Login</button>
@@ -54,6 +53,22 @@
                     <div class="mt-3 text-center">
                         <span>Don't have an account? <a asp-controller="Signup" asp-action="Index" class="text-danger text-decoration-none fw-bold">Register</a></span>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Leaderboard Section -->
+        <div class="row justify-content-center">
+            <div class="col-md-11">
+                <div class="login-form-container mb-4" style="background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);">
+                    <h5 class="fw-bold mb-4" style="color: #0b4a94;">
+                        <i class="bi bi-trophy-fill me-2 text-warning"></i>Student Leaderboard
+                    </h5>
+                    @{
+                        var leaderboard = ViewBag.LeaderboardData as List<SignUpLogin.Models.ViewModels.LeaderboardEntryViewModel>
+                        ?? new List<SignUpLogin.Models.ViewModels.LeaderboardEntryViewModel>();
+                    }
+                    @await Html.PartialAsync("_LeaderboardPartial", leaderboard)
                 </div>
             </div>
         </div>
@@ -87,26 +102,31 @@
 
 <style>
     html, body {
-        height: 100%;
         margin: 0;
-        overflow: hidden;
+        padding: 0;
+        overflow-y: auto;
     }
 
     body {
         display: flex;
         flex-direction: column;
-        height: 100vh;
+        min-height: 100vh;
         background-image: url('/images/UC_background.jpg');
         background-size: cover;
         background-position: center;
         background-repeat: no-repeat;
+        background-attachment: fixed;
     }
 
     .login-container {
         flex: 1;
         display: flex;
-        align-items: center;
-        overflow: hidden;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    .min-vh-80 {
+        min-height: 80vh;
     }
 
         .login-container .row {

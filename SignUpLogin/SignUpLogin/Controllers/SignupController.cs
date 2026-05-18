@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SignUpLogin.Models;
 using SignUpLogin.Data;
@@ -38,6 +38,7 @@ namespace SignUpLogin.Controllers
                     return View("Signup", model);
                 }
 
+                model.MiddleName = model.MiddleName ?? string.Empty;
                 model.Role = "Student";
                 model.RemainingSessions = 30;
                 model.LastAnnouncementsReadAt = null;

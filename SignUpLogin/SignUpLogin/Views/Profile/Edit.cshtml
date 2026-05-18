@@ -25,7 +25,7 @@
 
                     <div class="mb-3 text-center">
                         <img src="@(string.IsNullOrEmpty(Model.CurrentImagePath) ? "/images/default-avatar.png" : Model.CurrentImagePath)"
-                             onerror="this.src='/images/default-avatar.png'"
+                             onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=User&background=0b4a94&color=fff&size=160&bold=true';"
                              alt="Profile picture" class="rounded-circle border" style="width:120px;height:120px;object-fit:cover;" />
                     </div>
 

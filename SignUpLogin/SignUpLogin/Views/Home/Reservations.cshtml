@@ -5,8 +5,8 @@
     var pending  = Model.Count(r => r.Status == "Pending");
     var approved = Model.Count(r => r.Status == "Approved");
     var denied   = Model.Count(r => r.Status == "Denied");
-    var tomorrow = DateTime.Now.AddDays(1).ToString("yyyy-MM-dd");
-    var labNames = new[] { "Lab 524", "Lab 526", "Lab 528", "Lab 542", "Lab 544" };
+    var today    = DateTime.Now.ToString("yyyy-MM-dd");
+    var todayDateTime = DateTime.Now.ToString("yyyy-MM-ddTHH:mm");
 }
 
 <!DOCTYPE html>
@@ -82,7 +82,7 @@
                                             }
                                         </div>
                                         <div class="small text-muted mb-1">
-                                            <i class="bi bi-calendar3 me-1"></i>@r.ReservationDate.ToString("MMMM dd, yyyy")
+                                            <i class="bi bi-calendar3 me-1"></i>@r.ReservationDate.ToString("MMMM dd, yyyy - hh:mm tt")
                                             &nbsp;·&nbsp;
                                             <i class="bi bi-journal-text me-1"></i>@r.Purpose
                                         </div>
@@ -133,17 +133,20 @@
                     <div class="modal-body">
                         <div class="mb-3">
                             <label class="form-label small fw-semibold">Laboratory</label>
-                            <select name="Laboratory" class="form-select form-select-sm" required>
+                            <select name="Laboratory" id="laboratorySelect" class="form-select form-select-sm" required>
                                 <option value="" disabled selected>Select lab…</option>
-                                @foreach (var lab in labNames)
+                                @if (ViewBag.LabNames != null)
                                 {
-                                    <option value="@lab">@lab</option>
+                                    foreach (var lab in (List<string>)ViewBag.LabNames)
+                                    {
+                                        <option value="@lab">@lab</option>
+                                    }
                                 }
                             </select>
                         </div>
                         <div class="mb-3">
                             <label class="form-label small fw-semibold">Preferred PC <span class="text-muted fw-normal">(optional)</span></label>
-                            <select name="PcNumber" class="form-select form-select-sm">
+                            <select name="PcNumber" id="pcNumberSelect" class="form-select form-select-sm">
                                 <option value="">No preference</option>
                                 @for (int i = 1; i <= 49; i++)
                                 {
@@ -157,9 +160,9 @@
                                    placeholder="e.g. C Programming practice" maxlength="120" required />
                         </div>
                         <div class="mb-3">
-                            <label class="form-label small fw-semibold">Date Requested</label>
-                            <input type="date" name="ReservationDate" class="form-control form-control-sm"
-                                   min="@tomorrow" required />
+                            <label class="form-label small fw-semibold">What time and date will you reserve?</label>
+                            <input type="datetime-local" name="ReservationDate" class="form-control form-control-sm"
+                                   min="@todayDateTime" value="@todayDateTime" required />
                         </div>
                     </div>
                     <div class="modal-footer" style="border-top:1px solid #e5e7eb;">
@@ -175,6 +178,53 @@
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const labPcCountMap = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.LabPcCountMap));
+        const labSelect = document.getElementById('laboratorySelect');
+        const pcSelect = document.getElementById('pcNumberSelect');
+
+        if (labSelect && pcSelect) {
+            labSelect.addEventListener('change', function() {
+                const selectedLab = this.value;
+                const totalPCs = labPcCountMap[selectedLab] || 49;
+                
+                pcSelect.innerHTML = '<option value="">No preference</option>';
+                for (let i = 1; i <= totalPCs; i++) {
+                    const option = document.createElement('option');
+                    option.value = 'PC-' + i;
+                    option.textContent = 'PC-' + i;
+                    pcSelect.appendChild(option);
+                }
+            });
+        }
+
+        // Auto-fill form and pop modal if query parameters are present
+        window.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const labParam = urlParams.get('laboratory');
+            const pcParam = urlParams.get('pc');
+
+            if (labParam && labSelect && pcSelect) {
+                // 1. Select the lab
+                labSelect.value = labParam;
+                
+                // 2. Dispatch change event to populate PCs list
+                labSelect.dispatchEvent(new Event('change'));
+
+                // 3. Select the PC
+                if (pcParam) {
+                    pcSelect.value = pcParam;
+                }
+
+                // 4. Trigger modal opening
+                const modalEl = document.getElementById('newReservationModal');
+                if (modalEl) {
+                    const myModal = new bootstrap.Modal(modalEl);
+                    myModal.show();
+                }
+            }
+        });
+    </script>
 </body>
 </html>
 

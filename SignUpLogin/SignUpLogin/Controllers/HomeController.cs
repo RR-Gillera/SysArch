@@ -103,7 +103,7 @@ namespace SignUpLogin.Controllers
                 }
             }
             if (anyAdded) await _context.SaveChangesAsync();
-            var orderedLabStatuses = LabNames.Select(n => labStatuses.First(l => l.LabName == n)).ToList();
+            var orderedLabStatuses = labStatuses.OrderBy(l => l.LabName).ToList();
 
             var vm = new StudentHomeViewModel
             {
@@ -288,6 +288,10 @@ namespace SignUpLogin.Controllers
                 .OrderByDescending(r => r.CreatedAt)
                 .ToListAsync();
 
+            var labStatuses = await _context.LabStatuses.ToListAsync();
+            ViewBag.LabNames = labStatuses.OrderBy(l => l.LabName).Select(l => l.LabName).ToList();
+            ViewBag.LabPcCountMap = labStatuses.ToDictionary(l => l.LabName, l => l.TotalPCs);
+
             return View(reservations);
         }
 
@@ -323,7 +327,7 @@ namespace SignUpLogin.Controllers
                 Laboratory      = Laboratory,
                 PcNumber        = string.IsNullOrWhiteSpace(PcNumber) ? null : PcNumber.Trim(),
                 Purpose         = Purpose.Trim(),
-                ReservationDate = ReservationDate.Date,
+                ReservationDate = ReservationDate,
                 CreatedAt       = DateTime.UtcNow
             });
 

@@ -30,9 +30,9 @@
                         <i class="bi bi-download me-1"></i>Export
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end shadow-sm">
-                        <li><a class="dropdown-item" asp-controller="Admin" asp-action="ExportSitInCsv"><i class="bi bi-filetype-csv me-2 text-success"></i>Export to CSV</a></li>
-                        <li><a class="dropdown-item" asp-controller="Admin" asp-action="ExportSitInDocx"><i class="bi bi-filetype-docx me-2 text-primary"></i>Export to DOCX</a></li>
-                        <li><a class="dropdown-item" asp-controller="Admin" asp-action="ExportSitInPdf"><i class="bi bi-filetype-pdf me-2 text-danger"></i>Export to PDF</a></li>
+                        <li><a class="dropdown-item export-link" asp-controller="Admin" asp-action="ExportSitInCsv"><i class="bi bi-filetype-csv me-2 text-success"></i>Export to CSV</a></li>
+                        <li><a class="dropdown-item export-link" asp-controller="Admin" asp-action="ExportSitInDocx"><i class="bi bi-filetype-docx me-2 text-primary"></i>Export to DOCX</a></li>
+                        <li><a class="dropdown-item export-link" asp-controller="Admin" asp-action="ExportSitInPdf"><i class="bi bi-filetype-pdf me-2 text-danger"></i>Export to PDF</a></li>
                     </ul>
                 </div>
             </div>
@@ -47,11 +47,13 @@
                     <label class="form-label small fw-semibold mb-1">Filter by Lab</label>
                     <select id="labFilter" class="form-select form-select-sm">
                         <option value="">All Labs</option>
-                        <option>Lab 524</option>
-                        <option>Lab 526</option>
-                        <option>Lab 528</option>
-                        <option>Lab 542</option>
-                        <option>Lab 544</option>
+                        @if (ViewBag.LabNames != null)
+                        {
+                            foreach (var name in (List<string>)ViewBag.LabNames)
+                            {
+                                <option>@name</option>
+                            }
+                        }
                     </select>
                 </div>
                 <div class="col-md-3">
@@ -126,9 +128,33 @@
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         const s=document.getElementById('searchInput'),l=document.getElementById('labFilter'),st=document.getElementById('statusFilter'),c=document.getElementById('clearBtn'),tb=document.querySelector('#recordsTable tbody'),vc=document.getElementById('visibleCount');
-        function f(){const q=s.value.toLowerCase().trim(),lab=l.value,status=st.value;let n=0;tb.querySelectorAll('tr[data-name]').forEach(r=>{const m=(!q||r.dataset.name.includes(q)||r.dataset.id.includes(q))&&(!lab||r.dataset.lab===lab)&&(!status||r.dataset.status===status);r.style.display=m?'':'none';if(m)n++;});vc.textContent=n;}
+        function f(){
+            const q=s.value.toLowerCase().trim(),lab=l.value,status=st.value;
+            let n=0;
+            tb.querySelectorAll('tr[data-name]').forEach(r=>{
+                const m=(!q||r.dataset.name.includes(q)||r.dataset.id.includes(q))&&(!lab||r.dataset.lab===lab)&&(!status||r.dataset.status===status);
+                r.style.display=m?'':'none';
+                if(m)n++;
+            });
+            vc.textContent=n;
+
+            // Dynamically update export URLs
+            document.querySelectorAll('.export-link').forEach(link => {
+                let baseUrl = link.getAttribute('data-base-url');
+                if (!baseUrl) {
+                    baseUrl = link.getAttribute('href');
+                    link.setAttribute('data-base-url', baseUrl);
+                }
+                const url = new URL(baseUrl, window.location.origin);
+                url.searchParams.set('search', s.value.trim());
+                url.searchParams.set('lab', l.value);
+                url.searchParams.set('status', st.value);
+                link.setAttribute('href', url.pathname + url.search);
+            });
+        }
         s.addEventListener('input',f);l.addEventListener('change',f);st.addEventListener('change',f);
         c.addEventListener('click',()=>{s.value=l.value=st.value='';f();});
+        f();
     </script>
 </body>
 </html>

@@ -20,5 +20,7 @@ namespace SignUpLogin.Models
         public string? Remarks { get; set; }
 
         public DateTime UpdatedAt { get; set; } = DateTime.Now;
+
+        public int TotalPCs { get; set; } = 0;
     }
 }

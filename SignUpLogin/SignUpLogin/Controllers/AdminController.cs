@@ -41,7 +41,7 @@ namespace SignUpLogin.Controllers
 
             // Ensure every lab has a row; create missing ones as "Available"
             var labStatuses = await _context.LabStatuses.ToListAsync();
-            bool anyAdded = false;
+            bool anyChanges = false;
             foreach (var name in LabNames)
             {
                 if (!labStatuses.Any(l => l.LabName == name))
@@ -49,13 +49,25 @@ namespace SignUpLogin.Controllers
                     var newLab = new LabStatus { LabName = name, Status = "Available", UpdatedAt = DateTime.UtcNow };
                     _context.LabStatuses.Add(newLab);
                     labStatuses.Add(newLab);
-                    anyAdded = true;
+                    anyChanges = true;
                 }
             }
-            if (anyAdded) await _context.SaveChangesAsync();
 
-            var orderedLabStatuses = LabNames
-                .Select(n => labStatuses.First(l => l.LabName == n))
+            // Automatically clean up legacy Remarks containing "PCs available"
+            foreach (var lab in labStatuses)
+            {
+                if (lab.Remarks != null && lab.Remarks.Contains("PCs available"))
+                {
+                    lab.Remarks = null;
+                    anyChanges = true;
+                }
+            }
+
+            if (anyChanges) await _context.SaveChangesAsync();
+
+            // Order by LabName dynamically so newly added labs appear on the dashboard
+            var orderedLabStatuses = labStatuses
+                .OrderBy(l => l.LabName)
                 .ToList();
 
             var vm = new AdminDashboardViewModel
@@ -70,6 +82,67 @@ namespace SignUpLogin.Controllers
             };
 
             return View(vm);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AddLaboratory(string LabName, int TotalPCs)
+        {
+            if (!IsAdmin()) return RedirectToAction("Index", "Login");
+
+            LabName = LabName?.Trim() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(LabName))
+            {
+                TempData["Error"] = "Lab name cannot be empty.";
+                return RedirectToAction(nameof(Home));
+            }
+
+            var existingLab = await _context.LabStatuses.FirstOrDefaultAsync(l => l.LabName == LabName);
+            if (existingLab != null)
+            {
+                TempData["Error"] = $"Lab {LabName} already exists.";
+                return RedirectToAction(nameof(Home));
+            }
+
+            // Create placeholder PCs. Note: the actual PC data structure you use isn't shown,
+            // but we'll add the LabStatus which is what's used on the dashboard layout.
+            var lab = new LabStatus 
+            { 
+                LabName = LabName,
+                Status = "Available",
+                Remarks = null,
+                TotalPCs = TotalPCs,
+                UpdatedAt = DateTime.UtcNow
+            };
+            
+            _context.LabStatuses.Add(lab);
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] = $"Lab {LabName} added successfully with {TotalPCs} PCs.";
+            return RedirectToAction(nameof(Home));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> RemoveLaboratory(string LabName)
+        {
+            if (!IsAdmin()) return RedirectToAction("Index", "Login");
+
+            if (string.IsNullOrWhiteSpace(LabName))
+            {
+                TempData["Error"] = "Lab name invalid.";
+                return RedirectToAction(nameof(Home));
+            }
+            
+            var existingLab = await _context.LabStatuses.FirstOrDefaultAsync(l => l.LabName == LabName);
+            if (existingLab != null)
+            {
+                _context.LabStatuses.Remove(existingLab);
+                await _context.SaveChangesAsync();
+                TempData["Success"] = $"Lab {LabName} removed successfully.";
+            }
+
+            return RedirectToAction(nameof(Home));
         }
 
         // ── Lab Status ─────────────────────────────────────────────────────
@@ -313,6 +386,11 @@ namespace SignUpLogin.Controllers
                 .OrderByDescending(r => r.TimeIn)
                 .ToListAsync();
 
+            ViewBag.LabNames = await _context.LabStatuses
+                .Select(l => l.LabName)
+                .OrderBy(n => n)
+                .ToListAsync();
+
             return View(records);
         }
 
@@ -451,6 +529,7 @@ namespace SignUpLogin.Controllers
                     StudentIdNumber = s.IdNumber,
                     StudentName = $"{s.FirstName} {s.LastName}".Trim(),
                     Points = sp?.Points ?? 0,
+                    LifetimePoints = sp?.LifetimePoints ?? 0,
                     TotalMinutes = minutes,
                     LastRewardReason = sp?.LastRewardReason
                 };
@@ -564,17 +643,42 @@ namespace SignUpLogin.Controllers
             return RedirectToAction(nameof(Reservations));
         }
 
-        // ── Export CSV ─────────────────────────────────────────────────────
         [HttpGet]
-        public async Task<IActionResult> ExportSitInCsv()
+        public async Task<IActionResult> ExportSitInCsv(string? search, string? lab, string? status)
         {
             if (!IsAdmin()) return RedirectToAction("Index", "Login");
 
-            var records = await _context.SitInRecords
+            IQueryable<SitInRecord> query = _context.SitInRecords
                 .AsNoTracking()
-                .Include(r => r.Student)
-                .OrderByDescending(r => r.TimeIn)
-                .ToListAsync();
+                .Include(r => r.Student);
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var q = search.ToLower().Trim();
+                query = query.Where(r =>
+                    r.StudentIdNumber.ToLower().Contains(q) ||
+                    (r.Student != null && (r.Student.FirstName + " " + r.Student.LastName).ToLower().Contains(q))
+                );
+            }
+
+            if (!string.IsNullOrWhiteSpace(lab))
+            {
+                query = query.Where(r => r.Laboratory == lab);
+            }
+
+            if (!string.IsNullOrWhiteSpace(status))
+            {
+                if (status == "active")
+                {
+                    query = query.Where(r => r.TimeOut == null);
+                }
+                else if (status == "completed")
+                {
+                    query = query.Where(r => r.TimeOut != null);
+                }
+            }
+
+            var records = await query.OrderByDescending(r => r.TimeIn).ToListAsync();
 
             var sb = new System.Text.StringBuilder();
             sb.AppendLine("ID,Student ID,Student Name,Purpose,Laboratory,PC Number,Time In,Time Out,Duration (mins),Status");
@@ -585,9 +689,9 @@ namespace SignUpLogin.Controllers
                 var timeIn   = r.TimeIn.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss");
                 var timeOut  = r.TimeOut?.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss") ?? "Active";
                 var duration = r.TimeOut.HasValue ? (int)(r.TimeOut.Value - r.TimeIn).TotalMinutes : 0;
-                var status   = r.TimeOut == null ? "Active" : "Completed";
+                var statusStr   = r.TimeOut == null ? "Active" : "Completed";
                 var pc       = r.PcNumber ?? "";
-                sb.AppendLine($"{r.Id},{r.StudentIdNumber},\"{name}\",\"{r.Purpose}\",\"{r.Laboratory}\",\"{pc}\",\"{timeIn}\",\"{timeOut}\",{duration},{status}");
+                sb.AppendLine($"{r.Id},{r.StudentIdNumber},\"{name}\",\"{r.Purpose}\",\"{r.Laboratory}\",\"{pc}\",\"{timeIn}\",\"{timeOut}\",{duration},{statusStr}");
             }
 
             var bytes = System.Text.Encoding.UTF8.GetBytes(sb.ToString());
@@ -595,15 +699,41 @@ namespace SignUpLogin.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> ExportSitInDocx()
+        public async Task<IActionResult> ExportSitInDocx(string? search, string? lab, string? status)
         {
             if (!IsAdmin()) return RedirectToAction("Index", "Login");
 
-            var records = await _context.SitInRecords
+            IQueryable<SitInRecord> query = _context.SitInRecords
                 .AsNoTracking()
-                .Include(r => r.Student)
-                .OrderByDescending(r => r.TimeIn)
-                .ToListAsync();
+                .Include(r => r.Student);
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var q = search.ToLower().Trim();
+                query = query.Where(r =>
+                    r.StudentIdNumber.ToLower().Contains(q) ||
+                    (r.Student != null && (r.Student.FirstName + " " + r.Student.LastName).ToLower().Contains(q))
+                );
+            }
+
+            if (!string.IsNullOrWhiteSpace(lab))
+            {
+                query = query.Where(r => r.Laboratory == lab);
+            }
+
+            if (!string.IsNullOrWhiteSpace(status))
+            {
+                if (status == "active")
+                {
+                    query = query.Where(r => r.TimeOut == null);
+                }
+                else if (status == "completed")
+                {
+                    query = query.Where(r => r.TimeOut != null);
+                }
+            }
+
+            var records = await query.OrderByDescending(r => r.TimeIn).ToListAsync();
 
             using var memoryStream = new System.IO.MemoryStream();
             using (var wordDocument = DocumentFormat.OpenXml.Packaging.WordprocessingDocument.Create(memoryStream, DocumentFormat.OpenXml.WordprocessingDocumentType.Document))
@@ -624,11 +754,11 @@ namespace SignUpLogin.Controllers
                     var name = r.Student != null ? $"{r.Student.FirstName} {r.Student.LastName}".Trim() : r.StudentIdNumber;
                     var timeIn = r.TimeIn.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss");
                     var timeOut = r.TimeOut?.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss") ?? "Active";
-                    var status = r.TimeOut == null ? "Active" : "Completed";
+                    var statusStr = r.TimeOut == null ? "Active" : "Completed";
 
                     var p = body.AppendChild(new DocumentFormat.OpenXml.Wordprocessing.Paragraph());
                     var r1 = p.AppendChild(new DocumentFormat.OpenXml.Wordprocessing.Run());
-                    r1.AppendChild(new DocumentFormat.OpenXml.Wordprocessing.Text($"Student: {name} ({r.StudentIdNumber}) - Lab: {r.Laboratory} - Status: {status}"));
+                    r1.AppendChild(new DocumentFormat.OpenXml.Wordprocessing.Text($"Student: {name} ({r.StudentIdNumber}) - Lab: {r.Laboratory} - Status: {statusStr}"));
                     r1.AppendChild(new DocumentFormat.OpenXml.Wordprocessing.Break());
                     r1.AppendChild(new DocumentFormat.OpenXml.Wordprocessing.Text($"Time In: {timeIn} - Time Out: {timeOut}"));
                     
@@ -641,15 +771,41 @@ namespace SignUpLogin.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> ExportSitInPdf()
+        public async Task<IActionResult> ExportSitInPdf(string? search, string? lab, string? status)
         {
             if (!IsAdmin()) return RedirectToAction("Index", "Login");
 
-            var records = await _context.SitInRecords
+            IQueryable<SitInRecord> query = _context.SitInRecords
                 .AsNoTracking()
-                .Include(r => r.Student)
-                .OrderByDescending(r => r.TimeIn)
-                .ToListAsync();
+                .Include(r => r.Student);
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var q = search.ToLower().Trim();
+                query = query.Where(r =>
+                    r.StudentIdNumber.ToLower().Contains(q) ||
+                    (r.Student != null && (r.Student.FirstName + " " + r.Student.LastName).ToLower().Contains(q))
+                );
+            }
+
+            if (!string.IsNullOrWhiteSpace(lab))
+            {
+                query = query.Where(r => r.Laboratory == lab);
+            }
+
+            if (!string.IsNullOrWhiteSpace(status))
+            {
+                if (status == "active")
+                {
+                    query = query.Where(r => r.TimeOut == null);
+                }
+                else if (status == "completed")
+                {
+                    query = query.Where(r => r.TimeOut != null);
+                }
+            }
+
+            var records = await query.OrderByDescending(r => r.TimeIn).ToListAsync();
 
             var document = QuestPDF.Fluent.Document.Create(container =>
             {
@@ -689,14 +845,14 @@ namespace SignUpLogin.Controllers
                             var name = r.Student != null ? $"{r.Student.FirstName} {r.Student.LastName}".Trim() : r.StudentIdNumber;
                             var timeIn = r.TimeIn.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss");
                             var timeOut = r.TimeOut?.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss") ?? "Active";
-                            var status = r.TimeOut == null ? "Active" : "Completed";
+                            var statusStr = r.TimeOut == null ? "Active" : "Completed";
 
                             table.Cell().Text($"{name}\n({r.StudentIdNumber})");
                             table.Cell().Text(r.Laboratory);
                             table.Cell().Text(r.PcNumber ?? "-");
                             table.Cell().Text(timeIn);
                             table.Cell().Text(timeOut);
-                            table.Cell().Text(status);
+                            table.Cell().Text(statusStr);
                         }
                     });
 
@@ -710,6 +866,187 @@ namespace SignUpLogin.Controllers
 
             var pdfBytes = document.GeneratePdf();
             return File(pdfBytes, "application/pdf", $"SitInRecords_{DateTime.Now:yyyyMMdd_HHmmss}.pdf");
+        }
+
+        // ── Export Reservations & Logs ──────────────────────────────────────
+        [HttpGet]
+        public async Task<IActionResult> ExportReservationsCsv(string? status)
+        {
+            if (!IsAdmin()) return RedirectToAction("Index", "Login");
+
+            IQueryable<Reservation> query = _context.Reservations
+                .Include(r => r.Student)
+                .OrderByDescending(r => r.CreatedAt);
+
+            if (status == "logs")
+            {
+                query = query.Where(r => r.Status == "Approved" || r.Status == "Denied");
+            }
+            else if (!string.IsNullOrWhiteSpace(status))
+            {
+                query = query.Where(r => r.Status == status);
+            }
+
+            var records = await query.ToListAsync();
+            var sb = new System.Text.StringBuilder();
+            sb.AppendLine("ID,Student ID,Student Name,Laboratory,PC Number,Purpose,Reservation Date/Time,Submitted At,Status,Reviewed At,Admin Remarks");
+
+            foreach (var r in records)
+            {
+                var name = r.Student != null ? $"{r.Student.FirstName} {r.Student.LastName}".Trim() : r.StudentIdNumber;
+                var dateReq = r.ReservationDate.ToString("yyyy-MM-dd HH:mm");
+                var subAt = r.CreatedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss");
+                var revAt = r.ReviewedAt.HasValue ? r.ReviewedAt.Value.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss") : "N/A";
+                var remarks = r.AdminRemarks ?? "";
+                var pc = r.PcNumber ?? "";
+                sb.AppendLine($"{r.Id},{r.StudentIdNumber},\"{name}\",\"{r.Laboratory}\",\"{pc}\",\"{r.Purpose}\",\"{dateReq}\",\"{subAt}\",\"{r.Status}\",\"{revAt}\",\"{remarks}\"");
+            }
+
+            var bytes = System.Text.Encoding.UTF8.GetBytes(sb.ToString());
+            string prefix = status == "logs" ? "ReservationLogs" : "ReservationsList";
+            return File(bytes, "text/csv", $"{prefix}_{DateTime.Now:yyyyMMdd_HHmmss}.csv");
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ExportReservationsDocx(string? status)
+        {
+            if (!IsAdmin()) return RedirectToAction("Index", "Login");
+
+            IQueryable<Reservation> query = _context.Reservations
+                .Include(r => r.Student)
+                .OrderByDescending(r => r.CreatedAt);
+
+            if (status == "logs")
+            {
+                query = query.Where(r => r.Status == "Approved" || r.Status == "Denied");
+            }
+            else if (!string.IsNullOrWhiteSpace(status))
+            {
+                query = query.Where(r => r.Status == status);
+            }
+
+            var records = await query.ToListAsync();
+            using var memoryStream = new System.IO.MemoryStream();
+            using (var wordDocument = DocumentFormat.OpenXml.Packaging.WordprocessingDocument.Create(memoryStream, DocumentFormat.OpenXml.WordprocessingDocumentType.Document))
+            {
+                var mainPart = wordDocument.AddMainDocumentPart();
+                mainPart.Document = new DocumentFormat.OpenXml.Wordprocessing.Document();
+                var body = mainPart.Document.AppendChild(new DocumentFormat.OpenXml.Wordprocessing.Body());
+
+                var titleText = status == "logs" ? "Reservation Logs Report" : "Lab Reservations Report";
+                var para = body.AppendChild(new DocumentFormat.OpenXml.Wordprocessing.Paragraph());
+                var run = para.AppendChild(new DocumentFormat.OpenXml.Wordprocessing.Run());
+                run.AppendChild(new DocumentFormat.OpenXml.Wordprocessing.Text(titleText));
+                
+                foreach (var r in records)
+                {
+                    var name = r.Student != null ? $"{r.Student.FirstName} {r.Student.LastName}".Trim() : r.StudentIdNumber;
+                    var dateReq = r.ReservationDate.ToString("yyyy-MM-dd HH:mm");
+                    var subAt = r.CreatedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss");
+                    var revAt = r.ReviewedAt.HasValue ? r.ReviewedAt.Value.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss") : "N/A";
+
+                    var p = body.AppendChild(new DocumentFormat.OpenXml.Wordprocessing.Paragraph());
+                    var r1 = p.AppendChild(new DocumentFormat.OpenXml.Wordprocessing.Run());
+                    r1.AppendChild(new DocumentFormat.OpenXml.Wordprocessing.Text($"Student: {name} ({r.StudentIdNumber}) - Lab: {r.Laboratory} - PC: {r.PcNumber ?? "N/A"} - Status: {r.Status}"));
+                    r1.AppendChild(new DocumentFormat.OpenXml.Wordprocessing.Break());
+                    r1.AppendChild(new DocumentFormat.OpenXml.Wordprocessing.Text($"Purpose: {r.Purpose}"));
+                    r1.AppendChild(new DocumentFormat.OpenXml.Wordprocessing.Break());
+                    r1.AppendChild(new DocumentFormat.OpenXml.Wordprocessing.Text($"Reservation Date/Time: {dateReq} - Submitted At: {subAt} - Reviewed At: {revAt}"));
+                    if (!string.IsNullOrWhiteSpace(r.AdminRemarks))
+                    {
+                        r1.AppendChild(new DocumentFormat.OpenXml.Wordprocessing.Break());
+                        r1.AppendChild(new DocumentFormat.OpenXml.Wordprocessing.Text($"Remarks: {r.AdminRemarks}"));
+                    }
+                    body.AppendChild(new DocumentFormat.OpenXml.Wordprocessing.Paragraph()); // spacer
+                }
+            }
+
+            memoryStream.Position = 0;
+            string prefix = status == "logs" ? "ReservationLogs" : "ReservationsList";
+            return File(memoryStream.ToArray(), "application/vnd.openxmlformats-officedocument.wordprocessingml.document", $"{prefix}_{DateTime.Now:yyyyMMdd_HHmmss}.docx");
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ExportReservationsPdf(string? status)
+        {
+            if (!IsAdmin()) return RedirectToAction("Index", "Login");
+
+            IQueryable<Reservation> query = _context.Reservations
+                .Include(r => r.Student)
+                .OrderByDescending(r => r.CreatedAt);
+
+            if (status == "logs")
+            {
+                query = query.Where(r => r.Status == "Approved" || r.Status == "Denied");
+            }
+            else if (!string.IsNullOrWhiteSpace(status))
+            {
+                query = query.Where(r => r.Status == status);
+            }
+
+            var records = await query.ToListAsync();
+            var titleText = status == "logs" ? "Reservation Logs Report" : "Lab Reservations Report";
+
+            var document = QuestPDF.Fluent.Document.Create(container =>
+            {
+                container.Page(page =>
+                {
+                    page.Size(QuestPDF.Helpers.PageSizes.A4.Landscape());
+                    page.Margin(1, QuestPDF.Infrastructure.Unit.Centimetre);
+                    page.PageColor(QuestPDF.Helpers.Colors.White);
+                    page.DefaultTextStyle(x => x.FontSize(9));
+
+                    page.Header().Text(titleText).SemiBold().FontSize(16).FontColor(QuestPDF.Helpers.Colors.Blue.Darken2);
+
+                    page.Content().PaddingVertical(1, QuestPDF.Infrastructure.Unit.Centimetre).Table(table =>
+                    {
+                        table.ColumnsDefinition(columns =>
+                        {
+                            columns.RelativeColumn(2); // Student
+                            columns.RelativeColumn(1.2f); // Lab & PC
+                            columns.RelativeColumn(2); // Purpose
+                            columns.RelativeColumn(1.8f); // Reservation Date/Time
+                            columns.RelativeColumn(1); // Status
+                            columns.RelativeColumn(2.0f); // Remarks
+                        });
+
+                        table.Header(header =>
+                        {
+                            header.Cell().Text("Student");
+                            header.Cell().Text("Lab & PC");
+                            header.Cell().Text("Purpose");
+                            header.Cell().Text("Reservation Date/Time");
+                            header.Cell().Text("Status");
+                            header.Cell().Text("Admin Remarks");
+                        });
+
+                        foreach (var r in records)
+                        {
+                            var name = r.Student != null ? $"{r.Student.FirstName} {r.Student.LastName}".Trim() : r.StudentIdNumber;
+                            var dateReq = r.ReservationDate.ToString("MMM dd, yyyy - hh:mm tt");
+                            var pc = r.PcNumber ?? "—";
+                            var remarks = r.AdminRemarks ?? "—";
+
+                            table.Cell().Text($"{name}\n({r.StudentIdNumber})");
+                            table.Cell().Text($"{r.Laboratory}\nPC: {pc}");
+                            table.Cell().Text(r.Purpose);
+                            table.Cell().Text(dateReq);
+                            table.Cell().Text(r.Status);
+                            table.Cell().Text(remarks);
+                        }
+                    });
+
+                    page.Footer().AlignCenter().Text(x =>
+                    {
+                        x.Span("Page ");
+                        x.CurrentPageNumber();
+                    });
+                });
+            });
+
+            var pdfBytes = document.GeneratePdf();
+            string prefix = status == "logs" ? "ReservationLogs" : "ReservationsList";
+            return File(pdfBytes, "application/pdf", $"{prefix}_{DateTime.Now:yyyyMMdd_HHmmss}.pdf");
         }
 
         public IActionResult Logout()
@@ -732,6 +1069,7 @@ namespace SignUpLogin.Controllers
         public string StudentIdNumber { get; set; } = string.Empty;
         public string StudentName { get; set; } = string.Empty;
         public int Points { get; set; }
+        public int LifetimePoints { get; set; }
         public int TotalMinutes { get; set; }
         public string? LastRewardReason { get; set; }
     }

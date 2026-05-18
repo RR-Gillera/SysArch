@@ -13,7 +13,7 @@ namespace SignUpLogin.Models.ViewModels
         public string FirstName { get; set; } = string.Empty;
 
         [Display(Name = "Middle Name")]
-        public string MiddleName { get; set; } = string.Empty;
+        public string? MiddleName { get; set; }
 
         [Required]
         [Display(Name = "Last Name")]

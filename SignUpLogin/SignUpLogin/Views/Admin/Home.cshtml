@@ -98,11 +98,10 @@
                             <label class="form-label fw-semibold small">Laboratory</label>
                             <select name="Laboratory" id="laboratorySelect" class="form-select form-select-sm" required>
                                 <option value="" disabled selected>Select lab</option>
-                                <option value="Lab 524">Lab 524</option>
-                                <option value="Lab 526">Lab 526</option>
-                                <option value="Lab 528">Lab 528</option>
-                                <option value="Lab 542">Lab 542</option>
-                                <option value="Lab 544">Lab 544</option>
+                                @foreach (var lab in Model.LabStatuses)
+                                {
+                                    <option value="@lab.LabName">@lab.LabName</option>
+                                }
                             </select>
                         </div>
                         <div class="mb-3 d-none" id="pcNumberGroup">
@@ -204,6 +203,12 @@
                         <div class="admin-lab-hint"><i class="bi bi-display me-1"></i>View / Edit</div>
                     </div>
                 }
+
+                <!-- Add New Lab Card -->
+                <div class="admin-lab-card lab-available" style="border: 2px dashed #0b4a94; background-color: rgba(11, 74, 148, 0.05); display: flex; align-items: center; justify-content: center; flex-direction: column; cursor: pointer;" data-bs-toggle="modal" data-bs-target="#addNewLabModal">
+                    <i class="bi bi-plus-circle fs-3 text-primary mb-2"></i>
+                    <div class="fw-bold text-primary">Add New Lab</div>
+                </div>
             </div>
         </section>
 
@@ -248,10 +253,46 @@
                                     </div>
                                     <button type="submit" class="btn btn-primary btn-sm w-100"><i class="bi bi-check-circle me-1"></i>Save Status</button>
                                 </form>
+
+                                <hr class="my-3"/>
+                                <form asp-controller="Admin" asp-action="RemoveLaboratory" method="post" onsubmit="return confirm('Are you sure you want to remove this lab? This action cannot be undone.');">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" id="labModalRemoveNameInput" name="LabName" />
+                                    <button type="submit" class="btn btn-outline-danger btn-sm w-100"><i class="bi bi-trash3 me-1"></i>Remove Lab</button>
+                                </form>
                             </div>
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Confirm End Sit-in Modal ── -->
+    <div class="modal fade" id="addNewLabModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content">
+                <div class="modal-header border-0 pb-0">
+                    <h6 class="modal-title fw-bold"><i class="bi bi-plus-circle text-primary me-2"></i>Add New Laboratory</h6>
+                    <button type="button" class="btn-close btn-sm" data-bs-dismiss="modal"></button>
+                </div>
+                <form asp-controller="Admin" asp-action="AddLaboratory" method="post">
+                    <div class="modal-body pt-3 small">
+                        @Html.AntiForgeryToken()
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Lab Number / Name</label>
+                            <input type="text" name="LabName" class="form-control form-control-sm" placeholder="e.g. 542" required />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Number of PCs</label>
+                            <input type="number" name="TotalPCs" class="form-control form-control-sm" placeholder="e.g. 30" required min="1" max="200" />
+                        </div>
+                    </div>
+                    <div class="modal-footer border-0 pt-0">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-check-circle me-1"></i>Add Lab</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
@@ -302,18 +343,21 @@
         // PC Grid & Lab Modal Logic
         const labModal = new bootstrap.Modal(document.getElementById('labModal'));
         const occupiedPcsMap = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.CurrentSitIns.Where(r => r.PcNumber != null).GroupBy(r => r.Laboratory).ToDictionary(g => g.Key, g => g.Select(r => r.PcNumber).ToList())));
+        const labPcCountMap = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.LabStatuses.ToDictionary(l => l.LabName, l => l.TotalPCs)));
 
         function openLabModal(labName, currentStatus, currentRemarks) {
             document.getElementById('labModalTitle').innerHTML = '<i class="bi bi-pc-display text-primary me-2"></i>' + labName + ' — PC Availability';
             document.getElementById('labModalNameInput').value = labName;
+            document.getElementById('labModalRemoveNameInput').value = labName;
             document.getElementById('labModalStatusInput').value = currentStatus;
             document.getElementById('labModalRemarksInput').value = currentRemarks;
             document.querySelectorAll('.lab-preset-btn').forEach(btn => btn.classList.toggle('lab-preset-active', btn.dataset.val === currentStatus));
 
             const used = occupiedPcsMap[labName] || [];
+            const pcCount = (labPcCountMap[labName] > 0) ? labPcCountMap[labName] : 49;
             const grid = document.getElementById('labPcGrid');
             grid.innerHTML = '';
-            for (let i = 1; i <= 49; i++) {
+            for (let i = 1; i <= pcCount; i++) {
                 const pcId = 'PC-' + i;
                 const isUsed = used.includes(pcId);
                 const card = document.createElement('div');
@@ -357,7 +401,8 @@
             let occupiedPcs = [];
             try { const res = await fetch(`/Admin/GetOccupiedPcs?laboratory=${encodeURIComponent(labSelect.value)}`); const data = await res.json(); occupiedPcs = data.occupiedPcs ?? []; } catch { }
             pcSelect.innerHTML = '<option value="" disabled selected>Select PC</option>';
-            for (let i = 1; i <= 49; i++) { const pcName = `PC-${i}`; if (!occupiedPcs.includes(pcName)) { const opt = document.createElement('option'); opt.value = opt.textContent = pcName; pcSelect.appendChild(opt); } }
+            const dropCount = (labPcCountMap[labSelect.value] > 0) ? labPcCountMap[labSelect.value] : 49;
+            for (let i = 1; i <= dropCount; i++) { const pcName = `PC-${i}`; if (!occupiedPcs.includes(pcName)) { const opt = document.createElement('option'); opt.value = opt.textContent = pcName; pcSelect.appendChild(opt); } }
             if (pcSelect.options.length === 1) { const opt = document.createElement('option'); opt.disabled = true; opt.textContent = 'No PCs available'; pcSelect.appendChild(opt); }
         });
 
@@ -484,9 +529,27 @@
     }
 
     .admin-lab-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill,minmax(170px,1fr));
+        display: flex;
+        flex-wrap: nowrap;
+        overflow-x: auto;
         gap: 14px;
+        padding-bottom: 12px; /* space for horizontal scrollbar */
+    }
+
+    /* Track styling for the scrollbar to make it look neat */
+    .admin-lab-grid::-webkit-scrollbar {
+        height: 8px;
+    }
+    .admin-lab-grid::-webkit-scrollbar-track {
+        background: #f1f5f9;
+        border-radius: 4px;
+    }
+    .admin-lab-grid::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 4px;
+    }
+    .admin-lab-grid::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
     }
 
     .admin-lab-card {
@@ -496,6 +559,8 @@
         cursor: pointer;
         transition: transform .15s,box-shadow .15s;
         position: relative;
+        flex: 0 0 170px; /* fixed width preventing shrink */
+        min-width: 170px;
     }
 
         .admin-lab-card:hover {

@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Collections.Generic;
@@ -25,7 +25,7 @@ namespace SignUpLogin.Models
 
         [RegularExpression(@"^[a-zA-Z\s\-']*$", ErrorMessage = "Middle Name must contain letters only.")]
         [Display(Name = "Middle Name")]
-        public string MiddleName { get; set; } = string.Empty;
+        public string? MiddleName { get; set; }
 
         [Required(ErrorMessage = "Course Level is required.")]
         [Display(Name = "Course Level")]

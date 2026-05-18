@@ -147,26 +147,16 @@
 
         <!-- Leaderboard -->
         <div class="module-card">
-            <div class="d-flex align-items-center justify-content-between mb-3">
-                <h6 class="fw-semibold mb-0"><i class="bi bi-trophy me-2 text-warning"></i>Points Leaderboard</h6>
-                <div class="btn-group btn-group-sm" role="group">
-                    <button type="button" class="btn btn-outline-primary active" id="sortPointsBtn" onclick="sortLeaderboard('points')">
-                        <i class="bi bi-sort-numeric-down me-1"></i>Top Points
-                    </button>
-                    <button type="button" class="btn btn-outline-primary" id="sortTimeBtn" onclick="sortLeaderboard('time')">
-                        <i class="bi bi-clock-history me-1"></i>Highest Time
-                    </button>
-                </div>
-            </div>
+            <h6 class="fw-semibold mb-3"><i class="bi bi-trophy me-2 text-warning"></i>Top Students Leaderboard</h6>
 
             <div class="table-responsive">
-                <table class="table table-sm table-hover align-middle mb-0" id="leaderboardTable">
+                <table class="table table-sm table-hover align-middle mb-0">
                     <thead class="table-light">
                         <tr>
-                            <th>Rank (by Points)</th>
+                            <th>Rank</th>
                             <th>Student</th>
                             <th>Points</th>
-                            <th>Total Sit-In Time</th>
+                            <th>Total Accumulated</th>
                             <th>Tier</th>
                         </tr>
                     </thead>
@@ -174,18 +164,13 @@
                         @if (leaderboardData.Any())
                         {
                             var sortedByPoints = leaderboardData.OrderByDescending(x => x.Points).ToList();
-                            var pointRanks = new Dictionary<string, int>();
-                            for (int i = 0; i < sortedByPoints.Count; i++)
-                            {
-                                pointRanks[sortedByPoints[i].StudentIdNumber] = i + 1;
-                            }
+                            int rank = 1;
 
-                            foreach (var item in leaderboardData)
+                            foreach (var item in sortedByPoints)
                             {
                                 string sid = item.StudentIdNumber;
                                 string name = string.IsNullOrWhiteSpace(item.StudentName) ? sid : item.StudentName;
                                 int pts = item.Points;
-                                int mins = item.TotalMinutes;
 
                                 string tier = pts >= 90 ? "Gold" :
                                 pts >= 60 ? "Silver" :
@@ -195,21 +180,21 @@
                                 tier == "Silver" ? "#475569" :
                                 tier == "Bronze" ? "#92400e" : "#6366f1";
 
-                                int rank = pointRanks[sid];
-                                string medal = rank == 1 ? "🥇" : rank == 2 ? "🥈" : rank == 3 ? "🥉" : $"#{rank}";
-                                string timeStr = $"{mins / 60}h {mins % 60}m";
+                                string rankLabel = rank <= 3 ? rank.ToString() : $"#{rank}";
+                                int totalAccumulated = item.LifetimePoints > 0 ? item.LifetimePoints : item.Points;
 
-                                <tr data-points="@pts" data-time="@mins">
-                                    <td class="fw-bold">@medal</td>
+                                <tr>
+                                    <td class="fw-bold">@rankLabel</td>
                                     <td>@name</td>
                                     <td class="fw-bold" style="color:#0b4a94;">@pts</td>
-                                    <td>@timeStr</td>
+                                    <td class="fw-semibold">@totalAccumulated</td>
                                     <td>
-                                        <span style="background:@(tc)22;color:@tc;border:1px solid @(tc)55;padding:2px 10px;border-radius:99px;font-size:.75rem;font-weight:700;">
+                                        <span style="background:@(tc)22;color:@tc;border:1px solid @(tc)55;padding:2px 8px;border-radius:99px;font-size:.7rem;font-weight:700;">
                                             @tier
                                         </span>
                                     </td>
                                 </tr>
+                                rank++;
                             }
                         }
                         else
@@ -230,27 +215,6 @@
     @await Html.PartialAsync("_Footer")
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-
-    <script>
-        function sortLeaderboard(criteria) {
-            const tbody = document.querySelector('#leaderboardTable tbody');
-            const rows = Array.from(tbody.querySelectorAll('tr[data-points]'));
-            const btnPoints = document.getElementById('sortPointsBtn');
-            const btnTime = document.getElementById('sortTimeBtn');
-
-            if (criteria === 'points') {
-                btnPoints.classList.add('active');
-                btnTime.classList.remove('active');
-                rows.sort((a, b) => parseInt(b.dataset.points) - parseInt(a.dataset.points));
-            } else {
-                btnTime.classList.add('active');
-                btnPoints.classList.remove('active');
-                rows.sort((a, b) => parseInt(b.dataset.time) - parseInt(a.dataset.time));
-            }
-
-            rows.forEach(row => tbody.appendChild(row));
-        }
-    </script>
 </body>
 </html>
 

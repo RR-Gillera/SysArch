@@ -25,7 +25,7 @@
                     <div class="col-md-3 text-center">
                         <div class="avatar-wrap mx-auto">
                             <img src="@(string.IsNullOrWhiteSpace(Model.ProfileImagePath) ? "/images/default-avatar.png" : Model.ProfileImagePath)"
-                                 onerror="this.src='https://ui-avatars.com/api/?name=@Model.UserName&background=0b4a94&color=fff&size=160&bold=true'"
+                                 onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=@Model.UserName&background=0b4a94&color=fff&size=160&bold=true';"
                                  alt="Student avatar" class="avatar-img" />
                         </div>
                     </div>
@@ -551,7 +551,12 @@
                             <span class="pc-legend pc-legend-used"></span>&nbsp;In Use
                         </p>
                     </div>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <div class="d-flex align-items-center ms-auto">
+                        <a id="modalReserveBtn" href="/Home/Reservations" class="btn btn-primary btn-sm me-3 fw-semibold py-2 px-3 shadow-sm" style="border-radius: 8px;">
+                            <i class="bi bi-calendar-plus me-1"></i>Reserve a Sit-In
+                        </a>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
                 </div>
                 <div class="modal-body">
                     <div id="pcLoadingSpinner" class="text-center py-4 d-none">
@@ -567,6 +572,7 @@
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        const labPcCountMap = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.LabStatuses.ToDictionary(l => l.LabName, l => l.TotalPCs)));
         const pcModal = new bootstrap.Modal(document.getElementById('pcModal'));
 
         // Status → badge style mapping (mirrors admin colour scheme)
@@ -588,6 +594,9 @@
             let remarkHtml = labRemarks ? `<span class="text-muted ms-2" style="font-size:.78rem;">${labRemarks}</span>` : '';
             statusRow.innerHTML = `<span class="lab-status-badge ${badge.cls}">${badge.label}</span>${remarkHtml}`;
 
+            // Update general reserve button link
+            document.getElementById('modalReserveBtn').href = '/Home/Reservations?laboratory=' + encodeURIComponent(labName);
+
             // Clear and show spinner
             const grid = document.getElementById('pcGrid');
             const spinner = document.getElementById('pcLoadingSpinner');
@@ -608,8 +617,9 @@
 
             spinner.classList.add('d-none');
 
-            // Build PC grid (PC-1 … PC-49, matching admin format)
-            for (let i = 1; i <= 49; i++) {
+            // Build PC grid dynamically based on total lab PC capacity (default to 49 for legacy)
+            const totalPCs = labPcCountMap[labName] || 49;
+            for (let i = 1; i <= totalPCs; i++) {
                 const pcId   = 'PC-' + i;
                 const isUsed = occupiedPcs.includes(pcId);
                 const card   = document.createElement('div');
@@ -618,6 +628,15 @@
                     '<div class="pc-icon">&#128187;</div>' +
                     '<div class="pc-label">' + pcId + '</div>' +
                     '<div class="pc-status-text">' + (isUsed ? 'In Use' : 'Available') + '</div>';
+                
+                if (!isUsed) {
+                    card.style.cursor = 'pointer';
+                    card.title = `Click to reserve ${pcId} in ${labName}!`;
+                    card.onclick = () => {
+                        window.location.href = '/Home/Reservations?laboratory=' + encodeURIComponent(labName) + '&pc=' + encodeURIComponent(pcId);
+                    };
+                }
+                
                 grid.appendChild(card);
             }
         }
@@ -811,9 +830,27 @@
 
     /* ── Lab grid ── */
     .lab-grid {
-        display: grid;
-        grid-template-columns: repeat(5, 1fr);
+        display: flex;
+        flex-wrap: nowrap;
+        overflow-x: auto;
         gap: 12px;
+        padding-bottom: 12px; /* space for horizontal scrollbar */
+    }
+
+    /* Custom elegant scrollbar for the lab grid */
+    .lab-grid::-webkit-scrollbar {
+        height: 6px;
+    }
+    .lab-grid::-webkit-scrollbar-track {
+        background: #f1f5f9;
+        border-radius: 4px;
+    }
+    .lab-grid::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 4px;
+    }
+    .lab-grid::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
     }
 
     .lab-card {
@@ -822,6 +859,15 @@
         text-align: center;
         border: 1.5px solid;
         position: relative;
+        flex: 0 0 190px;
+        min-width: 190px;
+        cursor: pointer;
+        transition: transform .15s, box-shadow .15s;
+    }
+
+    .lab-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 18px rgba(0,0,0,0.08);
     }
 
     /* Available — green */
@@ -982,6 +1028,14 @@
     .pc-free {
         background: #f0fdf4;
         border-color: #bbf7d0;
+        transition: all 0.2s ease;
+    }
+
+    .pc-free:hover {
+        background: #dcfce7 !important;
+        border-color: #22c55e !important;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(34, 197, 94, 0.15);
     }
 
     .pc-used {
@@ -1185,17 +1239,7 @@
         color: #475569;
     }
 
-    @@media (max-width: 768px) {
-        .lab-grid {
-            grid-template-columns: repeat(3, 1fr);
-        }
-    }
 
-    @@media (max-width: 480px) {
-        .lab-grid {
-            grid-template-columns: repeat(2, 1fr);
-        }
-    }
 
     footer {
         margin-top: 0 !important;
