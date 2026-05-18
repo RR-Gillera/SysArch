@@ -24,7 +24,6 @@
                             string name = string.IsNullOrWhiteSpace(item.StudentName)
                             ? item.StudentIdNumber : item.StudentName;
                             int totalAccumulated = item.LifetimePoints > 0 ? item.LifetimePoints : item.Points;
-
                             string tier = totalAccumulated >= 90 ? "Gold" :
                             totalAccumulated >= 60 ? "Silver" :
                             totalAccumulated >= 30 ? "Bronze" : "Starter";

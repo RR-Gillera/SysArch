@@ -12,7 +12,7 @@ namespace SignUpLogin.Controllers
         private readonly ApplicationDbContext _context;
         private static readonly string[] LabNames = { "Lab 524", "Lab 526", "Lab 528", "Lab 542", "Lab 544" };
         private const int MinutesPerPoint = 120;
-        private const int PointsPerSession = 2;
+        private const int PointsPerSession = 3;
 
         public HomeController(ApplicationDbContext context)
         {

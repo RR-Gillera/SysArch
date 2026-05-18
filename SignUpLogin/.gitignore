@@ -1,0 +1,41 @@
+## Visual Studio / .NET Core gitignore template
+## Core build directories
+[Bb]in/
+[Oo]bj/
+[Tt]emp/
+
+## User-specific files
+*.rsuser
+*.suo
+*.user
+*.userresourcerc
+*.userpreflight
+
+## Build results
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+build/
+bld/
+[Bb]in/
+[Oo]bj/
+[Log]/
+
+## Visual Studio 2015/2017/2019/2022 cache and settings
+.vs/
+.sconsign.dblite
+.sconf_temp
+.vstmp
+
+## Rider / JetBrains
+.idea/
+*.sln.iml
+
+## OS generated files
+.DS_Store
+.DS_Store?
+ehthumbs.db
+Thumbs.db
