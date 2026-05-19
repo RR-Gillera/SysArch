@@ -92,7 +92,19 @@
                         </div>
                         <div class="mb-3">
                             <label class="form-label fw-semibold small">Purpose</label>
-                            <input type="text" name="Purpose" class="form-control form-control-sm" placeholder="e.g. C Programming" required />
+                            <select name="Purpose" class="form-select form-select-sm" required>
+                                <option value="" disabled selected>Select purpose</option>
+                                <option value="C Programming">C Programming</option>
+                                <option value="C++ Programming">C++ Programming</option>
+                                <option value="C# Programming">C# Programming</option>
+                                <option value="Java Programming">Java Programming</option>
+                                <option value="Python Programming">Python Programming</option>
+                                <option value="Web Development">Web Development</option>
+                                <option value="Database Systems">Database Systems</option>
+                                <option value="Data Structures & Algorithms">Data Structures & Algorithms</option>
+                                <option value="Object Oriented Programming">Object Oriented Programming</option>
+                                <option value="Others">Others</option>
+                            </select>
                         </div>
                         <div class="mb-3">
                             <label class="form-label fw-semibold small">Laboratory</label>
@@ -146,7 +158,7 @@
                                             <td>@(string.IsNullOrWhiteSpace(sit.Purpose) ? "-" : sit.Purpose)</td>
                                             <td>@sit.Laboratory</td>
                                             <td>@(string.IsNullOrWhiteSpace(sit.PcNumber) ? "-" : sit.PcNumber)</td>
-                                            <td class="text-nowrap">@sit.TimeIn.ToLocalTime().ToString("hh:mm tt")</td>
+                                            <td class="text-nowrap">@sit.TimeIn.ToString("hh:mm tt")</td>
                                             <td><span class="badge text-bg-success">Active</span></td>
                                             <td>
                                                 <button type="button" class="btn btn-outline-danger btn-sm close-sitin-btn"
@@ -223,7 +235,8 @@
                         <h6 class="modal-title fw-bold mb-0" id="labModalTitle"><i class="bi bi-pc-display text-primary me-2"></i></h6>
                         <p class="mb-0 mt-1" style="font-size:.78rem;color:#64748b;">
                             <span class="pc-legend-dot pc-dot-free"></span>&nbsp;Free &nbsp;&nbsp;
-                            <span class="pc-legend-dot pc-dot-used"></span>&nbsp;In Use
+                            <span class="pc-legend-dot pc-dot-used"></span>&nbsp;In Use &nbsp;&nbsp;
+                            <span class="pc-legend-dot pc-dot-unavailable"></span>&nbsp;Unavailable
                         </p>
                     </div>
                     <button type="button" class="btn-close btn-sm" data-bs-dismiss="modal"></button>
@@ -343,6 +356,7 @@
         // PC Grid & Lab Modal Logic
         const labModal = new bootstrap.Modal(document.getElementById('labModal'));
         const occupiedPcsMap = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.CurrentSitIns.Where(r => r.PcNumber != null).GroupBy(r => r.Laboratory).ToDictionary(g => g.Key, g => g.Select(r => r.PcNumber).ToList())));
+        const unavailablePcsMap = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.LabStatuses.ToDictionary(l => l.LabName, l => (l.UnavailablePcs ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries).ToList())));
         const labPcCountMap = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.LabStatuses.ToDictionary(l => l.LabName, l => l.TotalPCs)));
 
         function openLabModal(labName, currentStatus, currentRemarks) {
@@ -354,18 +368,73 @@
             document.querySelectorAll('.lab-preset-btn').forEach(btn => btn.classList.toggle('lab-preset-active', btn.dataset.val === currentStatus));
 
             const used = occupiedPcsMap[labName] || [];
+            const disabled = unavailablePcsMap[labName] || [];
             const pcCount = (labPcCountMap[labName] > 0) ? labPcCountMap[labName] : 49;
             const grid = document.getElementById('labPcGrid');
             grid.innerHTML = '';
             for (let i = 1; i <= pcCount; i++) {
                 const pcId = 'PC-' + i;
                 const isUsed = used.includes(pcId);
+                const isUnavailable = disabled.includes(pcId);
                 const card = document.createElement('div');
-                card.className = 'lab-pc-card ' + (isUsed ? 'lab-pc-used' : 'lab-pc-free');
-                card.innerHTML = `<div class="lab-pc-icon">&#128187;</div><div class="lab-pc-label">${pcId}</div><div class="lab-pc-status">${isUsed ? 'In Use' : 'Free'}</div>`;
+                
+                let statusClass = 'lab-pc-free';
+                let statusText = 'Free';
+                if (isUsed) {
+                    statusClass = 'lab-pc-used';
+                    statusText = 'In Use';
+                } else if (isUnavailable) {
+                    statusClass = 'lab-pc-unavailable';
+                    statusText = 'Unavailable';
+                }
+
+                card.className = `lab-pc-card ${statusClass} pc-clickable`;
+                card.style.cursor = 'pointer';
+                card.innerHTML = `<div class="lab-pc-icon">&#128187;</div><div class="lab-pc-label">${pcId}</div><div class="lab-pc-status">${statusText}</div>`;
+                
+                card.onclick = () => togglePcStatus(labName, pcId, card);
+                
                 grid.appendChild(card);
             }
             labModal.show();
+        }
+
+        async function togglePcStatus(labName, pcId, cardElement) {
+            try {
+                const response = await fetch('/Admin/TogglePcAvailability', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ labName: labName, pcNumber: pcId })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    const statusEl = cardElement.querySelector('.lab-pc-status');
+                    
+                    if (data.isUnavailable) {
+                        cardElement.classList.remove('lab-pc-free');
+                        cardElement.classList.add('lab-pc-unavailable');
+                        statusEl.textContent = 'Unavailable';
+                        // Update local map
+                        if (!unavailablePcsMap[labName]) unavailablePcsMap[labName] = [];
+                        if (!unavailablePcsMap[labName].includes(pcId)) unavailablePcsMap[labName].push(pcId);
+                    } else {
+                        cardElement.classList.remove('lab-pc-unavailable');
+                        cardElement.classList.add('lab-pc-free');
+                        statusEl.textContent = 'Free';
+                        // Update local map
+                        if (unavailablePcsMap[labName]) {
+                            unavailablePcsMap[labName] = unavailablePcsMap[labName].filter(p => p !== pcId);
+                        }
+                    }
+                } else {
+                    const err = await response.text();
+                    alert(err || 'Failed to update PC status.');
+                }
+            } catch (err) {
+                console.error(err);
+                alert('An error occurred while updating PC status.');
+            }
         }
 
         document.querySelectorAll('.lab-preset-btn').forEach(btn => {
@@ -392,17 +461,38 @@
         async function lookupStudent() { const id = idInput.value.trim(); if (!id) return; resetFields(); try { const res = await fetch(`/Admin/LookupStudent?idNumber=${encodeURIComponent(id)}`); const data = await res.json(); if (data.found) { nameField.value = data.name; sessField.value = data.remainingSessions; hiddenId.value = data.idNumber; sitInBtn.disabled = false; } else { fbk.classList.remove('d-none'); } } catch { fbk.classList.remove('d-none'); } }
         lookupBtn.addEventListener('click', lookupStudent);
         idInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); lookupStudent(); } });
-        idInput.addEventListener('input', resetFields);
+        let lookupTimeout = null;
+        idInput.addEventListener('input', () => {
+            resetFields();
+            clearTimeout(lookupTimeout);
+            const val = idInput.value.trim();
+            if (val.length > 0) {
+                lookupTimeout = setTimeout(lookupStudent, 400);
+            }
+        });
 
         labSelect.addEventListener('change', async () => {
             pcSelect.innerHTML = '<option value="" disabled selected>Loading…</option>';
             pcGroup.classList.remove('d-none'); pcSelect.setAttribute('required', 'required');
             if (!labSelect.value) { pcGroup.classList.add('d-none'); pcSelect.removeAttribute('required'); pcSelect.innerHTML = '<option value="" disabled selected>Select PC</option>'; return; }
             let occupiedPcs = [];
-            try { const res = await fetch(`/Admin/GetOccupiedPcs?laboratory=${encodeURIComponent(labSelect.value)}`); const data = await res.json(); occupiedPcs = data.occupiedPcs ?? []; } catch { }
+            let unavailablePcs = [];
+            try { 
+                const res = await fetch(`/Admin/GetOccupiedPcs?laboratory=${encodeURIComponent(labSelect.value)}`); 
+                const data = await res.json(); 
+                occupiedPcs = data.occupiedPcs ?? []; 
+                unavailablePcs = data.unavailablePcs ?? [];
+            } catch { }
             pcSelect.innerHTML = '<option value="" disabled selected>Select PC</option>';
             const dropCount = (labPcCountMap[labSelect.value] > 0) ? labPcCountMap[labSelect.value] : 49;
-            for (let i = 1; i <= dropCount; i++) { const pcName = `PC-${i}`; if (!occupiedPcs.includes(pcName)) { const opt = document.createElement('option'); opt.value = opt.textContent = pcName; pcSelect.appendChild(opt); } }
+            for (let i = 1; i <= dropCount; i++) { 
+                const pcName = `PC-${i}`; 
+                if (!occupiedPcs.includes(pcName) && !unavailablePcs.includes(pcName)) { 
+                    const opt = document.createElement('option'); 
+                    opt.value = opt.textContent = pcName; 
+                    pcSelect.appendChild(opt); 
+                } 
+            }
             if (pcSelect.options.length === 1) { const opt = document.createElement('option'); opt.disabled = true; opt.textContent = 'No PCs available'; pcSelect.appendChild(opt); }
         });
 
@@ -749,6 +839,18 @@
         opacity: .82;
     }
 
+    .lab-pc-unavailable {
+        background: #f1f5f9;
+        border-color: #cbd5e1;
+        opacity: .75;
+    }
+
+    .lab-pc-card.pc-clickable:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        transition: all 0.2s;
+    }
+
     .lab-pc-icon {
         font-size: 1.3rem;
         margin-bottom: 3px;
@@ -774,6 +876,10 @@
         color: #b91c1c;
     }
 
+    .lab-pc-unavailable .lab-pc-status {
+        color: #64748b;
+    }
+
     .pc-legend-dot {
         display: inline-block;
         width: 9px;
@@ -789,6 +895,10 @@
 
     .pc-dot-used {
         background: #ef4444;
+    }
+
+    .pc-dot-unavailable {
+        background: #94a3b8;
     }
 
     .status-editor-box {

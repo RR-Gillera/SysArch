@@ -63,7 +63,7 @@ namespace SignUpLogin.Models
 
         public string? ProfileImagePath { get; set; }
 
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime CreatedAt { get; set; } = DateTime.Now;
 
         // ── ADD THESE NAVIGATION PROPERTIES ─────────────────────────────
         public ICollection<SitInRecord> SitInRecords { get; set; } = new List<SitInRecord>();

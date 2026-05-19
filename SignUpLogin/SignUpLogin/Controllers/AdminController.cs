@@ -25,6 +25,8 @@ namespace SignUpLogin.Controllers
         {
             if (!IsAdmin()) return RedirectToAction("Index", "Login");
 
+            await ProcessDueReservations();
+
             var currentSitIns = await _context.SitInRecords
                 .Include(r => r.Student)
                 .AsNoTracking()
@@ -46,7 +48,7 @@ namespace SignUpLogin.Controllers
             {
                 if (!labStatuses.Any(l => l.LabName == name))
                 {
-                    var newLab = new LabStatus { LabName = name, Status = "Available", UpdatedAt = DateTime.UtcNow };
+                    var newLab = new LabStatus { LabName = name, Status = "Available", UpdatedAt = DateTime.Now };
                     _context.LabStatuses.Add(newLab);
                     labStatuses.Add(newLab);
                     anyChanges = true;
@@ -112,7 +114,7 @@ namespace SignUpLogin.Controllers
                 Status = "Available",
                 Remarks = null,
                 TotalPCs = TotalPCs,
-                UpdatedAt = DateTime.UtcNow
+                UpdatedAt = DateTime.Now
             };
             
             _context.LabStatuses.Add(lab);
@@ -161,12 +163,47 @@ namespace SignUpLogin.Controllers
 
             lab.Status = Status?.Trim() ?? "Available";
             lab.Remarks = string.IsNullOrWhiteSpace(Remarks) ? null : Remarks.Trim();
-            lab.UpdatedAt = DateTime.UtcNow;
+            lab.UpdatedAt = DateTime.Now;
 
             await _context.SaveChangesAsync();
 
             TempData["Success"] = $"{LabName} status updated to \"{lab.Status}\".";
             return RedirectToAction(nameof(Home));
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> TogglePcAvailability([FromBody] PcToggleRequest request)
+        {
+            if (!IsAdmin()) return Unauthorized();
+
+            var lab = await _context.LabStatuses.FirstOrDefaultAsync(l => l.LabName == request.LabName);
+            if (lab == null) return NotFound("Laboratory not found.");
+
+            var unavailableList = lab.UnavailablePcs?.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList() ?? new List<string>();
+
+            if (unavailableList.Contains(request.PcNumber))
+            {
+                unavailableList.Remove(request.PcNumber);
+            }
+            else
+            {
+                // Verify PC is not currently in use before making it unavailable (optional but good)
+                bool isInUse = await _context.SitInRecords.AnyAsync(r => r.Laboratory == request.LabName && r.PcNumber == request.PcNumber && r.TimeOut == null);
+                if (isInUse) return BadRequest("Cannot disable a PC that is currently in use.");
+
+                unavailableList.Add(request.PcNumber);
+            }
+
+            lab.UnavailablePcs = string.Join(",", unavailableList);
+            await _context.SaveChangesAsync();
+
+            return Json(new { success = true, isUnavailable = unavailableList.Contains(request.PcNumber) });
+        }
+
+        public class PcToggleRequest
+        {
+            public string LabName { get; set; } = string.Empty;
+            public string PcNumber { get; set; } = string.Empty;
         }
 
         // ── Students ───────────────────────────────────────────────────────
@@ -284,7 +321,7 @@ namespace SignUpLogin.Controllers
             if (!IsAdmin()) return Unauthorized();
 
             if (string.IsNullOrWhiteSpace(laboratory))
-                return Json(new { occupiedPcs = Array.Empty<string>() });
+                return Json(new { occupiedPcs = Array.Empty<string>(), unavailablePcs = Array.Empty<string>() });
 
             var occupiedPcs = await _context.SitInRecords
                 .AsNoTracking()
@@ -292,7 +329,12 @@ namespace SignUpLogin.Controllers
                 .Select(r => r.PcNumber)
                 .ToListAsync();
 
-            return Json(new { occupiedPcs });
+            var labStatus = await _context.LabStatuses
+                .FirstOrDefaultAsync(l => l.LabName == laboratory);
+
+            var unavailablePcs = labStatus?.UnavailablePcs?.Split(',', StringSplitOptions.RemoveEmptyEntries) ?? Array.Empty<string>();
+
+            return Json(new { occupiedPcs, unavailablePcs });
         }
 
         [HttpPost]
@@ -339,15 +381,9 @@ namespace SignUpLogin.Controllers
                 Purpose = Purpose,
                 Laboratory = Laboratory,
                 PcNumber = PcNumber,
-                TimeIn = DateTime.UtcNow
-            };
-
-            _context.SitInRecords.Add(record);
-
-            if (student.RemainingSessions > 0)
-                student.RemainingSessions--;
-
-            await _context.SaveChangesAsync();
+                  TimeIn = DateTime.Now
+};
+await _context.SaveChangesAsync();
 
             TempData["Success"] = $"Sit-in recorded for {student.FirstName} {student.LastName}.";
             return RedirectToAction(nameof(Home));
@@ -368,10 +404,33 @@ namespace SignUpLogin.Controllers
                 return RedirectToAction(nameof(Home));
             }
 
-            record.TimeOut = DateTime.UtcNow;
+            record.TimeOut = DateTime.Now;
+            record.PointsAwarded = true;
+
+            var pointsRow = await _context.StudentPoints.FirstOrDefaultAsync(p => p.StudentIdNumber == record.StudentIdNumber);
+            if (pointsRow == null)
+            {
+                pointsRow = new StudentPoints
+                {
+                    StudentIdNumber = record.StudentIdNumber,
+                    Points = 1,
+                    LifetimePoints = 1,
+                    LastRewardReason = "Earned 1 pt(s) for completing a sit-in",
+                    UpdatedAt = DateTime.Now
+                };
+                _context.StudentPoints.Add(pointsRow);
+            }
+            else
+            {
+                pointsRow.Points += 1;
+                pointsRow.LifetimePoints += 1;
+                pointsRow.LastRewardReason = "Earned 1 pt(s) for completing a sit-in";
+                pointsRow.UpdatedAt = DateTime.Now;
+            }
+
             await _context.SaveChangesAsync();
 
-            TempData["Success"] = "Sit-in session ended successfully.";
+            TempData["Success"] = "Sit-in session ended successfully. +1 point awarded!";
             return RedirectToAction(nameof(Home));
         }
 
@@ -424,7 +483,7 @@ namespace SignUpLogin.Controllers
                 Title = Title.Trim(),
                 Message = Message.Trim(),
                 PostedBy = string.IsNullOrWhiteSpace(PostedBy) ? "CCS Admin" : PostedBy.Trim(),
-                PostedAt = DateTime.UtcNow
+                PostedAt = DateTime.Now
             };
 
             _context.Announcements.Add(announcement);
@@ -575,7 +634,7 @@ namespace SignUpLogin.Controllers
 
             row.Points += Points;
             row.LastRewardReason = string.IsNullOrWhiteSpace(Reason) ? row.LastRewardReason : Reason.Trim();
-            row.UpdatedAt = DateTime.UtcNow;
+            row.UpdatedAt = DateTime.Now;
 
             await _context.SaveChangesAsync();
 
@@ -590,18 +649,23 @@ namespace SignUpLogin.Controllers
         {
             if (!IsAdmin()) return RedirectToAction("Index", "Login");
 
+            await ProcessDueReservations();
+
             var reservations = await _context.Reservations
                 .AsNoTracking()
                 .Include(r => r.Student)
                 .OrderByDescending(r => r.CreatedAt)
                 .ToListAsync();
 
+            var labStatuses = await _context.LabStatuses.AsNoTracking().ToListAsync();
+            ViewBag.LabPcCountMap = labStatuses.ToDictionary(l => l.LabName, l => l.TotalPCs);
+
             return View(reservations);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ApproveReservation(int id, string? AdminRemarks)
+        public async Task<IActionResult> ApproveReservation(int id, string? AdminRemarks, string? AssignedPc)
         {
             if (!IsAdmin()) return RedirectToAction("Index", "Login");
 
@@ -612,12 +676,99 @@ namespace SignUpLogin.Controllers
                 return RedirectToAction(nameof(Reservations));
             }
 
+            // If the admin assigned a PC, update the reservation's PC number
+            if (!string.IsNullOrWhiteSpace(AssignedPc))
+            {
+                reservation.PcNumber = AssignedPc;
+            }
+
+            // CHECK FOR CONFLICTS AGAIN BEFORE APPROVING
+            // This prevents the admin from accidentally approving two people for the same PC/Time
+            if (!string.IsNullOrWhiteSpace(reservation.PcNumber))
+            {
+                // 1. Check if the PC is marked as unavailable by admin
+                var labStatus = await _context.LabStatuses.FirstOrDefaultAsync(l => l.LabName == reservation.Laboratory);
+                if (labStatus != null && !string.IsNullOrWhiteSpace(labStatus.UnavailablePcs))
+                {
+                    var unavailableList = labStatus.UnavailablePcs.Split(',', StringSplitOptions.RemoveEmptyEntries);
+                    if (unavailableList.Contains(reservation.PcNumber))
+                    {
+                        TempData["Error"] = $"Cannot approve. {reservation.PcNumber} is marked as unavailable in {reservation.Laboratory}.";
+                        return RedirectToAction(nameof(Reservations));
+                    }
+                }
+
+                var conflictRangeStart = reservation.ReservationDate.AddMinutes(-30);
+                var conflictRangeEnd = reservation.ReservationDate.AddMinutes(30);
+
+                var isAlreadyTaken = await _context.Reservations.AnyAsync(r => 
+                    r.Id != id &&
+                    r.Status == "Approved" && 
+                    r.Laboratory == reservation.Laboratory && 
+                    r.PcNumber == reservation.PcNumber &&
+                    r.ReservationDate >= conflictRangeStart && 
+                    r.ReservationDate <= conflictRangeEnd);
+
+                if (isAlreadyTaken)
+                {
+                    TempData["Error"] = $"Cannot approve. {reservation.PcNumber} is already reserved by another student at this time.";
+                    return RedirectToAction(nameof(Reservations));
+                }
+            }
+
             reservation.Status = "Approved";
             reservation.AdminRemarks = string.IsNullOrWhiteSpace(AdminRemarks) ? null : AdminRemarks.Trim();
-            reservation.ReviewedAt = DateTime.UtcNow;
+            reservation.ReviewedAt = DateTime.Now; // Use UTC+8
+
+            bool satInCreated = false;
+
+            var student = await _context.Signups.FirstOrDefaultAsync(s => s.IdNumber == reservation.StudentIdNumber);
+            if (student != null)
+            {
+                // We ONLY auto-sit-in if the current time matches or is past the reservation time
+                var now = DateTime.Now;
+                var reservationTime = reservation.ReservationDate;
+
+                if (now >= reservationTime)
+                {
+                    // Check if student already has an active sit-in
+                    var existingActive = await _context.SitInRecords.AnyAsync(r => r.StudentIdNumber == reservation.StudentIdNumber && r.TimeOut == null);
+                    
+                    if (!existingActive && student.RemainingSessions > 0)
+                    {
+                        // Check if the PC is currently occupied by someone else
+                        var isPcOccupied = false;
+                        if (!string.IsNullOrWhiteSpace(reservation.PcNumber))
+                        {
+                            isPcOccupied = await _context.SitInRecords.AnyAsync(r => r.Laboratory == reservation.Laboratory && r.PcNumber == reservation.PcNumber && r.TimeOut == null);
+                        }
+
+                        if (!isPcOccupied)
+                        {
+                            var sitInRecord = new SitInRecord
+                            {
+                                StudentIdNumber = reservation.StudentIdNumber,
+                                Purpose = reservation.Purpose,
+                                Laboratory = reservation.Laboratory,
+                                PcNumber = reservation.PcNumber,
+                                TimeIn = DateTime.Now 
+                            };
+
+                            _context.SitInRecords.Add(sitInRecord);
+                            student.RemainingSessions--;
+                            satInCreated = true;
+                        }
+                    }
+                }
+            }
+
             await _context.SaveChangesAsync();
 
-            TempData["Success"] = "Reservation approved successfully.";
+            if (satInCreated)
+                TempData["Success"] = "Reservation approved and student has been automatically sat in.";
+            else
+                TempData["Success"] = "Reservation approved. Student will need to sit in manually when the time arrives.";
+            
             return RedirectToAction(nameof(Reservations));
         }
 
@@ -636,7 +787,7 @@ namespace SignUpLogin.Controllers
 
             reservation.Status = "Denied";
             reservation.AdminRemarks = string.IsNullOrWhiteSpace(AdminRemarks) ? null : AdminRemarks.Trim();
-            reservation.ReviewedAt = DateTime.UtcNow;
+            reservation.ReviewedAt = DateTime.Now;
             await _context.SaveChangesAsync();
 
             TempData["Error"] = "Reservation denied.";
@@ -686,8 +837,8 @@ namespace SignUpLogin.Controllers
             foreach (var r in records)
             {
                 var name     = r.Student != null ? $"{r.Student.FirstName} {r.Student.LastName}".Trim() : r.StudentIdNumber;
-                var timeIn   = r.TimeIn.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss");
-                var timeOut  = r.TimeOut?.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss") ?? "Active";
+                var timeIn   = r.TimeIn.ToString("yyyy-MM-dd HH:mm:ss");
+                var timeOut  = r.TimeOut?.ToString("yyyy-MM-dd HH:mm:ss") ?? "Active";
                 var duration = r.TimeOut.HasValue ? (int)(r.TimeOut.Value - r.TimeIn).TotalMinutes : 0;
                 var statusStr   = r.TimeOut == null ? "Active" : "Completed";
                 var pc       = r.PcNumber ?? "";
@@ -752,8 +903,8 @@ namespace SignUpLogin.Controllers
                 foreach (var r in records)
                 {
                     var name = r.Student != null ? $"{r.Student.FirstName} {r.Student.LastName}".Trim() : r.StudentIdNumber;
-                    var timeIn = r.TimeIn.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss");
-                    var timeOut = r.TimeOut?.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss") ?? "Active";
+                    var timeIn = r.TimeIn.ToString("yyyy-MM-dd HH:mm:ss");
+                    var timeOut = r.TimeOut?.ToString("yyyy-MM-dd HH:mm:ss") ?? "Active";
                     var statusStr = r.TimeOut == null ? "Active" : "Completed";
 
                     var p = body.AppendChild(new DocumentFormat.OpenXml.Wordprocessing.Paragraph());
@@ -843,8 +994,8 @@ namespace SignUpLogin.Controllers
                         foreach (var r in records)
                         {
                             var name = r.Student != null ? $"{r.Student.FirstName} {r.Student.LastName}".Trim() : r.StudentIdNumber;
-                            var timeIn = r.TimeIn.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss");
-                            var timeOut = r.TimeOut?.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss") ?? "Active";
+                            var timeIn = r.TimeIn.ToString("yyyy-MM-dd HH:mm:ss");
+                            var timeOut = r.TimeOut?.ToString("yyyy-MM-dd HH:mm:ss") ?? "Active";
                             var statusStr = r.TimeOut == null ? "Active" : "Completed";
 
                             table.Cell().Text($"{name}\n({r.StudentIdNumber})");
@@ -880,11 +1031,18 @@ namespace SignUpLogin.Controllers
 
             if (status == "logs")
             {
-                query = query.Where(r => r.Status == "Approved" || r.Status == "Denied");
+                query = query.Where(r => r.Status == "Approved" || r.Status == "CheckedIn" || r.Status == "Denied");
             }
             else if (!string.IsNullOrWhiteSpace(status))
             {
-                query = query.Where(r => r.Status == status);
+                if (status == "Approved")
+                {
+                    query = query.Where(r => r.Status == "Approved" || r.Status == "CheckedIn");
+                }
+                else
+                {
+                    query = query.Where(r => r.Status == status);
+                }
             }
 
             var records = await query.ToListAsync();
@@ -895,8 +1053,8 @@ namespace SignUpLogin.Controllers
             {
                 var name = r.Student != null ? $"{r.Student.FirstName} {r.Student.LastName}".Trim() : r.StudentIdNumber;
                 var dateReq = r.ReservationDate.ToString("yyyy-MM-dd HH:mm");
-                var subAt = r.CreatedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss");
-                var revAt = r.ReviewedAt.HasValue ? r.ReviewedAt.Value.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss") : "N/A";
+                var subAt = r.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss");
+                var revAt = r.ReviewedAt.HasValue ? r.ReviewedAt.Value.ToString("yyyy-MM-dd HH:mm:ss") : "N/A";
                 var remarks = r.AdminRemarks ?? "";
                 var pc = r.PcNumber ?? "";
                 sb.AppendLine($"{r.Id},{r.StudentIdNumber},\"{name}\",\"{r.Laboratory}\",\"{pc}\",\"{r.Purpose}\",\"{dateReq}\",\"{subAt}\",\"{r.Status}\",\"{revAt}\",\"{remarks}\"");
@@ -918,11 +1076,18 @@ namespace SignUpLogin.Controllers
 
             if (status == "logs")
             {
-                query = query.Where(r => r.Status == "Approved" || r.Status == "Denied");
+                query = query.Where(r => r.Status == "Approved" || r.Status == "CheckedIn" || r.Status == "Denied");
             }
             else if (!string.IsNullOrWhiteSpace(status))
             {
-                query = query.Where(r => r.Status == status);
+                if (status == "Approved")
+                {
+                    query = query.Where(r => r.Status == "Approved" || r.Status == "CheckedIn");
+                }
+                else
+                {
+                    query = query.Where(r => r.Status == status);
+                }
             }
 
             var records = await query.ToListAsync();
@@ -942,8 +1107,8 @@ namespace SignUpLogin.Controllers
                 {
                     var name = r.Student != null ? $"{r.Student.FirstName} {r.Student.LastName}".Trim() : r.StudentIdNumber;
                     var dateReq = r.ReservationDate.ToString("yyyy-MM-dd HH:mm");
-                    var subAt = r.CreatedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss");
-                    var revAt = r.ReviewedAt.HasValue ? r.ReviewedAt.Value.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss") : "N/A";
+                    var subAt = r.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss");
+                    var revAt = r.ReviewedAt.HasValue ? r.ReviewedAt.Value.ToString("yyyy-MM-dd HH:mm:ss") : "N/A";
 
                     var p = body.AppendChild(new DocumentFormat.OpenXml.Wordprocessing.Paragraph());
                     var r1 = p.AppendChild(new DocumentFormat.OpenXml.Wordprocessing.Run());
@@ -977,11 +1142,18 @@ namespace SignUpLogin.Controllers
 
             if (status == "logs")
             {
-                query = query.Where(r => r.Status == "Approved" || r.Status == "Denied");
+                query = query.Where(r => r.Status == "Approved" || r.Status == "CheckedIn" || r.Status == "Denied");
             }
             else if (!string.IsNullOrWhiteSpace(status))
             {
-                query = query.Where(r => r.Status == status);
+                if (status == "Approved")
+                {
+                    query = query.Where(r => r.Status == "Approved" || r.Status == "CheckedIn");
+                }
+                else
+                {
+                    query = query.Where(r => r.Status == status);
+                }
             }
 
             var records = await query.ToListAsync();
@@ -1056,6 +1228,63 @@ namespace SignUpLogin.Controllers
             return RedirectToAction("Index", "Login");
         }
 
+        private async Task ProcessDueReservations()
+        {
+            var now = DateTime.Now;
+            var dueReservations = await _context.Reservations
+                .Where(r => r.Status == "Approved" && r.ReservationDate <= now)
+                .ToListAsync();
+
+            if (dueReservations.Any())
+            {
+                bool changes = false;
+                foreach (var res in dueReservations)
+                {
+                    var student = await _context.Signups.FirstOrDefaultAsync(s => s.IdNumber == res.StudentIdNumber);
+                    if (student != null && student.RemainingSessions > 0)
+                    {
+                        var existingActive = await _context.SitInRecords.AnyAsync(r => r.StudentIdNumber == res.StudentIdNumber && r.TimeOut == null);
+                        if (!existingActive)
+                        {
+                            var isPcOccupied = false;
+                            if (!string.IsNullOrWhiteSpace(res.PcNumber))
+                            {
+                                isPcOccupied = await _context.SitInRecords.AnyAsync(r => r.Laboratory == res.Laboratory && r.PcNumber == res.PcNumber && r.TimeOut == null);
+                            }
+
+                            if (!isPcOccupied)
+                            {
+                                var sitInRecord = new SitInRecord
+                                {
+                                    StudentIdNumber = res.StudentIdNumber,
+                                    Purpose = res.Purpose,
+                                    Laboratory = res.Laboratory,
+                                    PcNumber = res.PcNumber,
+                                    TimeIn = res.ReservationDate
+                                };
+
+                                _context.SitInRecords.Add(sitInRecord);
+                                student.RemainingSessions--;
+                                
+                                res.Status = "CheckedIn";
+                                changes = true;
+                            }
+                        }
+                    }
+                    else if (student != null && student.RemainingSessions <= 0)
+                    {
+                        res.Status = "CheckedIn";
+                        changes = true;
+                    }
+                }
+
+                if (changes)
+                {
+                    await _context.SaveChangesAsync();
+                }
+            }
+        }
+
         private bool IsAdmin()
         {
             return !string.IsNullOrEmpty(HttpContext.Session.GetString("IdNumber"))
@@ -1074,3 +1303,4 @@ namespace SignUpLogin.Controllers
         public string? LastRewardReason { get; set; }
     }
 }
+

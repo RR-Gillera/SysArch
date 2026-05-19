@@ -19,6 +19,6 @@ namespace SignUpLogin.Models
         [StringLength(80)]
         public string PostedBy { get; set; } = "CCS Admin";
 
-        public DateTime PostedAt { get; set; } = DateTime.UtcNow;
+        public DateTime PostedAt { get; set; } = DateTime.Now;
     }
 }

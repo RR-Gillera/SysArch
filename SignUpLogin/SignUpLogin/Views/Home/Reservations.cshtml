@@ -3,7 +3,7 @@
     ViewData["Title"] = "My Reservations";
     Layout = null;
     var pending  = Model.Count(r => r.Status == "Pending");
-    var approved = Model.Count(r => r.Status == "Approved");
+    var approved = Model.Count(r => r.Status == "Approved" || r.Status == "CheckedIn");
     var denied   = Model.Count(r => r.Status == "Denied");
     var today    = DateTime.Now.ToString("yyyy-MM-dd");
     var todayDateTime = DateTime.Now.ToString("yyyy-MM-ddTHH:mm");
@@ -67,6 +67,7 @@
                             var (badgeCls, iconCls) = r.Status switch
                             {
                                 "Approved" => ("badge-approved", "bi-check-circle-fill text-success"),
+                                "CheckedIn" => ("badge-approved", "bi-check-circle-fill text-success"),
                                 "Denied"   => ("badge-denied",   "bi-x-circle-fill text-danger"),
                                 _          => ("badge-pending",  "bi-hourglass-split text-warning")
                             };
@@ -94,9 +95,9 @@
                                         }
                                     </div>
                                     <div class="text-end flex-shrink-0">
-                                        <span class="res-status-badge @badgeCls">@r.Status</span>
+                                        <span class="res-status-badge @badgeCls">@(r.Status == "CheckedIn" ? "Checked In" : r.Status)</span>
                                         <div class="text-muted" style="font-size:.7rem; margin-top:4px;">
-                                            Submitted @r.CreatedAt.ToLocalTime().ToString("MMM dd, hh:mm tt")
+                                            Submitted @r.CreatedAt.ToString("MMM dd, hh:mm tt")
                                         </div>
                                     </div>
                                 </div>
@@ -156,8 +157,19 @@
                         </div>
                         <div class="mb-3">
                             <label class="form-label small fw-semibold">Purpose</label>
-                            <input type="text" name="Purpose" class="form-control form-control-sm"
-                                   placeholder="e.g. C Programming practice" maxlength="120" required />
+                            <select name="Purpose" class="form-select form-select-sm" required>
+                                <option value="" disabled selected>Select purpose…</option>
+                                <option value="C Programming">C Programming</option>
+                                <option value="C++ Programming">C++ Programming</option>
+                                <option value="C# Programming">C# Programming</option>
+                                <option value="Java Programming">Java Programming</option>
+                                <option value="Python Programming">Python Programming</option>
+                                <option value="Web Development">Web Development</option>
+                                <option value="Database Systems">Database Systems</option>
+                                <option value="Data Structures & Algorithms">Data Structures & Algorithms</option>
+                                <option value="Object Oriented Programming">Object Oriented Programming</option>
+                                <option value="Others">Others</option>
+                            </select>
                         </div>
                         <div class="mb-3">
                             <label class="form-label small fw-semibold">What time and date will you reserve?</label>
@@ -184,15 +196,36 @@
         const pcSelect = document.getElementById('pcNumberSelect');
 
         if (labSelect && pcSelect) {
-            labSelect.addEventListener('change', function() {
+            labSelect.addEventListener('change', async function() {
                 const selectedLab = this.value;
                 const totalPCs = labPcCountMap[selectedLab] || 49;
                 
+                pcSelect.innerHTML = '<option value="">Loading...</option>';
+
+                let occupiedPcs = [];
+                let unavailablePcs = [];
+                try {
+                    const res = await fetch(`/Home/GetOccupiedPcs?laboratory=${encodeURIComponent(selectedLab)}`);
+                    const data = await res.json();
+                    occupiedPcs = data.occupiedPcs || [];
+                    unavailablePcs = data.unavailablePcs || [];
+                } catch { }
+
                 pcSelect.innerHTML = '<option value="">No preference</option>';
                 for (let i = 1; i <= totalPCs; i++) {
+                    const pcName = 'PC-' + i;
+                    if (!occupiedPcs.includes(pcName) && !unavailablePcs.includes(pcName)) {
+                        const option = document.createElement('option');
+                        option.value = pcName;
+                        option.textContent = pcName;
+                        pcSelect.appendChild(option);
+                    }
+                }
+
+                if (pcSelect.options.length === 1) {
                     const option = document.createElement('option');
-                    option.value = 'PC-' + i;
-                    option.textContent = 'PC-' + i;
+                    option.disabled = true;
+                    option.textContent = 'No PCs available';
                     pcSelect.appendChild(option);
                 }
             });

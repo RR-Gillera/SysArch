@@ -111,7 +111,7 @@
                                         </span>
                                     </td>
                                     <td class="text-muted small">@(string.IsNullOrWhiteSpace(fb.Comment) ? "—" : fb.Comment)</td>
-                                    <td class="text-nowrap small">@fb.SubmittedAt.ToLocalTime().ToString("MMM dd, yyyy hh:mm tt")</td>
+                                    <td class="text-nowrap small">@fb.SubmittedAt.ToString("MMM dd, yyyy hh:mm tt")</td>
                                 </tr>
                             }
                         }

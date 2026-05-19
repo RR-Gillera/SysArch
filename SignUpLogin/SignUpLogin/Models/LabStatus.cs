@@ -22,5 +22,11 @@ namespace SignUpLogin.Models
         public DateTime UpdatedAt { get; set; } = DateTime.Now;
 
         public int TotalPCs { get; set; } = 0;
+
+        /// <summary>
+        /// Comma-separated list of PC numbers that are currently set to "Unavailable" by admin.
+        /// e.g. "PC-1,PC-3,PC-4"
+        /// </summary>
+        public string? UnavailablePcs { get; set; }
     }
 }

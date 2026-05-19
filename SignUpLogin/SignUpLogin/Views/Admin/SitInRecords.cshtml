@@ -100,8 +100,8 @@
                                     <td>@(string.IsNullOrWhiteSpace(record.Purpose) ? "-" : record.Purpose)</td>
                                     <td>@record.Laboratory</td>
                                     <td>@(string.IsNullOrWhiteSpace(record.PcNumber) ? "-" : record.PcNumber)</td>
-                                    <td class="text-nowrap">@record.TimeIn.ToLocalTime().ToString("MMM dd, yyyy hh:mm tt")</td>
-                                    <td class="text-nowrap">@(record.TimeOut.HasValue ? record.TimeOut.Value.ToLocalTime().ToString("MMM dd, yyyy hh:mm tt") : "-")</td>
+                                    <td class="text-nowrap">@record.TimeIn.ToString("MMM dd, yyyy hh:mm tt")</td>
+                                    <td class="text-nowrap">@(record.TimeOut.HasValue ? record.TimeOut.Value.ToString("MMM dd, yyyy hh:mm tt") : "-")</td>
                                     <td>@if (isActive) {
                                     <span class="badge text-bg-success">Active</span>
                                 } else

@@ -24,6 +24,8 @@ namespace SignUpLogin.Controllers
             var guardResult = EnsureStudentAccess();
             if (guardResult != null) return guardResult;
 
+            await ProcessDueReservations();
+
             var idNumber = HttpContext.Session.GetString("IdNumber")!;
             var student = await _context.Signups.FirstOrDefaultAsync(s => s.IdNumber == idNumber);
             if (student == null)
@@ -51,7 +53,7 @@ namespace SignUpLogin.Controllers
             int newPoints = 0;
             foreach (var record in unawarded)
             {
-                int earned = (int)((record.TimeOut!.Value - record.TimeIn).TotalMinutes / MinutesPerPoint);
+                int earned = 1;
                 newPoints += earned;
                 record.PointsAwarded = true;
             }
@@ -67,8 +69,8 @@ namespace SignUpLogin.Controllers
                             StudentIdNumber = idNumber,
                             Points = newPoints,
                             LifetimePoints = newPoints,
-                            LastRewardReason = $"Earned {newPoints} pt(s) for sit-in time",
-                            UpdatedAt = DateTime.UtcNow
+                            LastRewardReason = $"Earned {newPoints} pt(s) for completing sit-in(s)",
+                            UpdatedAt = DateTime.Now
                         };
                         _context.StudentPoints.Add(pointsRow);
                     }
@@ -76,8 +78,8 @@ namespace SignUpLogin.Controllers
                     {
                         pointsRow.Points += newPoints;
                         pointsRow.LifetimePoints += newPoints;
-                        pointsRow.LastRewardReason = $"Earned {newPoints} pt(s) for sit-in time";
-                        pointsRow.UpdatedAt = DateTime.UtcNow;
+                        pointsRow.LastRewardReason = $"Earned {newPoints} pt(s) for completing sit-in(s)";
+                        pointsRow.UpdatedAt = DateTime.Now;
                     }
                     TempData["PointsEarned"] = newPoints;
                 }
@@ -87,7 +89,7 @@ namespace SignUpLogin.Controllers
             if (pointsRow != null && pointsRow.LifetimePoints < pointsRow.Points)
             {
                 pointsRow.LifetimePoints = pointsRow.Points;
-                pointsRow.UpdatedAt = DateTime.UtcNow;
+                pointsRow.UpdatedAt = DateTime.Now;
                 await _context.SaveChangesAsync();
             }
 
@@ -98,7 +100,7 @@ namespace SignUpLogin.Controllers
             {
                 if (!labStatuses.Any(l => l.LabName == name))
                 {
-                    _context.LabStatuses.Add(new LabStatus { LabName = name, Status = "Available", UpdatedAt = DateTime.UtcNow });
+                    _context.LabStatuses.Add(new LabStatus { LabName = name, Status = "Available", UpdatedAt = DateTime.Now });
                     anyAdded = true;
                 }
             }
@@ -205,7 +207,7 @@ namespace SignUpLogin.Controllers
 
             pointsRow.Points -= validPoints;
             pointsRow.LastRewardReason = $"Redeemed {validPoints} pt(s) for {sessionsGained} session(s)";
-            pointsRow.UpdatedAt = DateTime.UtcNow;
+            pointsRow.UpdatedAt = DateTime.Now;
             student.RemainingSessions += sessionsGained;
 
             await _context.SaveChangesAsync();
@@ -220,14 +222,19 @@ namespace SignUpLogin.Controllers
             if (guardResult != null) return Unauthorized();
 
             if (string.IsNullOrWhiteSpace(laboratory))
-                return Json(new { occupiedPcs = Array.Empty<string>() });
+                return Json(new { occupiedPcs = Array.Empty<string>(), unavailablePcs = Array.Empty<string>() });
 
             var occupiedPcs = await _context.SitInRecords
                 .Where(r => r.Laboratory == laboratory && r.TimeOut == null && r.PcNumber != null)
                 .Select(r => r.PcNumber)
                 .ToListAsync();
 
-            return Json(new { occupiedPcs });
+            var labStatus = await _context.LabStatuses
+                .FirstOrDefaultAsync(l => l.LabName == laboratory);
+
+            var unavailablePcs = labStatus?.UnavailablePcs?.Split(',', StringSplitOptions.RemoveEmptyEntries) ?? Array.Empty<string>();
+
+            return Json(new { occupiedPcs, unavailablePcs });
         }
 
         [HttpPost]
@@ -241,7 +248,7 @@ namespace SignUpLogin.Controllers
             var student = await _context.Signups.FirstOrDefaultAsync(s => s.IdNumber == idNumber);
             if (student != null)
             {
-                student.LastAnnouncementsReadAt = DateTime.UtcNow;
+                student.LastAnnouncementsReadAt = DateTime.Now;
                 await _context.SaveChangesAsync();
                 HttpContext.Session.SetInt32("UnreadAnnouncements", 0);
             }
@@ -266,7 +273,7 @@ namespace SignUpLogin.Controllers
                     SitInRecordId = SitInRecordId,
                     Rating = Rating,
                     Comment = string.IsNullOrWhiteSpace(Comment) ? null : Comment.Trim(),
-                    SubmittedAt = DateTime.UtcNow
+                    SubmittedAt = DateTime.Now
                 });
                 await _context.SaveChangesAsync();
                 TempData["Success"] = "Thank you for your feedback!";
@@ -281,6 +288,8 @@ namespace SignUpLogin.Controllers
         {
             var guardResult = EnsureStudentAccess();
             if (guardResult != null) return guardResult;
+
+            await ProcessDueReservations();
 
             var idNumber = HttpContext.Session.GetString("IdNumber")!;
             var reservations = await _context.Reservations
@@ -310,15 +319,64 @@ namespace SignUpLogin.Controllers
                 return RedirectToAction(nameof(Reservations));
             }
 
+            if (ReservationDate < DateTime.Now)
+            {
+                TempData["Error"] = "Reservation date cannot be in the past.";
+                return RedirectToAction(nameof(Reservations));
+            }
+
+            var student = await _context.Signups.FirstOrDefaultAsync(s => s.IdNumber == idNumber);
+            if (student == null || student.RemainingSessions <= 0)
+            {
+                TempData["Error"] = "You do not have enough remaining sessions to make a reservation.";
+                return RedirectToAction(nameof(Reservations));
+            }
+
             var hasPending = await _context.Reservations.AnyAsync(r =>
                 r.StudentIdNumber == idNumber &&
-                r.Status == "Pending" &&
+                (r.Status == "Pending" || r.Status == "Approved") &&
                 r.ReservationDate.Date == ReservationDate.Date);
 
             if (hasPending)
             {
-                TempData["Error"] = "You already have a pending reservation on that date.";
+                TempData["Error"] = "You already have a pending or approved reservation on that date.";
                 return RedirectToAction(nameof(Reservations));
+            }
+
+            // Check if another student has already reserved this specific PC at the same time
+            if (!string.IsNullOrWhiteSpace(PcNumber))
+            {
+                var cleanPc = PcNumber.Trim();
+                
+                // 1. Check if the PC is marked as unavailable by admin
+                var labStatus = await _context.LabStatuses.FirstOrDefaultAsync(l => l.LabName == Laboratory);
+                if (labStatus != null && !string.IsNullOrWhiteSpace(labStatus.UnavailablePcs))
+                {
+                    var unavailableList = labStatus.UnavailablePcs.Split(',', StringSplitOptions.RemoveEmptyEntries);
+                    if (unavailableList.Contains(cleanPc))
+                    {
+                        TempData["Error"] = $"{cleanPc} is currently unavailable in {Laboratory}.";
+                        return RedirectToAction(nameof(Reservations));
+                    }
+                }
+
+                // Check if any approved reservation exists for the same Lab, PC, and Time (within a +/- 30 min window for simplicity, or exact if preferred)
+                // For now, let's check for the exact same hour/minute slot or overlapping ones
+                var conflictRangeStart = ReservationDate.AddMinutes(-30);
+                var conflictRangeEnd = ReservationDate.AddMinutes(30);
+
+                var isReserved = await _context.Reservations.AnyAsync(r => 
+                    r.Status == "Approved" && 
+                    r.Laboratory == Laboratory && 
+                    r.PcNumber == cleanPc &&
+                    r.ReservationDate >= conflictRangeStart && 
+                    r.ReservationDate <= conflictRangeEnd);
+
+                if (isReserved)
+                {
+                    TempData["Error"] = $"{cleanPc} in {Laboratory} is already reserved for this time. Please choose another PC or time.";
+                    return RedirectToAction(nameof(Reservations));
+                }
             }
 
             _context.Reservations.Add(new Reservation
@@ -328,7 +386,7 @@ namespace SignUpLogin.Controllers
                 PcNumber        = string.IsNullOrWhiteSpace(PcNumber) ? null : PcNumber.Trim(),
                 Purpose         = Purpose.Trim(),
                 ReservationDate = ReservationDate,
-                CreatedAt       = DateTime.UtcNow
+                CreatedAt       = DateTime.Now
             });
 
             await _context.SaveChangesAsync();
@@ -340,6 +398,63 @@ namespace SignUpLogin.Controllers
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error() => View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+
+        private async Task ProcessDueReservations()
+        {
+            var now = DateTime.Now;
+            var dueReservations = await _context.Reservations
+                .Where(r => r.Status == "Approved" && r.ReservationDate <= now)
+                .ToListAsync();
+
+            if (dueReservations.Any())
+            {
+                bool changes = false;
+                foreach (var res in dueReservations)
+                {
+                    var student = await _context.Signups.FirstOrDefaultAsync(s => s.IdNumber == res.StudentIdNumber);
+                    if (student != null && student.RemainingSessions > 0)
+                    {
+                        var existingActive = await _context.SitInRecords.AnyAsync(r => r.StudentIdNumber == res.StudentIdNumber && r.TimeOut == null);
+                        if (!existingActive)
+                        {
+                            var isPcOccupied = false;
+                            if (!string.IsNullOrWhiteSpace(res.PcNumber))
+                            {
+                                isPcOccupied = await _context.SitInRecords.AnyAsync(r => r.Laboratory == res.Laboratory && r.PcNumber == res.PcNumber && r.TimeOut == null);
+                            }
+
+                            if (!isPcOccupied)
+                            {
+                                var sitInRecord = new SitInRecord
+                                {
+                                    StudentIdNumber = res.StudentIdNumber,
+                                    Purpose = res.Purpose,
+                                    Laboratory = res.Laboratory,
+                                    PcNumber = res.PcNumber,
+                                    TimeIn = res.ReservationDate
+                                };
+
+                                _context.SitInRecords.Add(sitInRecord);
+                                student.RemainingSessions--;
+                                
+                                res.Status = "CheckedIn";
+                                changes = true;
+                            }
+                        }
+                    }
+                    else if (student != null && student.RemainingSessions <= 0)
+                    {
+                        res.Status = "CheckedIn";
+                        changes = true;
+                    }
+                }
+
+                if (changes)
+                {
+                    await _context.SaveChangesAsync();
+                }
+            }
+        }
 
         private IActionResult? EnsureStudentAccess()
         {

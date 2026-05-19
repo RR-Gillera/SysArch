@@ -4,7 +4,7 @@
     ViewData["ActivePage"] = "Reservations";
     Layout = null;
     var pending  = Model.Count(r => r.Status == "Pending");
-    var approved = Model.Count(r => r.Status == "Approved");
+    var approved = Model.Count(r => r.Status == "Approved" || r.Status == "CheckedIn");
     var denied   = Model.Count(r => r.Status == "Denied");
 }
 
@@ -118,6 +118,7 @@
                                 var badgeClass = r.Status switch
                                 {
                                     "Approved" => "text-bg-success",
+                                    "CheckedIn" => "text-bg-success",
                                     "Denied"   => "text-bg-danger",
                                     _          => "text-bg-warning"
                                 };
@@ -129,15 +130,17 @@
                                     <td>@(r.PcNumber ?? "—")</td>
                                     <td>@r.Purpose</td>
                                     <td class="text-nowrap">@r.ReservationDate.ToString("MMM dd, yyyy — hh:mm tt")</td>
-                                    <td class="text-nowrap small">@r.CreatedAt.ToLocalTime().ToString("MMM dd hh:mm tt")</td>
-                                    <td><span class="badge @badgeClass">@r.Status</span></td>
+                                    <td class="text-nowrap small">@r.CreatedAt.ToString("MMM dd hh:mm tt")</td>
+                                    <td><span class="badge @badgeClass">@(r.Status == "CheckedIn" ? "Checked In" : r.Status)</span></td>
                                     <td class="text-center text-nowrap">
                                         @if (r.Status == "Pending")
                                         {
                                             <button type="button" class="btn btn-success btn-sm me-1 action-btn"
                                                     data-id="@r.Id"
                                                     data-action="approve"
-                                                    data-name="@studentName">
+                                                    data-name="@studentName"
+                                                    data-lab="@r.Laboratory"
+                                                    data-pc="@r.PcNumber">
                                                 <i class="bi bi-check-lg me-1"></i>Approve
                                             </button>
                                             <button type="button" class="btn btn-danger btn-sm action-btn"
@@ -180,8 +183,19 @@
                     <div class="modal-body small">
                         <p>Approving reservation for <strong id="approveStudentName"></strong>.</p>
                         <input type="hidden" name="id" id="approveId" />
-                        <label class="form-label fw-semibold small">Remarks <span class="text-muted">(optional)</span></label>
-                        <input type="text" name="AdminRemarks" class="form-control form-control-sm" placeholder="e.g. Approved — PC-12 reserved for you" />
+                        
+                        <div id="pcAssignmentSection" class="mb-3 d-none">
+                            <label class="form-label fw-semibold small">Assign PC <span class="text-danger">*</span></label>
+                            <select name="AssignedPc" id="assignedPcSelect" class="form-select form-select-sm">
+                                <option value="">Select a PC...</option>
+                            </select>
+                            <div class="form-text text-muted">The student didn't specify a PC preference.</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold small">Remarks <span class="text-muted">(optional)</span></label>
+                            <input type="text" name="AdminRemarks" class="form-control form-control-sm" placeholder="e.g. Approved — PC-12 reserved for you" />
+                        </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
@@ -253,11 +267,37 @@
         // Modals
         const approveModal = new bootstrap.Modal(document.getElementById('approveModal'));
         const denyModal    = new bootstrap.Modal(document.getElementById('denyModal'));
+        const labPcCountMap = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.LabPcCountMap));
+
         document.querySelectorAll('.action-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 if (btn.dataset.action === 'approve') {
                     document.getElementById('approveId').value = btn.dataset.id;
                     document.getElementById('approveStudentName').textContent = btn.dataset.name;
+                    
+                    const pcSection = document.getElementById('pcAssignmentSection');
+                    const pcSelect = document.getElementById('assignedPcSelect');
+                    
+                    // If no PC was preferred, show assignment dropdown
+                    if (!btn.dataset.pc || btn.dataset.pc === '') {
+                        pcSection.classList.remove('d-none');
+                        pcSelect.setAttribute('required', 'required');
+                        
+                        // Clear and populate based on lab capacity
+                        pcSelect.innerHTML = '<option value="">Select a PC...</option>';
+                        const labName = btn.dataset.lab;
+                        const count = labPcCountMap[labName] || 49;
+                        for(let i=1; i<=count; i++) {
+                            const opt = document.createElement('option');
+                            opt.value = `PC-${i}`;
+                            opt.textContent = `PC-${i}`;
+                            pcSelect.appendChild(opt);
+                        }
+                    } else {
+                        pcSection.classList.add('d-none');
+                        pcSelect.removeAttribute('required');
+                    }
+                    
                     approveModal.show();
                 } else {
                     document.getElementById('denyId').value = btn.dataset.id;

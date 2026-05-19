@@ -231,7 +231,7 @@
                                 @foreach (var announcement in Model.Announcements)
                                 {
                                     <div class="announcement-item">
-                                        <div class="announcement-meta">@announcement.PostedBy | @announcement.PostedAt.ToLocalTime().ToString("yyyy-MMM-dd")</div>
+                                        <div class="announcement-meta">@announcement.PostedBy | @announcement.PostedAt.ToString("yyyy-MMM-dd")</div>
                                         <div><strong>@announcement.Title</strong></div>
                                         <div>@announcement.Message</div>
                                     </div>
@@ -379,7 +379,7 @@
                             <div class="points-label">Available Points</div>
                         </div>
                         <div class="mt-2" style="font-size:0.78rem; color:#64748b;">
-                            <i class="bi bi-clock me-1"></i>1 pt per 2 hrs of sit-in
+                            <i class="bi bi-check-circle me-1"></i>1 pt per completed sit-in
                         </div>
                     </div>
 
@@ -417,7 +417,7 @@
                         else
                         {
                             <div class="reward-reason-box mb-3" style="border-color:@tierBorder; color:#94a3b8;">
-                                <i class="bi bi-info-circle me-2"></i>No rewards yet. Sit-in for 2+ hours to earn your first point!
+                                <i class="bi bi-info-circle me-2"></i>No rewards yet. Complete a sit-in to earn your first point!
                             </div>
                         }
 
@@ -605,14 +605,16 @@
 
             pcModal.show();
 
-            // Fetch live occupied PCs from server
+            // Fetch live occupied and unavailable PCs from server
             let occupiedPcs = [];
+            let unavailablePcs = [];
             try {
                 const res  = await fetch(`/Home/GetOccupiedPcs?laboratory=${encodeURIComponent(labName)}`);
                 const data = await res.json();
                 occupiedPcs = data.occupiedPcs ?? [];
+                unavailablePcs = data.unavailablePcs ?? [];
             } catch (e) {
-                console.warn('Could not fetch occupied PCs:', e);
+                console.warn('Could not fetch PC data:', e);
             }
 
             spinner.classList.add('d-none');
@@ -622,14 +624,27 @@
             for (let i = 1; i <= totalPCs; i++) {
                 const pcId   = 'PC-' + i;
                 const isUsed = occupiedPcs.includes(pcId);
+                const isUnavailable = unavailablePcs.includes(pcId);
                 const card   = document.createElement('div');
-                card.className = 'pc-card ' + (isUsed ? 'pc-used' : 'pc-free');
+                
+                let statusClass = 'pc-free';
+                let statusText = 'Available';
+                
+                if (isUsed) {
+                    statusClass = 'pc-used';
+                    statusText = 'In Use';
+                } else if (isUnavailable) {
+                    statusClass = 'pc-unavailable';
+                    statusText = 'Unavailable';
+                }
+
+                card.className = 'pc-card ' + statusClass;
                 card.innerHTML =
                     '<div class="pc-icon">&#128187;</div>' +
                     '<div class="pc-label">' + pcId + '</div>' +
-                    '<div class="pc-status-text">' + (isUsed ? 'In Use' : 'Available') + '</div>';
+                    '<div class="pc-status-text">' + statusText + '</div>';
                 
-                if (!isUsed) {
+                if (!isUsed && !isUnavailable) {
                     card.style.cursor = 'pointer';
                     card.title = `Click to reserve ${pcId} in ${labName}!`;
                     card.onclick = () => {
@@ -1041,6 +1056,12 @@
     .pc-used {
         background: #fef2f2;
         border-color: #fecaca;
+        opacity: 0.75;
+    }
+
+    .pc-unavailable {
+        background: #f1f5f9;
+        border-color: #cbd5e1;
         opacity: 0.75;
     }
 
