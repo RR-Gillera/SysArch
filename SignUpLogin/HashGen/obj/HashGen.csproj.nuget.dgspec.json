@@ -1,23 +1,23 @@
 {
   "format": 1,
   "restore": {
-    "Z:\\TT518\\SysArch\\SignUpLogin\\HashGen\\HashGen.csproj": {}
+    "C:\\Users\\PP401\\SysArch\\SignUpLogin\\HashGen\\HashGen.csproj": {}
   },
   "projects": {
-    "Z:\\TT518\\SysArch\\SignUpLogin\\HashGen\\HashGen.csproj": {
+    "C:\\Users\\PP401\\SysArch\\SignUpLogin\\HashGen\\HashGen.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "Z:\\TT518\\SysArch\\SignUpLogin\\HashGen\\HashGen.csproj",
+        "projectUniqueName": "C:\\Users\\PP401\\SysArch\\SignUpLogin\\HashGen\\HashGen.csproj",
         "projectName": "HashGen",
-        "projectPath": "Z:\\TT518\\SysArch\\SignUpLogin\\HashGen\\HashGen.csproj",
-        "packagesPath": "C:\\Users\\TT518\\.nuget\\packages\\",
-        "outputPath": "Z:\\TT518\\SysArch\\SignUpLogin\\HashGen\\obj\\",
+        "projectPath": "C:\\Users\\PP401\\SysArch\\SignUpLogin\\HashGen\\HashGen.csproj",
+        "packagesPath": "C:\\Users\\PP401\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\PP401\\SysArch\\SignUpLogin\\HashGen\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\TT518\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\PP401\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
